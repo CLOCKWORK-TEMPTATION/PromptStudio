@@ -10,6 +10,11 @@ build/
 out/
 
 # Environment files
+# Build
+dist/
+build/
+
+# Environment
 .env
 .env.local
 .env.development.local
@@ -46,4 +51,22 @@ backend/prisma/*.db
 backend/prisma/*.db-journal
 
 # TypeScript
+pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Misc
+*.log
 *.tsbuildinfo
