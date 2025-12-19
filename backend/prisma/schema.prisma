@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  avatar    String?
+  color     String   @default("#3B82F6")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownedSessions    CollaborationSession[] @relation("SessionOwner")
+  sessionMembers   SessionMember[]
+  editHistory      EditHistory[]
+  comments         Comment[]
+  cacheEntries     SemanticCache[]
+}
+
+// Collaboration Session
+model CollaborationSession {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  content     String   @default("")
+  isActive    Boolean  @default(true)
+  shareToken  String   @unique @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Owner relation
+  ownerId String
+  owner   User   @relation("SessionOwner", fields: [ownerId], references: [id])
+
+  // Relations
+  members     SessionMember[]
+  editHistory EditHistory[]
+  comments    Comment[]
+  snapshots   SessionSnapshot[]
+
+  @@index([ownerId])
+  @@index([shareToken])
+}
+
+// Session Members with permissions
+model SessionMember {
+  id        String     @id @default(uuid())
+  role      MemberRole @default(VIEWER)
+  joinedAt  DateTime   @default(now())
+  lastSeenAt DateTime  @default(now())
+
+  // Relations
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id])
+  sessionId String
+  session   CollaborationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sessionId])
+  @@index([sessionId])
+}
+
+enum MemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+// Edit History for versioning
+model EditHistory {
+  id          String   @id @default(uuid())
+  operation   String   // JSON string of the operation
+  contentBefore String?
+  contentAfter  String?
+  timestamp   DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id])
+  sessionId String
+  session   CollaborationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, timestamp])
+}
+
+// Session Snapshots for major versions
+model SessionSnapshot {
+  id        String   @id @default(uuid())
+  name      String
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  sessionId String
+  session   CollaborationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+// Comments and Annotations
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  position  Json?    // { start: number, end: number } for inline comments
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Parent comment for threads
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+
+  // Relations
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id])
+  sessionId String
+  session   CollaborationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([parentId])
+}
+
+// Semantic Cache
+model SemanticCache {
+  id            String   @id @default(uuid())
+  prompt        String
+  promptHash    String
+  embedding     Json     // Vector embedding stored as JSON array
+  response      String
+  model         String
+  hitCount      Int      @default(0)
+  tokensSaved   Int      @default(0)
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  lastAccessedAt DateTime @default(now())
+
+  // User who created this cache entry
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  // Tags for invalidation
+  tags CacheTag[]
+
+  @@index([promptHash])
+  @@index([expiresAt])
+}
+
+// Cache Tags for invalidation
+model CacheTag {
+  id    String @id @default(uuid())
+  name  String
+
+  cacheId String
+  cache   SemanticCache @relation(fields: [cacheId], references: [id], onDelete: Cascade)
+
+  @@index([name])
+}
+
+// Cache Statistics
+model CacheStatistics {
+  id            String   @id @default(uuid())
+  date          DateTime @default(now()) @db.Date
+  totalHits     Int      @default(0)
+  totalMisses   Int      @default(0)
+  tokensSaved   Int      @default(0)
+  costSaved     Float    @default(0)
+
+  @@unique([date])
+}
+
+// Cache Configuration
+model CacheConfig {
+  id                  String  @id @default(uuid())
+  enabled             Boolean @default(true)
+  similarityThreshold Float   @default(0.85)
+  defaultTTLSeconds   Int     @default(3600)
+  maxCacheSize        Int     @default(10000)
+
+  // Invalidation rules as JSON
+  invalidationRules   Json    @default("[]")
+
+  updatedAt DateTime @updatedAt
+}
