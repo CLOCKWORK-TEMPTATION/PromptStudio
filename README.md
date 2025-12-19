@@ -1,8 +1,62 @@
 # PromptStudio
 
-Real-time collaborative prompt engineering platform with semantic caching capabilities.
+A comprehensive AI Prompt Engineering Platform with SDK Auto-Generation, Cloud Deployment, Real-time Collaboration, and Semantic Caching capabilities.
 
 ## Features
+
+### 🎨 Prompt Editor
+- Visual prompt template editor with variable support
+- Real-time prompt testing and preview
+- Model configuration (temperature, max tokens, top_p, etc.)
+- Support for multiple AI providers (OpenAI, Anthropic)
+- Variable type definitions with validation
+
+### 🔧 SDK Auto-Generation
+Generate production-ready client code for your prompts:
+
+#### Python SDK
+- Async/sync mode selection
+- Built-in retry logic with exponential backoff
+- Custom exception classes for error handling
+- TypedDict support for type hints
+- Full docstrings and usage examples
+- aiohttp/requests integration
+
+#### TypeScript SDK
+- Full TypeScript type definitions
+- Async/await with fetch API
+- Custom error classes
+- Retry logic with configurable attempts
+- Streaming response support
+- Ready for npm publishing
+
+### ☁️ Cloud Deployment
+One-click deployment to major cloud platforms:
+
+#### Vercel Edge Functions
+- Edge Runtime for ultra-low latency
+- Automatic HTTPS and global CDN
+- Zero configuration deployment
+- Rate limiting support
+
+#### Cloudflare Workers
+- 0ms cold start with V8 Isolates
+- 300+ global edge locations
+- KV storage for rate limiting
+- Durable Objects support
+
+#### AWS Lambda
+- SAM template for easy deployment
+- API Gateway integration
+- ARM64 architecture for performance
+- CloudWatch Logs integration
+- VPC support
+
+#### Google Cloud Functions
+- 2nd gen (Cloud Run based)
+- Secret Manager integration
+- Cloud Logging
+- Multi-region deployment
 
 ### 🤝 Live Collaboration
 - **WebSocket-based real-time collaboration** - Edit prompts together in real-time
@@ -26,7 +80,23 @@ Real-time collaborative prompt engineering platform with semantic caching capabi
 - **Analytics dashboard** - Track hit rates, tokens saved, and cost savings
 - **Cache management UI** - Browse, search, and delete cache entries
 
+### 🔒 Security Features
+- API Key authentication
+- Rate limiting configuration
+- Webhook notifications for events
+- Request signing for webhooks
+
 ## Tech Stack
+
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Zustand** - State management
+- **Lucide React** - Icons
+- **Socket.IO Client** - WebSocket client
+- **Yjs** - CRDT client
 
 ### Backend
 - **Node.js** + **Express** - API server
@@ -35,146 +105,135 @@ Real-time collaborative prompt engineering platform with semantic caching capabi
 - **Redis** - Caching and pub/sub
 - **Yjs** - CRDT implementation for collaborative editing
 - **OpenAI API** - Embedding generation for semantic search
-- **TypeScript** - Type safety throughout
-
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **Zustand** - State management
-- **Socket.IO Client** - WebSocket client
-- **Yjs** - CRDT client
-- **Recharts** - Data visualization
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL 15+
-- Redis 7+
+- PostgreSQL 15+ (for collaboration features)
+- Redis 7+ (for caching features)
 - npm or yarn
 
-### Quick Start with Docker
+### Quick Start
 
 ```bash
-# Start all services
-docker-compose up -d
+# Clone the repository
+git clone https://github.com/your-org/prompt-studio.git
+cd prompt-studio
 
-# The application will be available at:
-# Frontend: http://localhost:3000
-# Backend: http://localhost:3001
-```
-
-### Manual Setup
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/PromptStudio.git
-cd PromptStudio
-```
-
-2. **Install backend dependencies**
-```bash
-cd backend
+# Install dependencies
 npm install
-cp .env.example .env
-# Edit .env with your configuration
-```
 
-3. **Setup database**
-```bash
-npm run db:generate
-npm run db:push
-```
-
-4. **Start backend**
-```bash
+# Start development server
 npm run dev
 ```
 
-5. **Install frontend dependencies** (new terminal)
-```bash
-cd frontend
-npm install
-```
+### Development Commands
 
-6. **Start frontend**
 ```bash
+# Run development server
 npm run dev
-```
 
-7. **Open the application**
-Navigate to `http://localhost:3000`
+# Build for production
+npm run build
 
-## Environment Variables
+# Start production server
+npm start
 
-### Backend (.env)
-```env
-# Server
-PORT=3001
-NODE_ENV=development
-
-# Database
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/promptstudio"
-
-# Redis
-REDIS_URL="redis://localhost:6379"
-
-# JWT
-JWT_SECRET="your-secret-key"
-JWT_EXPIRES_IN="7d"
-
-# OpenAI (for semantic caching)
-OPENAI_API_KEY="your-openai-api-key"
-
-# Collaboration
-MAX_USERS_PER_SESSION=50
-SESSION_TIMEOUT_MINUTES=60
-
-# Cache
-CACHE_TTL_SECONDS=3600
-SIMILARITY_THRESHOLD=0.85
+# Type check
+npm run type-check
 ```
 
 ## Project Structure
 
 ```
 PromptStudio/
-├── backend/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── globals.css         # Global styles
+│   │   ├── layout.tsx          # Root layout
+│   │   └── page.tsx            # Main page
+│   │
+│   ├── components/             # React components
+│   │   ├── PromptEditor/       # Prompt editing UI
+│   │   ├── SDKGenerator/       # SDK generation UI
+│   │   ├── CloudDeployment/    # Cloud deployment UI
+│   │   └── collaboration/      # Real-time collaboration
+│   │
+│   ├── lib/                    # Core libraries
+│   │   ├── sdk-generator/      # SDK code generators
+│   │   └── cloud-deployment/   # Deployment generators
+│   │
+│   ├── store/                  # State management (Zustand)
+│   └── types/                  # TypeScript definitions
+│
+├── backend/                    # Backend services
 │   ├── src/
-│   │   ├── api/
-│   │   │   ├── routes/      # API routes
-│   │   │   └── middleware/  # Express middleware
-│   │   ├── websocket/
-│   │   │   ├── handlers/    # WebSocket event handlers
-│   │   │   └── managers/    # Session/presence managers
-│   │   ├── services/        # Business logic
-│   │   ├── lib/             # Shared utilities
-│   │   └── config/          # Configuration
-│   └── prisma/              # Database schema
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   │   └── collaboration/
-│   │   ├── pages/           # Page components
-│   │   ├── store/           # Zustand stores
-│   │   ├── services/        # API & WebSocket services
-│   │   └── lib/             # Utilities
-│   └── public/              # Static assets
-├── shared/
-│   └── types/               # Shared TypeScript types
-└── docker-compose.yml       # Docker services
+│   │   ├── api/               # API routes
+│   │   ├── websocket/         # WebSocket handlers
+│   │   └── services/          # Business logic
+│   └── prisma/                # Database schema
+│
+├── package.json
+├── tsconfig.json
+└── tailwind.config.ts
 ```
 
-## API Endpoints
+## SDK Generation Options
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login
-- `POST /api/auth/guest` - Guest login
-- `GET /api/auth/me` - Get current user
-- `PATCH /api/auth/me` - Update profile
+### Python Options
+| Option | Description | Default |
+|--------|-------------|---------|
+| `asyncMode` | Use async/await with aiohttp | `true` |
+| `includeRetryLogic` | Add exponential backoff retry | `true` |
+| `includeErrorHandling` | Custom exception classes | `true` |
+| `functionName` | Main function name | `generate_response` |
+| `className` | Client class name | `PromptClient` |
+| `includeTypes` | Add TypedDict definitions | `true` |
+| `retryAttempts` | Max retry attempts | `3` |
+| `timeout` | Request timeout (ms) | `30000` |
+
+### TypeScript Options
+| Option | Description | Default |
+|--------|-------------|---------|
+| `asyncMode` | Use async/await | `true` |
+| `includeRetryLogic` | Add retry helper function | `true` |
+| `includeErrorHandling` | Custom error classes | `true` |
+| `functionName` | Main method name | `generateResponse` |
+| `className` | Client class name | `PromptClient` |
+| `includeTypes` | Generate interfaces | `true` |
+| `retryAttempts` | Max retry attempts | `3` |
+| `timeout` | Request timeout (ms) | `30000` |
+
+## Deployment Configuration
+
+### Common Options
+| Option | Description |
+|--------|-------------|
+| `name` | Deployment name |
+| `region` | Cloud region |
+| `environment` | dev/staging/production |
+| `timeout` | Function timeout (seconds) |
+| `memory` | Memory allocation (MB) |
+
+### Rate Limiting
+| Option | Description |
+|--------|-------------|
+| `requestsPerMinute` | Limit per minute |
+| `requestsPerHour` | Limit per hour |
+| `requestsPerDay` | Limit per day |
+| `burstLimit` | Concurrent request limit |
+
+### Webhooks
+| Event | Description |
+|-------|-------------|
+| `request.started` | Request received |
+| `request.completed` | Successful response |
+| `request.failed` | Request error |
+| `rate_limit.exceeded` | Rate limit hit |
+| `error.occurred` | System error |
+
+## API Endpoints
 
 ### Sessions
 - `GET /api/sessions` - List user's sessions
@@ -182,20 +241,12 @@ PromptStudio/
 - `GET /api/sessions/:id` - Get session details
 - `PATCH /api/sessions/:id` - Update session
 - `DELETE /api/sessions/:id` - Delete session
-- `GET /api/sessions/share/:token` - Get session by share token
-- `POST /api/sessions/:id/members` - Invite member
-- `GET /api/sessions/:id/history` - Get edit history
-- `POST /api/sessions/:id/snapshots` - Create snapshot
 
 ### Cache
 - `GET /api/cache/config` - Get cache config
 - `PATCH /api/cache/config` - Update cache config
 - `POST /api/cache/lookup` - Lookup cache entry
-- `POST /api/cache/store` - Store cache entry
-- `GET /api/cache/entries` - List cache entries
 - `GET /api/cache/analytics` - Get cache analytics
-- `POST /api/cache/invalidate` - Invalidate entries
-- `POST /api/cache/cleanup` - Cleanup expired entries
 
 ## WebSocket Events
 
@@ -206,12 +257,6 @@ PromptStudio/
 - `cursor_move` - Update cursor position
 - `sync_state` - Receive full state sync
 
-### Comment Events
-- `comment_add` - Add a comment
-- `comment_update` - Update a comment
-- `comment_delete` - Delete a comment
-- `comment_resolve` - Resolve/unresolve comment
-
 ### Presence Events
 - `user_joined` - User joined session
 - `user_left` - User left session
@@ -220,4 +265,4 @@ PromptStudio/
 
 ## License
 
-MIT
+MIT License - see LICENSE file for details.
