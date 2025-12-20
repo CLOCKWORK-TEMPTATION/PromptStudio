@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import OpenAI from 'openai';
 import prisma from '../lib/prisma.js';
-import redis from '../lib/redis.js';
+// redis import removed - not used in this file
 import { config } from '../config/index.js';
 import type {
   SemanticCacheEntry,
@@ -13,7 +13,7 @@ import type {
   CacheStoreRequest,
   CacheInvalidateRequest,
   CacheInvalidateResponse,
-  CacheStatistics,
+  // CacheStatistics type removed - not used
 } from '../../../shared/types/cache.js';
 
 export class SemanticCacheService {
@@ -267,7 +267,7 @@ export class SemanticCacheService {
       });
 
       await prisma.semanticCache.deleteMany({
-        where: { id: { in: toDelete.map(e => e.id) } },
+        where: { id: { in: toDelete.map((e: { id: string }) => e.id) } },
       });
     }
 
@@ -322,7 +322,7 @@ export class SemanticCacheService {
             where: { name: { in: tags } },
             select: { cacheId: true },
           });
-          const cacheIds = [...new Set(entries.map(e => e.cacheId))];
+          const cacheIds = [...new Set(entries.map((e: { cacheId: string }) => e.cacheId))];
 
           if (cacheIds.length > 0) {
             const result = await prisma.semanticCache.deleteMany({
@@ -345,7 +345,7 @@ export class SemanticCacheService {
 
           if (entries.length > 0) {
             const result = await prisma.semanticCache.deleteMany({
-              where: { id: { in: entries.map(e => e.id) } },
+              where: { id: { in: entries.map((e: { id: string }) => e.id) } },
             });
             deletedCount = result.count;
           }
