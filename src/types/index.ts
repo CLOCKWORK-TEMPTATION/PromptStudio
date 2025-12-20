@@ -329,12 +329,13 @@ export interface Prompt {
   title: string;
   content: string;
   description?: string;
-  tags?: string[];
+  tags: string[];
   category?: string;
   model_id?: string;
   variables: PromptVariable[];
   modelConfig: ModelConfig;
   isFavorite?: boolean;
+  usageCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -343,8 +344,10 @@ export interface PromptVersion {
   id: string;
   promptId: string;
   version: number;
+  versionNumber?: number;
   content: string;
   modelConfig: ModelConfig;
+  changeSummary?: string;
   createdAt: Date;
 }
 
@@ -425,6 +428,14 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   { id: 'other', name: 'Other' },
 ];
 
+export interface MarketplacePromptVariable {
+  name: string;
+  type: string;
+  description: string;
+  required?: boolean;
+  defaultValue?: string;
+}
+
 export interface MarketplacePrompt {
   id: string;
   title: string;
@@ -433,8 +444,17 @@ export interface MarketplacePrompt {
   category: string;
   tags: string[];
   authorId: string;
-  downloads: number;
-  rating: number;
+  authorName?: string;
+  isFeatured?: boolean;
+  isStaffPick?: boolean;
+  avgRating: number;
+  reviewCount: number;
+  viewCount: number;
+  cloneCount: number;
+  downloads?: number;
+  rating?: number;
+  variables: MarketplacePromptVariable[];
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
 }
