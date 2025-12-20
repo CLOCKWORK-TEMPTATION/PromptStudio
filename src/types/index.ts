@@ -364,18 +364,23 @@ export interface AIModel {
   name: string;
   provider: string;
   context_window: number;
+  contextWindow: number;
   supports_functions: boolean;
   supports_json_mode: boolean;
+  pricing?: {
+    input: number;
+    output: number;
+  };
 }
 
 export const AI_MODELS: AIModel[] = [
-  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', context_window: 8192, supports_functions: true, supports_json_mode: true },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', context_window: 128000, supports_functions: true, supports_json_mode: true },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', context_window: 16385, supports_functions: true, supports_json_mode: true },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
-  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
-  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', context_window: 32760, supports_functions: true, supports_json_mode: false },
+  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', context_window: 8192, contextWindow: 8192, supports_functions: true, supports_json_mode: true, pricing: { input: 0.03, output: 0.06 } },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', context_window: 128000, contextWindow: 128000, supports_functions: true, supports_json_mode: true, pricing: { input: 0.01, output: 0.03 } },
+  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', context_window: 16385, contextWindow: 16385, supports_functions: true, supports_json_mode: true, pricing: { input: 0.0005, output: 0.0015 } },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', context_window: 200000, contextWindow: 200000, supports_functions: true, supports_json_mode: false, pricing: { input: 0.015, output: 0.075 } },
+  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', context_window: 200000, contextWindow: 200000, supports_functions: true, supports_json_mode: false, pricing: { input: 0.003, output: 0.015 } },
+  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic', context_window: 200000, contextWindow: 200000, supports_functions: true, supports_json_mode: false, pricing: { input: 0.00025, output: 0.00125 } },
+  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', context_window: 32760, contextWindow: 32760, supports_functions: true, supports_json_mode: false, pricing: { input: 0.00025, output: 0.0005 } },
 ];
 
 export const DEFAULT_MODEL_CONFIG: ModelConfig = {
@@ -405,6 +410,12 @@ export const TEMPLATE_CATEGORIES = [
   'Other'
 ] as const;
 
+export interface MarketplacePromptVariable {
+  name: string;
+  type: string;
+  description: string;
+}
+
 export interface MarketplacePrompt {
   id: string;
   title: string;
@@ -413,8 +424,17 @@ export interface MarketplacePrompt {
   category: string;
   tags: string[];
   authorId: string;
+  authorName?: string;
+  isFeatured?: boolean;
+  isStaffPick?: boolean;
   downloads: number;
   rating: number;
+  avgRating?: number;
+  reviewCount?: number;
+  viewCount?: number;
+  cloneCount?: number;
+  variables: MarketplacePromptVariable[];
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -468,6 +488,9 @@ export interface EnvironmentProfile {
   description: string;
   modelConfig: ModelConfig;
   variables: Record<string, string>;
+  defaultRole?: string;
+  default_output_format?: string;
+  isActive?: boolean;
 }
 
 // ============================================================

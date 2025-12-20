@@ -53,6 +53,7 @@ export function SettingsView() {
   }, []);
 
   const loadUserData = async () => {
+    if (!supabase) return;
     const token = await getOrCreateSession();
     const { data } = await supabase
       .from('user_sessions')
@@ -66,6 +67,7 @@ export function SettingsView() {
   };
 
   const loadProfiles = async () => {
+    if (!supabase) return;
     const token = await getOrCreateSession();
     const sessionId = await getSessionId(token);
     if (!sessionId) return;
@@ -82,6 +84,7 @@ export function SettingsView() {
   };
 
   const loadSavedConfigs = async () => {
+    if (!supabase) return;
     const token = await getOrCreateSession();
     const sessionId = await getSessionId(token);
     if (!sessionId) return;
@@ -113,6 +116,7 @@ export function SettingsView() {
   };
 
   const saveDisplayName = async () => {
+    if (!supabase) return;
     setIsLoading(true);
     const token = await getOrCreateSession();
     await supabase.from('user_sessions').update({ display_name: displayName }).eq('session_token', token);
@@ -121,7 +125,7 @@ export function SettingsView() {
   };
 
   const saveModelConfig = async () => {
-    if (!newConfigName.trim()) return;
+    if (!newConfigName.trim() || !supabase) return;
     setIsLoading(true);
 
     const token = await getOrCreateSession();
@@ -157,12 +161,13 @@ export function SettingsView() {
   };
 
   const deleteConfig = async (id: string) => {
+    if (!supabase) return;
     await supabase.from('model_configs').delete().eq('id', id);
     loadSavedConfigs();
   };
 
   const createProfile = async () => {
-    if (!newProfile.name.trim()) return;
+    if (!newProfile.name.trim() || !supabase) return;
     setIsLoading(true);
 
     const token = await getOrCreateSession();
@@ -191,11 +196,13 @@ export function SettingsView() {
   };
 
   const deleteProfile = async (id: string) => {
+    if (!supabase) return;
     await supabase.from('environment_profiles').delete().eq('id', id);
     loadProfiles();
   };
 
   const activateProfile = async (id: string) => {
+    if (!supabase) return;
     const token = await getOrCreateSession();
     const sessionId = await getSessionId(token);
     if (!sessionId) return;
@@ -206,6 +213,7 @@ export function SettingsView() {
   };
 
   const exportData = async () => {
+    if (!supabase) return;
     const token = await getOrCreateSession();
     const sessionId = await getSessionId(token);
     if (!sessionId) return;
@@ -234,6 +242,7 @@ export function SettingsView() {
 
   const clearAllData = async () => {
     if (!confirm('Are you sure you want to delete all your data? This action cannot be undone.')) return;
+    if (!supabase) return;
 
     const token = await getOrCreateSession();
     const sessionId = await getSessionId(token);
