@@ -338,9 +338,21 @@ export interface Template {
 export interface Technique {
   id: string;
   name: string;
+  title: string;
+  slug: string;
   description: string;
+  content: string;
   example: string;
   category: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  tags: string[];
+  bestFor: string[];
+  examples: Array<{
+    name: string;
+    prompt: string;
+    explanation: string;
+  }>;
+  relatedTechniques: string[];
 }
 
 export const TEMPLATE_CATEGORIES = [
@@ -463,6 +475,8 @@ export interface EnvironmentProfile {
   name: string;
   description: string;
   config: ModelConfig;
+  defaultRole?: string;
+  isActive?: boolean;
 }
 
 // ============================================================
@@ -470,10 +484,10 @@ export interface EnvironmentProfile {
 // ============================================================
 
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'zh', name: 'Chinese' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'zh', name: 'Chinese', nativeName: '中文' },
 ];

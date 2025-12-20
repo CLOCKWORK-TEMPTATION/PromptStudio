@@ -1,30 +1,19 @@
 import { useState, useEffect } from 'react';
 import {
   Settings,
-  User,
-  Palette,
   Code,
-  Bell,
   Shield,
-  Database,
-  Cloud,
   Download,
-  Upload,
   Trash2,
-  Key,
-  Globe,
-  Monitor,
   Moon,
   Sun,
   Check,
-  Copy,
   RefreshCw,
   Save,
   FolderOpen,
   Layers,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { useEditorStore } from '../../stores/editorStore';
 import { supabase, getOrCreateSession, getSessionId } from '../../lib/supabase';
 import type { EnvironmentProfile, ModelConfig } from '../../types';
 import { DEFAULT_MODEL_CONFIG, AI_MODELS, SUPPORTED_LANGUAGES } from '../../types';
@@ -105,7 +94,7 @@ export function SettingsView() {
 
     if (data) {
       setSavedConfigs(
-        data.map((d) => ({
+        data.map((d: Record<string, unknown>) => ({
           id: d.id,
           name: d.name,
           config: {
@@ -313,7 +302,7 @@ export function SettingsView() {
             </div>
             <select
               value={preferences.language}
-              onChange={(e) => setPreferences({ language: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreferences({ language: e.target.value })}
               className={clsx(
                 'px-4 py-2 rounded-lg border',
                 theme === 'dark'
@@ -344,7 +333,7 @@ export function SettingsView() {
               <input
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
                 className={clsx(
                   'flex-1 px-4 py-2 rounded-lg border',
                   theme === 'dark'
@@ -529,7 +518,7 @@ export function SettingsView() {
             <input
               type="text"
               value={newConfigName}
-              onChange={(e) => setNewConfigName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewConfigName(e.target.value)}
               placeholder="Configuration name..."
               className={clsx(
                 'flex-1 px-3 py-2 rounded-lg border text-sm',
@@ -565,7 +554,7 @@ export function SettingsView() {
           </p>
         ) : (
           <div className="space-y-2">
-            {savedConfigs.map((config) => (
+            {savedConfigs.map((config: { id: string; name: string; config: ModelConfig }) => (
               <div
                 key={config.id}
                 className={clsx(
@@ -639,11 +628,13 @@ export function SettingsView() {
               </div>
               <div className="flex gap-4">
                 <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}>
-                  {model.context_window.toLocaleString()} tokens
+                  {model.contextWindow.toLocaleString()} tokens
                 </span>
-                <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}>
-                  ${model.pricing.input}/1K in
-                </span>
+                {model.pricing && (
+                  <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}>
+                    ${model.pricing.input}/1K in
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -672,7 +663,7 @@ export function SettingsView() {
               <input
                 type="text"
                 value={newProfile.name}
-                onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProfile({ ...newProfile, name: e.target.value })}
                 placeholder="e.g., Code Review"
                 className={clsx(
                   'w-full px-3 py-2 rounded-lg border text-sm',
@@ -689,7 +680,7 @@ export function SettingsView() {
               <input
                 type="text"
                 value={newProfile.description}
-                onChange={(e) => setNewProfile({ ...newProfile, description: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProfile({ ...newProfile, description: e.target.value })}
                 placeholder="Profile description..."
                 className={clsx(
                   'w-full px-3 py-2 rounded-lg border text-sm',
@@ -708,7 +699,7 @@ export function SettingsView() {
               <input
                 type="text"
                 value={newProfile.defaultRole}
-                onChange={(e) => setNewProfile({ ...newProfile, defaultRole: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProfile({ ...newProfile, defaultRole: e.target.value })}
                 placeholder="You are a..."
                 className={clsx(
                   'w-full px-3 py-2 rounded-lg border text-sm',
@@ -725,7 +716,7 @@ export function SettingsView() {
               <input
                 type="text"
                 value={newProfile.default_output_format}
-                onChange={(e) => setNewProfile({ ...newProfile, default_output_format: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProfile({ ...newProfile, default_output_format: e.target.value })}
                 placeholder="JSON, Markdown, etc."
                 className={clsx(
                   'w-full px-3 py-2 rounded-lg border text-sm',
@@ -762,7 +753,7 @@ export function SettingsView() {
           </p>
         ) : (
           <div className="space-y-2">
-            {profiles.map((profile) => (
+            {profiles.map((profile: EnvironmentProfile) => (
               <div
                 key={profile.id}
                 className={clsx(
