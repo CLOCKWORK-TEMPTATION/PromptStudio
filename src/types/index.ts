@@ -418,8 +418,11 @@ export interface TokenVisualization {
 }
 
 export interface Token {
+  id: string | number;
   text: string;
-  type: string;
+  type?: string;
+  start?: number;
+  end?: number;
 }
 
 // ============================================================
@@ -427,9 +430,18 @@ export interface Token {
 // ============================================================
 
 export interface ToolDefinition {
+  id: string;
+  session_id?: string;
+  prompt_id?: string;
   name: string;
   description: string;
   parameters: JSONSchema;
+  returns?: JSONSchema;
+  mock_response?: Record<string, unknown>;
+  mockResponse?: Record<string, unknown>;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface JSONSchema {
@@ -443,10 +455,15 @@ export interface JSONSchema {
 // ============================================================
 
 export interface SmartVariable {
+  id?: string;
+  session_id?: string;
   name: string;
-  type: string;
+  variableType: 'timestamp' | 'history' | 'env' | 'file' | 'custom' | string;
+  default_value: string;
   description: string;
-  defaultValue?: any;
+  isSystem?: boolean;
+  created_at?: string;
+  createdAt?: string;
 }
 
 // ============================================================
