@@ -1,10 +1,10 @@
-import prisma from '../lib/prisma';
+import prisma from '../lib/prisma.js';
 import {
   LongTermMemoryService,
   MemoryType,
   ExecutionContext,
   MemorySearchResult,
-} from './LongTermMemoryService';
+} from './LongTermMemoryService.js';
 
 /**
  * مراحل خط الأنابيب القياسي

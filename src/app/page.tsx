@@ -5,7 +5,6 @@ import {
   Sparkles,
   Code,
   Cloud,
-  Activity,
   PenTool,
   Plus,
   Settings,
@@ -13,7 +12,6 @@ import {
   Zap,
   Terminal,
   Globe,
-  Shield,
   Menu,
   X,
 } from 'lucide-react';

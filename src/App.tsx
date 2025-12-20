@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslationStore } from './store/translationStore';
 import {
-  translateToMultipleLanguages,
+  translateMultiple,
   SUPPORTED_LANGUAGES,
 } from './services/translationService';
-import { TranslationResult } from './types';
+import { TranslationResult, SavedTranslation } from './types';
 import {
   TranslationInput,
   MultiLanguageSelector,
@@ -21,8 +21,6 @@ import {
   Download,
   History,
   Settings,
-  Sun,
-  Moon,
   Menu,
   X,
 } from 'lucide-react';
@@ -65,14 +63,14 @@ function App() {
 
     setIsTranslating(true);
     try {
-      const results = await translateToMultipleLanguages(
+      const results = await translateMultiple(
         sourceText,
         sourceLanguage,
         targetLanguages,
         culturalContext
       );
       setCurrentTranslations(results);
-      results.forEach((result) => addToHistory(result));
+      results.forEach((result: TranslationResult) => addToHistory(result));
     } catch (error) {
       console.error('Translation error:', error);
     } finally {
@@ -245,7 +243,7 @@ function App() {
                     Translation Results
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentTranslations.map((result) => (
+                    {currentTranslations.map((result: TranslationResult) => (
                       <TranslationResultCard
                         key={result.id}
                         result={result}
@@ -283,7 +281,7 @@ function App() {
               translations={savedTranslations}
               onDelete={deleteSavedTranslation}
               onToggleFavorite={toggleFavorite}
-              onSelect={(t) => {
+              onSelect={(t: SavedTranslation) => {
                 setSourceText(t.sourceText);
                 setSourceLanguage(t.sourceLanguage);
                 setActiveTab('translate');
@@ -320,7 +318,7 @@ function App() {
                 </p>
               ) : (
                 <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {translationHistory.map((t) => {
+                  {translationHistory.map((t: TranslationResult) => {
                     const sourceLang = SUPPORTED_LANGUAGES.find(
                       (l) => l.code === t.sourceLanguage
                     );
