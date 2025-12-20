@@ -42,7 +42,7 @@ type Comparison = z.infer<typeof ComparisonSchema>;
 
 type Session = z.infer<typeof SessionSchema>;
 
-export class ReasoningHistoryService {
+class ReasoningHistoryServiceClass {
     private sessions: Map<string, Session> = new Map();
     private comparisons: Map<string, Comparison> = new Map();
     private maxSessions: number = 1000;
@@ -514,16 +514,16 @@ export class ReasoningHistoryService {
     }
 }
 
-// Singleton instance for compatibility with static-like usage
-const reasoningHistoryServiceInstance = new ReasoningHistoryService();
+// Singleton instance for use across the application
+export const ReasoningHistoryService = new ReasoningHistoryServiceClass();
 
-// Static wrapper class for backward compatibility
+// Static wrapper for backward compatibility with routes that use static-like syntax
 export const ReasoningHistoryServiceStatic = {
-    createSession: reasoningHistoryServiceInstance.createSession.bind(reasoningHistoryServiceInstance),
-    completeSession: reasoningHistoryServiceInstance.completeSession.bind(reasoningHistoryServiceInstance),
-    storeComparison: reasoningHistoryServiceInstance.storeComparison.bind(reasoningHistoryServiceInstance),
-    getSession: reasoningHistoryServiceInstance.getSession.bind(reasoningHistoryServiceInstance),
-    getRecentSessions: reasoningHistoryServiceInstance.getRecentSessions.bind(reasoningHistoryServiceInstance),
-    getOverallStatistics: reasoningHistoryServiceInstance.getOverallStatistics.bind(reasoningHistoryServiceInstance),
-    getPromptStatistics: reasoningHistoryServiceInstance.getPromptStatistics.bind(reasoningHistoryServiceInstance),
+    createSession: ReasoningHistoryService.createSession.bind(ReasoningHistoryService),
+    completeSession: ReasoningHistoryService.completeSession.bind(ReasoningHistoryService),
+    storeComparison: ReasoningHistoryService.storeComparison.bind(ReasoningHistoryService),
+    getSession: ReasoningHistoryService.getSession.bind(ReasoningHistoryService),
+    getRecentSessions: ReasoningHistoryService.getRecentSessions.bind(ReasoningHistoryService),
+    getOverallStatistics: ReasoningHistoryService.getOverallStatistics.bind(ReasoningHistoryService),
+    getPromptStatistics: ReasoningHistoryService.getPromptStatistics.bind(ReasoningHistoryService),
 };

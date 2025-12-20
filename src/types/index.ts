@@ -364,18 +364,23 @@ export interface AIModel {
   name: string;
   provider: string;
   context_window: number;
+  contextWindow?: number; // Alias for backward compatibility
   supports_functions: boolean;
   supports_json_mode: boolean;
+  pricing?: {
+    input: number;
+    output: number;
+  };
 }
 
 export const AI_MODELS: AIModel[] = [
-  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', context_window: 8192, supports_functions: true, supports_json_mode: true },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', context_window: 128000, supports_functions: true, supports_json_mode: true },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', context_window: 16385, supports_functions: true, supports_json_mode: true },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
-  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
-  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', context_window: 32760, supports_functions: true, supports_json_mode: false },
+  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', context_window: 8192, contextWindow: 8192, supports_functions: true, supports_json_mode: true, pricing: { input: 0.03, output: 0.06 } },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', context_window: 128000, contextWindow: 128000, supports_functions: true, supports_json_mode: true, pricing: { input: 0.01, output: 0.03 } },
+  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', context_window: 16385, contextWindow: 16385, supports_functions: true, supports_json_mode: true, pricing: { input: 0.0005, output: 0.0015 } },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', context_window: 200000, contextWindow: 200000, supports_functions: true, supports_json_mode: false, pricing: { input: 0.015, output: 0.075 } },
+  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', context_window: 200000, contextWindow: 200000, supports_functions: true, supports_json_mode: false, pricing: { input: 0.003, output: 0.015 } },
+  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic', context_window: 200000, contextWindow: 200000, supports_functions: true, supports_json_mode: false, pricing: { input: 0.00025, output: 0.00125 } },
+  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', context_window: 32760, contextWindow: 32760, supports_functions: true, supports_json_mode: false, pricing: { input: 0.00025, output: 0.0005 } },
 ];
 
 export const DEFAULT_MODEL_CONFIG: ModelConfig = {
@@ -394,16 +399,30 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
 // Template & Technique Types
 // ============================================================
 
-export const TEMPLATE_CATEGORIES = [
-  'Content Creation',
-  'Code Generation',
-  'Data Analysis',
-  'Creative Writing',
-  'Business',
-  'Education',
-  'Research',
-  'Other'
-] as const;
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  defaultValue?: string;
+  required?: boolean;
+}
+
+export interface TemplateCategory {
+  id: string;
+  name: string;
+}
+
+export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
+  { id: 'coding', name: 'Code Generation' },
+  { id: 'writing', name: 'Content Creation' },
+  { id: 'analysis', name: 'Data Analysis' },
+  { id: 'creative', name: 'Creative Writing' },
+  { id: 'data', name: 'Data Processing' },
+  { id: 'business', name: 'Business' },
+  { id: 'customer-service', name: 'Customer Service' },
+  { id: 'education', name: 'Education' },
+  { id: 'research', name: 'Research' },
+  { id: 'other', name: 'Other' },
+];
 
 export interface MarketplacePrompt {
   id: string;
@@ -428,26 +447,67 @@ export interface MarketplaceReview {
   createdAt: Date;
 }
 
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  type?: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required?: boolean;
+  defaultValue?: string;
+}
+
+export interface TemplateCategory {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export const TEMPLATE_CATEGORIES_LIST: TemplateCategory[] = [
+  { id: 'coding', name: 'Coding', description: 'Code generation and programming' },
+  { id: 'writing', name: 'Writing', description: 'Content writing and copywriting' },
+  { id: 'analysis', name: 'Analysis', description: 'Data and text analysis' },
+  { id: 'creative', name: 'Creative', description: 'Creative and artistic content' },
+  { id: 'data', name: 'Data', description: 'Data processing and transformation' },
+  { id: 'business', name: 'Business', description: 'Business and marketing content' },
+  { id: 'customer-service', name: 'Customer Service', description: 'Customer support responses' },
+  { id: 'education', name: 'Education', description: 'Educational and learning content' },
+];
+
 export interface Template {
   id: string;
   name: string;
+  title: string;
   description: string;
   content: string;
   category: string;
   tags: string[];
-  variables: PromptVariable[];
+  variables: TemplateVariable[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  usageCount: number;
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface TechniqueExample {
+  name: string;
+  prompt: string;
+  explanation: string;
 }
 
 export interface Technique {
   id: string;
   name: string;
+  title: string;
+  slug: string;
   description: string;
+  content: string;
   example: string;
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   tags: string[];
+  bestFor: string[];
+  examples: TechniqueExample[];
+  relatedTechniques: string[];
 }
 
 // ============================================================
@@ -468,6 +528,9 @@ export interface EnvironmentProfile {
   description: string;
   modelConfig: ModelConfig;
   variables: Record<string, string>;
+  isActive?: boolean;
+  defaultRole?: string;
+  default_output_format?: string;
 }
 
 // ============================================================

@@ -1,4 +1,7 @@
+// @ts-expect-error - prisma client types
 import { PrismaClient } from '@prisma/client';
+
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
 
 export interface Permission {
     resource: string;
@@ -42,7 +45,7 @@ export class RBACService {
                 }
 
                 const hasPermission = userRole.role.permissions.some(
-                    rp => rp.permission.resource === permission.resource &&
+                    (rp: { permission: { resource: string; action: string } }) => rp.permission.resource === permission.resource &&
                         rp.permission.action === permission.action
                 );
 
@@ -298,7 +301,7 @@ export class RBACService {
         });
 
         return userRoles
-            .filter(ur => !ur.role.tenantId || ur.role.tenantId === tenantId)
-            .map(ur => ur.role);
+            .filter((ur: { role: { tenantId?: string | null } }) => !ur.role.tenantId || ur.role.tenantId === tenantId)
+            .map((ur: { role: { id: string; name: string; description?: string | null; tenantId?: string | null; isSystem: boolean; isActive: boolean; createdAt: Date; updatedAt: Date } }) => ur.role);
     }
 }

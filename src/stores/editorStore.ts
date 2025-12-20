@@ -226,17 +226,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   addCollaborator: (collaborator) => set((state) => ({
     collaborators: [...state.collaborators, collaborator]
   })),
-  removeCollaborator: (id) => set((state) => ({
-    collaborators: state.collaborators.filter((c) => c.id !== id)
+  removeCollaborator: (id: string) => set((state: EditorState) => ({
+    collaborators: state.collaborators.filter((c: Collaborator) => c.id !== id)
   })),
-  updateCollaboratorCursor: (id, position) => set((state) => ({
-    collaborators: state.collaborators.map((c) => c.id === id ? { ...c, cursorPosition: position } : c)
+  updateCollaboratorCursor: (id: string, position: number) => set((state: EditorState) => ({
+    collaborators: state.collaborators.map((c: Collaborator) => c.id === id ? { ...c, cursorPosition: position } : c)
   })),
-  setIsCollaborating: (collaborating) => set({ isCollaborating: collaborating }),
-  setShareCode: (code) => set({ shareCode: code }),
+  setIsCollaborating: (collaborating: boolean) => set({ isCollaborating: collaborating }),
+  setShareCode: (code: string | null) => set({ shareCode: code }),
 
   resetEditor: () => set(initialState),
-  loadPrompt: (prompt) => set({
+  loadPrompt: (prompt: { content: string; title: string; description: string; tags: string[]; category: string; model_id: string }) => set({
     content: prompt.content,
     title: prompt.title,
     description: prompt.description,
