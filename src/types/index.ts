@@ -364,7 +364,7 @@ export interface AIModel {
   name: string;
   provider: string;
   context_window: number;
-  contextWindow: number;
+  contextWindow?: number; // Alias for backward compatibility
   supports_functions: boolean;
   supports_json_mode: boolean;
   pricing?: {
@@ -399,16 +399,30 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
 // Template & Technique Types
 // ============================================================
 
-export const TEMPLATE_CATEGORIES = [
-  'Content Creation',
-  'Code Generation',
-  'Data Analysis',
-  'Creative Writing',
-  'Business',
-  'Education',
-  'Research',
-  'Other'
-] as const;
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  defaultValue?: string;
+  required?: boolean;
+}
+
+export interface TemplateCategory {
+  id: string;
+  name: string;
+}
+
+export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
+  { id: 'coding', name: 'Code Generation' },
+  { id: 'writing', name: 'Content Creation' },
+  { id: 'analysis', name: 'Data Analysis' },
+  { id: 'creative', name: 'Creative Writing' },
+  { id: 'data', name: 'Data Processing' },
+  { id: 'business', name: 'Business' },
+  { id: 'customer-service', name: 'Customer Service' },
+  { id: 'education', name: 'Education' },
+  { id: 'research', name: 'Research' },
+  { id: 'other', name: 'Other' },
+];
 
 export interface MarketplacePromptVariable {
   name: string;
@@ -448,26 +462,67 @@ export interface MarketplaceReview {
   createdAt: Date;
 }
 
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  type?: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required?: boolean;
+  defaultValue?: string;
+}
+
+export interface TemplateCategory {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export const TEMPLATE_CATEGORIES_LIST: TemplateCategory[] = [
+  { id: 'coding', name: 'Coding', description: 'Code generation and programming' },
+  { id: 'writing', name: 'Writing', description: 'Content writing and copywriting' },
+  { id: 'analysis', name: 'Analysis', description: 'Data and text analysis' },
+  { id: 'creative', name: 'Creative', description: 'Creative and artistic content' },
+  { id: 'data', name: 'Data', description: 'Data processing and transformation' },
+  { id: 'business', name: 'Business', description: 'Business and marketing content' },
+  { id: 'customer-service', name: 'Customer Service', description: 'Customer support responses' },
+  { id: 'education', name: 'Education', description: 'Educational and learning content' },
+];
+
 export interface Template {
   id: string;
   name: string;
+  title: string;
   description: string;
   content: string;
   category: string;
   tags: string[];
-  variables: PromptVariable[];
+  variables: TemplateVariable[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  usageCount: number;
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface TechniqueExample {
+  name: string;
+  prompt: string;
+  explanation: string;
 }
 
 export interface Technique {
   id: string;
   name: string;
+  title: string;
+  slug: string;
   description: string;
+  content: string;
   example: string;
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   tags: string[];
+  bestFor: string[];
+  examples: TechniqueExample[];
+  relatedTechniques: string[];
 }
 
 // ============================================================
@@ -488,9 +543,9 @@ export interface EnvironmentProfile {
   description: string;
   modelConfig: ModelConfig;
   variables: Record<string, string>;
+  isActive?: boolean;
   defaultRole?: string;
   default_output_format?: string;
-  isActive?: boolean;
 }
 
 // ============================================================

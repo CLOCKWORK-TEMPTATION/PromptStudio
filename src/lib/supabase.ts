@@ -1,39 +1,40 @@
 // Stub for Supabase client
 // Install @supabase/supabase-js if needed: npm install @supabase/supabase-js
 
-// Type definition for Supabase query response
-interface SupabaseResponse<T = Record<string, unknown>[]> {
-  data: T | null;
-  error: unknown;
+// Type stub for Supabase client
+interface SupabaseQueryResult<T = Record<string, unknown>> {
+  data: T[] | null;
+  error: Error | null;
 }
 
-// Type definition for Supabase client stub
 interface SupabaseQueryBuilder {
-  select: (columns?: string) => SupabaseQueryBuilder & Promise<SupabaseResponse>;
-  insert: (data: Record<string, unknown>) => SupabaseQueryBuilder & Promise<SupabaseResponse>;
-  update: (data: Record<string, unknown>) => SupabaseQueryBuilder & Promise<SupabaseResponse>;
-  delete: () => SupabaseQueryBuilder & Promise<SupabaseResponse>;
-  eq: (column: string, value: unknown) => SupabaseQueryBuilder & Promise<SupabaseResponse>;
-  order: (column: string, options?: { ascending?: boolean }) => SupabaseQueryBuilder & Promise<SupabaseResponse>;
-  maybeSingle: () => Promise<SupabaseResponse<Record<string, unknown>>>;
+  select: (columns?: string) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
+  insert: (data: Record<string, unknown>) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
+  update: (data: Record<string, unknown>) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
+  delete: () => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
+  eq: (column: string, value: unknown) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
+  order: (column: string, options?: { ascending?: boolean }) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
+  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
+  single: () => Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
+  then: <TResult>(onfulfilled?: ((value: SupabaseQueryResult) => TResult | PromiseLike<TResult>) | null) => Promise<TResult>;
 }
 
 interface SupabaseClient {
   from: (table: string) => SupabaseQueryBuilder;
 }
 
-// Export as properly typed null (can be SupabaseClient or null)
+// Export null for runtime check, but type as SupabaseClient for type safety
 export const supabase: SupabaseClient | null = null;
 
 // Stub functions for session management
 export async function getOrCreateSession(): Promise<string> {
-  // In production, this would create or retrieve a session token
-  return 'stub-session-token';
+  // Return a mock session token
+  return 'mock-session-token';
 }
 
-export async function getSessionId(_token: string): Promise<string | null> {
-  // In production, this would return the session ID for a given token
-  return 'stub-session-id';
+export async function getSessionId(token: string): Promise<string | null> {
+  // Return a mock session ID
+  return token ? 'mock-session-id' : null;
 }
 
 export default supabase;

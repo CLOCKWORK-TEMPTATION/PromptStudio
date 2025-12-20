@@ -637,7 +637,7 @@ export function SettingsView() {
               </div>
               <div className="flex gap-4">
                 <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}>
-                  {model.contextWindow.toLocaleString()} tokens
+                  {model.context_window.toLocaleString()} tokens
                 </span>
                 {model.pricing && (
                   <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}>

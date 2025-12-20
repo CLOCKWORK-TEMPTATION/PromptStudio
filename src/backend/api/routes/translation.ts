@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { TranslationService } from '../../services/TranslationService.js';
 
 export const translationRouter = Router();
 
-translationRouter.post('/', async (req, res, next) => {
+translationRouter.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { text, targetLang, context } = req.body;
 
