@@ -16,7 +16,7 @@ export interface CollaborationSession {
   description?: string;
   content: string;
   isActive: boolean;
-  shareToken?: string;
+  shareToken: string | null;
   ownerId: string;
   owner: User;
   members: CollaborationMember[];
@@ -26,6 +26,7 @@ export interface CollaborationSession {
 
 export interface CollaborationMember {
   id: string;
+  sessionId?: string;
   userId: string;
   user: User;
   role: MemberRole;
@@ -64,33 +65,33 @@ export enum CollaborationEvent {
   LEAVE_SESSION = 'leave_session',
   SESSION_UPDATE = 'session_update',
 
-  // Sync events
-  SYNC_REQUEST = 'sync_request',
-  SYNC_STATE = 'sync_state',
-
-  // Edit events
-  EDIT_OPERATION = 'edit_operation',
-
   // User events
   USER_JOINED = 'user_joined',
   USER_LEFT = 'user_left',
 
-  // Cursor events
-  CURSOR_MOVE = 'cursor_move',
-  CURSOR_UPDATE = 'cursor_update',
+  // Edit events
+  EDIT_OPERATION = 'edit_operation',
 
-  // Presence events
-  PRESENCE_UPDATE = 'presence_update',
+  // Sync events
+  SYNC_REQUEST = 'sync_request',
+  SYNC_STATE = 'sync_state',
 
   // Permission events
   PERMISSION_CHANGE = 'permission_change',
+
+  // Presence events
+  CURSOR_MOVE = 'cursor_move',
+  CURSOR_UPDATE = 'cursor_update',
+  SELECTION_CHANGE = 'selection_change',
+  PRESENCE_UPDATE = 'presence_update',
 
   // Comment events
   COMMENT_ADD = 'comment_add',
   COMMENT_UPDATE = 'comment_update',
   COMMENT_DELETE = 'comment_delete',
+  COMMENT_REPLY = 'comment_reply',
   COMMENT_RESOLVE = 'comment_resolve',
 
-  // Error event
-  ERROR = 'collaboration_error',
+  // Error events
+  ERROR = 'error',
 }

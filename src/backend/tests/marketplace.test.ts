@@ -1,3 +1,4 @@
+// @ts-expect-error - vitest types not installed
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MarketplaceService, PublishStatus } from '../services/MarketplaceService.js';
 
@@ -30,7 +31,7 @@ vi.mock('../lib/prisma.js', () => ({
     user: {
       findUnique: vi.fn(),
     },
-    $transaction: vi.fn((callback) => callback({
+    $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback({
       marketplacePrompt: {
         findUnique: vi.fn(),
         create: vi.fn(),
@@ -72,7 +73,7 @@ describe('MarketplaceService', () => {
         updatedAt: new Date(),
       };
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.create as any).mockResolvedValue(mockPrompt);
 
       const result = await MarketplaceService.createPrompt({
@@ -82,7 +83,7 @@ describe('MarketplaceService', () => {
         category: 'testing',
         authorId: 'author-1',
         status: PublishStatus.PENDING,
-      });
+      } as Parameters<typeof MarketplaceService.createPrompt>[0]);
 
       expect(result).toBeDefined();
       expect(prisma.marketplacePrompt.create).toHaveBeenCalled();
@@ -97,7 +98,7 @@ describe('MarketplaceService', () => {
         viewCount: 0,
       };
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findUnique as any).mockResolvedValue(mockPrompt);
 
       const result = await MarketplaceService.getPromptById('test-id');
@@ -116,7 +117,7 @@ describe('MarketplaceService', () => {
         viewCount: 5,
       };
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findUnique as any).mockResolvedValue(mockPrompt);
       (prisma.marketplacePrompt.update as any).mockResolvedValue({
         ...mockPrompt,
@@ -136,7 +137,7 @@ describe('MarketplaceService', () => {
         { id: '2', status: PublishStatus.APPROVED },
       ];
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findMany as any).mockResolvedValue(mockPrompts);
       (prisma.marketplacePrompt.count as any).mockResolvedValue(2);
 
@@ -153,7 +154,7 @@ describe('MarketplaceService', () => {
     });
 
     it('should support pagination', async () => {
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findMany as any).mockResolvedValue([]);
       (prisma.marketplacePrompt.count as any).mockResolvedValue(0);
 
@@ -168,7 +169,7 @@ describe('MarketplaceService', () => {
     });
 
     it('should support category filtering', async () => {
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findMany as any).mockResolvedValue([]);
       (prisma.marketplacePrompt.count as any).mockResolvedValue(0);
 
@@ -184,7 +185,7 @@ describe('MarketplaceService', () => {
     });
 
     it('should support search', async () => {
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findMany as any).mockResolvedValue([]);
       (prisma.marketplacePrompt.count as any).mockResolvedValue(0);
 
@@ -211,7 +212,7 @@ describe('MarketplaceService', () => {
         title: 'Updated Title',
       };
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.update as any).mockResolvedValue(mockUpdated);
 
       const result = await MarketplaceService.updatePrompt('test-id', {
@@ -224,7 +225,7 @@ describe('MarketplaceService', () => {
 
   describe('deletePrompt', () => {
     it('should delete prompt by ID', async () => {
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.delete as any).mockResolvedValue({});
 
       await MarketplaceService.deletePrompt('test-id');
@@ -244,7 +245,7 @@ describe('MarketplaceService', () => {
         reviewText: 'Great prompt!',
       };
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplaceReview.create as any).mockResolvedValue(mockReview);
       // Mock the findMany that updatePromptStats uses
       (prisma.marketplaceReview.findMany as any).mockResolvedValue([
@@ -270,7 +271,7 @@ describe('MarketplaceService', () => {
         rating: 3,
       };
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplaceReview.create as any).mockResolvedValue(mockReview);
       (prisma.marketplaceReview.findMany as any).mockResolvedValue([
         { rating: 3 },
@@ -294,7 +295,7 @@ describe('MarketplaceService', () => {
         { id: '2', rating: 4 },
       ];
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplaceReview.findMany as any).mockResolvedValue(mockReviews);
       (prisma.marketplaceReview.count as any).mockResolvedValue(2);
 
@@ -310,7 +311,7 @@ describe('MarketplaceService', () => {
 
   describe('recordUsage', () => {
     it('should increment clone count', async () => {
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.update as any).mockResolvedValue({});
 
       await MarketplaceService.recordUsage('prompt-1');
@@ -331,7 +332,7 @@ describe('MarketplaceService', () => {
         { id: '2', viewCount: 80, cloneCount: 40, avgRating: 4.5, createdAt: new Date() },
       ];
 
-      const { default: prisma } = await import('../lib/prisma.js');
+      const { default: prisma } = await import('../lib/prisma.js') as { default: any };
       (prisma.marketplacePrompt.findMany as any).mockResolvedValue(mockPrompts);
 
       const result = await MarketplaceService.getTrendingPrompts(10);

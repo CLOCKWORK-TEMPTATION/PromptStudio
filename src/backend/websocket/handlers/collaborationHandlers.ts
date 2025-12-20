@@ -5,7 +5,22 @@ import type { CollaborationManager } from '../managers/CollaborationManager.js';
 import type { CRDTManager } from '../managers/CRDTManager.js';
 import { presenceManager } from '../index.js';
 import prisma from '../../lib/prisma.js';
-import { CollaborationEvent } from '../../../../shared/types/collaboration.js';
+
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
+
+// Define CollaborationEvent locally to avoid shared folder rootDir issues
+enum CollaborationEvent {
+  JOIN_SESSION = 'join_session',
+  LEAVE_SESSION = 'leave_session',
+  SESSION_UPDATE = 'session_update',
+  USER_JOINED = 'user_joined',
+  USER_LEFT = 'user_left',
+  EDIT_OPERATION = 'edit_operation',
+  SYNC_REQUEST = 'sync_request',
+  SYNC_STATE = 'sync_state',
+  PERMISSION_CHANGE = 'permission_change',
+  ERROR = 'error',
+}
 
 export function handleCollaborationEvents(
   io: SocketIOServer,

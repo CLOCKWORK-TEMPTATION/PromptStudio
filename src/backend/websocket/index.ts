@@ -22,8 +22,7 @@ export const crdtManager = new CRDTManager();
 
 export function setupWebSocket(io: SocketIOServer): void {
   // Authentication middleware
-  // Authentication middleware
-  io.use(async (socket, next) => {
+  io.use(async (socket: Socket, next: (err?: Error) => void) => {
     try {
       const token = socket.handshake.auth.token || socket.handshake.query.token;
 
