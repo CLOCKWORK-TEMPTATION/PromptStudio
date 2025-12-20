@@ -53,7 +53,7 @@ export function SettingsView() {
   const [newProfile, setNewProfile] = useState({
     name: '',
     description: '',
-    default_role: '',
+    defaultRole: '',
     default_output_format: '',
   });
 
@@ -110,13 +110,13 @@ export function SettingsView() {
           name: d.name,
           config: {
             temperature: d.temperature,
-            top_p: d.top_p,
-            top_k: d.top_k,
-            frequency_penalty: d.frequency_penalty,
-            presence_penalty: d.presence_penalty,
-            max_tokens: d.max_tokens,
-            stop_sequences: d.stop_sequences || [],
-            response_format: d.response_format,
+            topP: d.topP,
+            topK: d.topK,
+            frequencyPenalty: d.frequencyPenalty,
+            presencePenalty: d.presencePenalty,
+            maxTokens: d.maxTokens,
+            stopSequences: d.stopSequences || [],
+            responseFormat: d.responseFormat,
           },
         }))
       );
@@ -147,13 +147,13 @@ export function SettingsView() {
       name: newConfigName,
       model_id: 'gpt-4',
       temperature: currentModelConfig.temperature,
-      top_p: currentModelConfig.top_p,
-      top_k: currentModelConfig.top_k,
-      frequency_penalty: currentModelConfig.frequency_penalty,
-      presence_penalty: currentModelConfig.presence_penalty,
-      max_tokens: currentModelConfig.max_tokens,
-      stop_sequences: currentModelConfig.stop_sequences,
-      response_format: currentModelConfig.response_format,
+      topP: currentModelConfig.topP,
+      topK: currentModelConfig.topK,
+      frequencyPenalty: currentModelConfig.frequencyPenalty,
+      presencePenalty: currentModelConfig.presencePenalty,
+      maxTokens: currentModelConfig.maxTokens,
+      stopSequences: currentModelConfig.stopSequences,
+      responseFormat: currentModelConfig.responseFormat,
     });
 
     setNewConfigName('');
@@ -187,7 +187,7 @@ export function SettingsView() {
       session_id: sessionId,
       name: newProfile.name,
       description: newProfile.description,
-      default_role: newProfile.default_role,
+      defaultRole: newProfile.defaultRole,
       default_output_format: newProfile.default_output_format,
       default_constraints: [],
       variables: {},
@@ -195,7 +195,7 @@ export function SettingsView() {
       is_active: false,
     });
 
-    setNewProfile({ name: '', description: '', default_role: '', default_output_format: '' });
+    setNewProfile({ name: '', description: '', defaultRole: '', default_output_format: '' });
     loadProfiles();
     setIsLoading(false);
     showSuccess();
@@ -211,8 +211,8 @@ export function SettingsView() {
     const sessionId = await getSessionId(token);
     if (!sessionId) return;
 
-    await supabase.from('environment_profiles').update({ is_active: false }).eq('session_id', sessionId);
-    await supabase.from('environment_profiles').update({ is_active: true }).eq('id', id);
+    await supabase.from('environment_profiles').update({ isActive: false }).eq('session_id', sessionId);
+    await supabase.from('environment_profiles').update({ isActive: true }).eq('id', id);
     loadProfiles();
   };
 
@@ -504,7 +504,7 @@ export function SettingsView() {
                 Top P
               </label>
               <span className={clsx('font-mono', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-                {currentModelConfig.top_p}
+                {currentModelConfig.topP}
               </span>
             </div>
             <div>
@@ -512,7 +512,7 @@ export function SettingsView() {
                 Max Tokens
               </label>
               <span className={clsx('font-mono', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-                {currentModelConfig.max_tokens}
+                {currentModelConfig.maxTokens}
               </span>
             </div>
             <div>
@@ -520,7 +520,7 @@ export function SettingsView() {
                 Response Format
               </label>
               <span className={clsx('font-mono', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-                {currentModelConfig.response_format}
+                {currentModelConfig.responseFormat}
               </span>
             </div>
           </div>
@@ -578,7 +578,7 @@ export function SettingsView() {
                     {config.name}
                   </span>
                   <p className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    Temp: {config.config.temperature}, Max Tokens: {config.config.max_tokens}
+                    Temp: {config.config.temperature}, Max Tokens: {config.config.maxTokens}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -707,8 +707,8 @@ export function SettingsView() {
               </label>
               <input
                 type="text"
-                value={newProfile.default_role}
-                onChange={(e) => setNewProfile({ ...newProfile, default_role: e.target.value })}
+                value={newProfile.defaultRole}
+                onChange={(e) => setNewProfile({ ...newProfile, defaultRole: e.target.value })}
                 placeholder="You are a..."
                 className={clsx(
                   'w-full px-3 py-2 rounded-lg border text-sm',
@@ -767,7 +767,7 @@ export function SettingsView() {
                 key={profile.id}
                 className={clsx(
                   'flex items-center justify-between p-4 rounded-lg border',
-                  profile.is_active
+                  profile.isActive
                     ? theme === 'dark'
                       ? 'bg-emerald-500/10 border-emerald-500/50'
                       : 'bg-emerald-50 border-emerald-300'
@@ -781,7 +781,7 @@ export function SettingsView() {
                     <span className={clsx('font-medium', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
                       {profile.name}
                     </span>
-                    {profile.is_active && (
+                    {profile.isActive && (
                       <span
                         className={clsx(
                           'text-xs px-2 py-0.5 rounded-full',
@@ -793,11 +793,11 @@ export function SettingsView() {
                     )}
                   </div>
                   <p className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {profile.description || profile.default_role || 'No description'}
+                    {profile.description || profile.defaultRole || 'No description'}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {!profile.is_active && (
+                  {!profile.isActive && (
                     <button
                       onClick={() => activateProfile(profile.id)}
                       className={clsx(

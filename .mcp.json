@@ -1,0 +1,60 @@
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "e:\\PromptStudio-main"
+            ]
+        },
+        "github": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github"
+            ],
+            "env": {
+                "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-github-token>"
+            }
+        },
+        "fetch": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-fetch"
+            ]
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        },
+        "memory": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ]
+        },
+        "figma": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-figma"
+            ],
+            "env": {
+                "FIGMA_PERSONAL_ACCESS_TOKEN": "<your-figma-token>"
+            }
+        },
+        "deepwiki": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@deepwiki/mcp-server"
+            ]
+        }
+    }
+}

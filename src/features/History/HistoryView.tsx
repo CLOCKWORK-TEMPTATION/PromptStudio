@@ -64,9 +64,9 @@ export function HistoryView() {
   };
 
   const handleToggleFavorite = async (prompt: Prompt) => {
-    await toggleFavorite(prompt.id, !prompt.is_favorite);
+    await toggleFavorite(prompt.id, !prompt.isFavorite);
     setPrompts(prompts.map((p) =>
-      p.id === prompt.id ? { ...p, is_favorite: !p.is_favorite } : p
+      p.id === prompt.id ? { ...p, isFavorite: !p.isFavorite } : p
     ));
   };
 
@@ -197,7 +197,7 @@ export function HistoryView() {
                     )}>
                       {prompt.title}
                     </span>
-                    {prompt.is_favorite && (
+                    {prompt.isFavorite && (
                       <Star className={clsx('w-4 h-4 flex-shrink-0', theme === 'dark' ? 'text-amber-400' : 'text-amber-500')} fill="currentColor" />
                     )}
                   </div>
@@ -210,7 +210,7 @@ export function HistoryView() {
                   <div className="flex items-center gap-2 mt-2">
                     <Clock className={clsx('w-3 h-3', theme === 'dark' ? 'text-gray-600' : 'text-gray-400')} />
                     <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-600' : 'text-gray-400')}>
-                      {formatDistanceToNow(new Date(prompt.updated_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(prompt.updatedAt), { addSuffix: true })}
                     </span>
                   </div>
                 </button>
@@ -230,10 +230,10 @@ export function HistoryView() {
                 </h1>
                 <div className="flex items-center gap-3 text-sm">
                   <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}>
-                    Updated {formatDistanceToNow(new Date(selectedPrompt.updated_at), { addSuffix: true })}
+                    Updated {formatDistanceToNow(new Date(selectedPrompt.updatedAt), { addSuffix: true })}
                   </span>
                   <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}>
-                    {selectedPrompt.usage_count} uses
+                    {selectedPrompt.usageCount} uses
                   </span>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export function HistoryView() {
                     theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
                   )}
                 >
-                  {selectedPrompt.is_favorite ? (
+                  {selectedPrompt.isFavorite ? (
                     <Star className="w-5 h-5 text-amber-500" fill="currentColor" />
                   ) : (
                     <StarOff className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-400' : 'text-gray-500')} />
@@ -345,15 +345,15 @@ export function HistoryView() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className={clsx('font-medium', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-                          Version {version.version_number}
+                          Version {version.versionNumber}
                         </span>
                         <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-500')}>
-                          {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(version.createdAt), { addSuffix: true })}
                         </span>
                       </div>
-                      {version.change_summary && (
+                      {version.changeSummary && (
                         <p className={clsx('text-sm mb-2', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                          {version.change_summary}
+                          {version.changeSummary}
                         </p>
                       )}
                       <button

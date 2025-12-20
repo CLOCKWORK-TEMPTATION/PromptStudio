@@ -248,13 +248,13 @@ export function TechniquesView() {
               />
             </div>
 
-            {selectedTechnique.best_for.length > 0 && (
+            {selectedTechnique.bestFor.length > 0 && (
               <div className="mt-6">
                 <h3 className={clsx('font-semibold mb-3', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
                   Best For
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedTechnique.best_for.map((useCase) => (
+                  {selectedTechnique.bestFor.map((useCase) => (
                     <span
                       key={useCase}
                       className={clsx(
@@ -309,13 +309,13 @@ export function TechniquesView() {
               </div>
             )}
 
-            {selectedTechnique.related_techniques.length > 0 && (
+            {selectedTechnique.relatedTechniques.length > 0 && (
               <div className="mt-6">
                 <h3 className={clsx('font-semibold mb-3', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
                   Related Techniques
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedTechnique.related_techniques.map((slug) => {
+                  {selectedTechnique.relatedTechniques.map((slug) => {
                     const related = techniques.find((t) => t.slug === slug);
                     if (!related) return null;
                     return (
