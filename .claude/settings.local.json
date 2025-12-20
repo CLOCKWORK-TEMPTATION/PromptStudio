@@ -4,7 +4,10 @@
       "Bash(npm install:*)",
       "Bash(npm run test:run:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
