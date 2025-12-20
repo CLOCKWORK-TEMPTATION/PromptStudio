@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   PenTool,
   Settings,
@@ -8,8 +8,6 @@ import {
   Save,
   Plus,
   Trash2,
-  ChevronDown,
-  Thermometer,
   Hash,
   Type,
   ToggleLeft,
@@ -27,7 +25,6 @@ import {
 } from 'lucide-react';
 import { usePromptStudioStore } from '@/store';
 import { PromptVariable } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
 
 const MODELS = [
   { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', provider: 'OpenAI' },
@@ -157,7 +154,7 @@ export function PromptEditor() {
   };
 
   const handleDeleteVariable = (index: number) => {
-    const newVariables = currentPrompt.variables.filter((_, i) => i !== index);
+    const newVariables = currentPrompt.variables.filter((_: PromptVariable, i: number) => i !== index);
     updatePrompt({ variables: newVariables });
   };
 
@@ -187,14 +184,14 @@ export function PromptEditor() {
               <input
                 type="text"
                 value={currentPrompt.name}
-                onChange={(e) => updatePrompt({ name: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ name: e.target.value })}
                 className="text-lg font-semibold text-white bg-transparent border-none focus:outline-none focus:ring-0"
                 placeholder="Prompt name"
               />
               <input
                 type="text"
                 value={currentPrompt.description}
-                onChange={(e) => updatePrompt({ description: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ description: e.target.value })}
                 className="block text-sm text-dark-400 bg-transparent border-none focus:outline-none focus:ring-0 w-full"
                 placeholder="Add a description..."
               />
@@ -228,7 +225,7 @@ export function PromptEditor() {
               <label className="block text-xs text-dark-400 mb-1.5">Model</label>
               <select
                 value={currentPrompt.model}
-                onChange={(e) => updatePrompt({ model: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updatePrompt({ model: e.target.value })}
                 className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
               >
                 {MODELS.map((model) => (
@@ -250,7 +247,7 @@ export function PromptEditor() {
                 max="2"
                 step="0.1"
                 value={currentPrompt.temperature}
-                onChange={(e) => updatePrompt({ temperature: parseFloat(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ temperature: parseFloat(e.target.value) })}
                 className="w-full"
               />
             </div>
@@ -261,7 +258,7 @@ export function PromptEditor() {
               <input
                 type="number"
                 value={currentPrompt.maxTokens}
-                onChange={(e) => updatePrompt({ maxTokens: parseInt(e.target.value) || 1024 })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ maxTokens: parseInt(e.target.value) || 1024 })}
                 className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
                 min={1}
                 max={128000}
@@ -277,7 +274,7 @@ export function PromptEditor() {
                 max="1"
                 step="0.1"
                 value={currentPrompt.topP}
-                onChange={(e) => updatePrompt({ topP: parseFloat(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ topP: parseFloat(e.target.value) })}
                 className="w-full"
               />
             </div>
@@ -298,7 +295,7 @@ export function PromptEditor() {
           <div className="flex-1 p-4 overflow-hidden">
             <textarea
               value={currentPrompt.prompt}
-              onChange={(e) => updatePrompt({ prompt: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updatePrompt({ prompt: e.target.value })}
               className="w-full h-full p-4 bg-dark-950 border border-dark-700 rounded-lg text-sm text-dark-100 font-mono resize-none focus:border-primary-500 focus:outline-none"
               placeholder="Enter your prompt template here...
 
@@ -389,7 +386,7 @@ Please provide a detailed and informative response."
 
               {quickAnalysis.recommendations.length > 0 && (
                 <div className="space-y-1">
-                  {quickAnalysis.recommendations.slice(0, 2).map((rec, idx) => (
+                  {quickAnalysis.recommendations.slice(0, 2).map((rec: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 text-xs text-dark-400">
                       <Lightbulb className="w-3 h-3 text-yellow-500" />
                       <span>{rec}</span>
@@ -461,7 +458,7 @@ Please provide a detailed and informative response."
                 </p>
               </div>
             ) : (
-              currentPrompt.variables.map((variable, index) => (
+              currentPrompt.variables.map((variable: PromptVariable, index: number) => (
                 <div
                   key={index}
                   className="p-3 bg-dark-800 rounded-lg border border-dark-700"
@@ -470,7 +467,7 @@ Please provide a detailed and informative response."
                     <input
                       type="text"
                       value={variable.name}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateVariable(index, { name: e.target.value })
                       }
                       className="text-sm font-medium text-white bg-transparent border-none focus:outline-none"
@@ -487,7 +484,7 @@ Please provide a detailed and informative response."
                   <div className="space-y-2">
                     <select
                       value={variable.type}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         handleUpdateVariable(index, {
                           type: e.target.value as PromptVariable['type'],
                         })
@@ -504,7 +501,7 @@ Please provide a detailed and informative response."
                     <input
                       type="text"
                       value={variable.description}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateVariable(index, { description: e.target.value })
                       }
                       className="w-full px-2 py-1.5 bg-dark-900 border border-dark-600 rounded text-xs text-dark-300 focus:border-primary-500 focus:outline-none"
@@ -515,7 +512,7 @@ Please provide a detailed and informative response."
                       <input
                         type="checkbox"
                         checked={variable.required}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleUpdateVariable(index, { required: e.target.checked })
                         }
                         className="rounded border-dark-600 bg-dark-900 text-primary-500 focus:ring-primary-500"

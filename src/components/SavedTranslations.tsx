@@ -8,7 +8,6 @@ import {
   Trash2,
   Heart,
   Search,
-  Filter,
   Calendar,
 } from 'lucide-react';
 
@@ -19,17 +18,17 @@ interface SavedTranslationsProps {
   onSelect: (translation: SavedTranslation) => void;
 }
 
-export const SavedTranslationsList: React.FC<SavedTranslationsProps> = ({
+export const SavedTranslationsList = ({
   translations,
   onDelete,
   onToggleFavorite,
   onSelect,
-}) => {
+}: SavedTranslationsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterFavorites, setFilterFavorites] = useState(false);
   const [filterCertified, setFilterCertified] = useState(false);
 
-  const filteredTranslations = translations.filter((t) => {
+  const filteredTranslations = translations.filter((t: SavedTranslation) => {
     const matchesSearch =
       t.sourceText.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.translatedText.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,7 +57,7 @@ export const SavedTranslationsList: React.FC<SavedTranslationsProps> = ({
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             placeholder="Search translations..."
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
                        focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -101,7 +100,7 @@ export const SavedTranslationsList: React.FC<SavedTranslationsProps> = ({
         </div>
       ) : (
         <div className="space-y-3 max-h-[500px] overflow-y-auto">
-          {filteredTranslations.map((t) => {
+          {filteredTranslations.map((t: SavedTranslation) => {
             const sourceLang = SUPPORTED_LANGUAGES.find((l) => l.code === t.sourceLanguage);
             const targetLang = SUPPORTED_LANGUAGES.find((l) => l.code === t.targetLanguage);
 
@@ -121,7 +120,7 @@ export const SavedTranslationsList: React.FC<SavedTranslationsProps> = ({
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                         e.stopPropagation();
                         onToggleFavorite(t.id);
                       }}
@@ -134,7 +133,7 @@ export const SavedTranslationsList: React.FC<SavedTranslationsProps> = ({
                       />
                     </button>
                     <button
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                         e.stopPropagation();
                         onDelete(t.id);
                       }}
