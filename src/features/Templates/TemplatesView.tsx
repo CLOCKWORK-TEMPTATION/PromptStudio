@@ -21,7 +21,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
 import { getTemplates, getFeaturedTemplates, getTemplatesByCategory, searchTemplates, incrementTemplateUsage } from '../../services/templateService';
 import type { Template, TemplateVariable, TemplateCategory } from '../../types';
-import { TEMPLATE_CATEGORIES } from '../../types';
+import { TEMPLATE_CATEGORIES_LIST as TEMPLATE_CATEGORIES } from '../../types';
 import clsx from 'clsx';
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -280,6 +280,7 @@ export function TemplatesView() {
 }
 
 interface TemplateCardProps {
+  key?: string | number;
   template: Template;
   theme: string;
   onClick: () => void;
