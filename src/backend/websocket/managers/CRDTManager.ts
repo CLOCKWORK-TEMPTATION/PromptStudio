@@ -1,5 +1,8 @@
+// @ts-expect-error - yjs types not installed
 import * as Y from 'yjs';
 import redis from '../../lib/redis.js';
+
+declare const Buffer: { from: (data: Uint8Array) => unknown };
 
 interface DocumentState {
   doc: Y.Doc;
@@ -10,7 +13,7 @@ interface DocumentState {
 export class CRDTManager {
   private documents: Map<string, DocumentState> = new Map();
   private readonly PERSIST_INTERVAL = 5000; // 5 seconds
-  private persistTimers: Map<string, NodeJS.Timeout> = new Map();
+  private persistTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   async getDocument(sessionId: string): Promise<Y.Doc> {
     let state = this.documents.get(sessionId);
@@ -125,7 +128,7 @@ export class CRDTManager {
     if (!state) return;
 
     // Listen for updates
-    state.doc.on('update', (update: Uint8Array, origin: unknown) => {
+    state.doc.on('update', (update: Uint8Array, _origin: unknown) => {
       state.pendingUpdates.push(update);
       this.schedulePersistence(sessionId);
     });
@@ -192,7 +195,7 @@ export class CRDTManager {
   }
 
   // Get awareness info (user cursors, selections, etc.)
-  getAwareness(sessionId: string): Map<string, unknown> {
+  getAwareness(_sessionId: string): Map<string, unknown> {
     // Awareness is typically handled separately, but we can store it here
     return new Map();
   }

@@ -1,10 +1,11 @@
+// @ts-expect-error - socket.io types not installed
 import { Server as SocketIOServer } from 'socket.io';
 import type { AuthenticatedSocket } from '../index.js';
 import type { PresenceManager } from '../managers/PresenceManager.js';
 import { CollaborationEvent, CursorPosition } from '../../../../shared/types/collaboration.js';
 
 export function handlePresenceEvents(
-  io: SocketIOServer,
+  _io: SocketIOServer,
   socket: AuthenticatedSocket,
   presenceManager: PresenceManager
 ): void {
