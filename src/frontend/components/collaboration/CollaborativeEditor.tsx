@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Y from 'yjs';
 import { useCollaborationStore } from '../../store/collaborationStore';
 import { socketService } from '../../services/socket';
-import { debounce, throttle } from '../../lib/utils';
+import { throttle } from '../../lib/utils';
 
 interface CollaborativeEditorProps {
   sessionId: string;

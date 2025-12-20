@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { AlertCircle, Brain, Shield, DollarSign, Zap, GitBranch, Wrench, ShieldCheck, ShieldAlert, Loader2 } from 'lucide-react';
+import { AlertCircle, Brain, Shield, DollarSign, Zap, GitBranch, Wrench, ShieldAlert, Loader2 } from 'lucide-react';
 import { ToolPlanViewer } from './ToolPlanViewer';
 import { SafetyWarningsPanel, SafetyCheckResult, SafetyIssue } from './SafetyWarningsPanel';
 
@@ -381,7 +381,7 @@ export function AdvancedPromptEditor() {
   const handleApplyFix = useCallback((issueId: string, fixedContent: string) => {
     if (!safetyResult) return;
 
-    const issue = safetyResult.issues.find(i => i.id === issueId);
+    const issue = safetyResult.issues.find((i: SafetyIssue) => i.id === issueId);
     if (!issue?.location) return;
 
     const fullPrompt = buildFullPrompt();
@@ -392,7 +392,7 @@ export function AdvancedPromptEditor() {
 
     // Update the hierarchical prompts based on the fix
     // For simplicity, we'll update the task prompt
-    setHierarchical(prev => ({
+    setHierarchical((prev: HierarchicalPrompt) => ({
       ...prev,
       taskPrompt: newContent.replace(/# System\n.*?(?=# Process|# Task|# Output|$)/s, '')
                            .replace(/# Process\n.*?(?=# Task|# Output|$)/s, '')
@@ -463,7 +463,7 @@ export function AdvancedPromptEditor() {
             </label>
             <textarea
               value={hierarchical.systemPrompt}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setHierarchical({ ...hierarchical, systemPrompt: e.target.value })
               }
               className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -477,7 +477,7 @@ export function AdvancedPromptEditor() {
             </label>
             <textarea
               value={hierarchical.processPrompt}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setHierarchical({ ...hierarchical, processPrompt: e.target.value })
               }
               className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -491,7 +491,7 @@ export function AdvancedPromptEditor() {
             </label>
             <textarea
               value={hierarchical.taskPrompt}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setHierarchical({ ...hierarchical, taskPrompt: e.target.value })
               }
               className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -505,7 +505,7 @@ export function AdvancedPromptEditor() {
             </label>
             <textarea
               value={hierarchical.outputPrompt}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setHierarchical({ ...hierarchical, outputPrompt: e.target.value })
               }
               className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -529,7 +529,7 @@ export function AdvancedPromptEditor() {
             <input
               type="text"
               value={settings.persona || ''}
-              onChange={(e) => setSettings({ ...settings, persona: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSettings({ ...settings, persona: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               placeholder="e.g., Expert Data Scientist"
             />
@@ -542,7 +542,7 @@ export function AdvancedPromptEditor() {
             <input
               type="text"
               value={settings.domain || ''}
-              onChange={(e) => setSettings({ ...settings, domain: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSettings({ ...settings, domain: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               placeholder="e.g., Machine Learning"
             />

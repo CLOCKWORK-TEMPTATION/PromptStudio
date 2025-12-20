@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { History, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatDateTime, formatRelativeTime } from '../../lib/utils';
+import { formatRelativeTime } from '../../lib/utils';
 
 interface HistoryEntry {
   id: string;
@@ -41,7 +41,7 @@ export default function HistoryPanel({ sessionId }: HistoryPanelProps) {
       if (pageNum === 1) {
         setHistory(response.data.data);
       } else {
-        setHistory(prev => [...prev, ...response.data.data]);
+        setHistory((prev: HistoryEntry[]) => [...prev, ...response.data.data]);
       }
       setHasMore(response.data.meta.hasMore);
       setPage(pageNum);
@@ -101,7 +101,7 @@ export default function HistoryPanel({ sessionId }: HistoryPanelProps) {
           </div>
         ) : (
           <div className="divide-y">
-            {history.map((entry) => (
+            {history.map((entry: HistoryEntry) => (
               <div key={entry.id} className="p-4">
                 <div
                   className="flex items-start gap-3 cursor-pointer"

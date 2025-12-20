@@ -5,10 +5,8 @@ import {
   ChevronDown,
   ChevronUp,
   GitCompare,
-  TrendingUp,
   Clock,
   CheckCircle,
-  AlertCircle,
   RotateCcw,
 } from 'lucide-react';
 import { formatRelativeTime } from '../../lib/utils';
@@ -54,9 +52,9 @@ export default function RefinementHistory({ promptId, onVersionApply }: Refineme
   const handleVersionSelect = (version: number) => {
     if (!compareMode) return;
 
-    setSelectedVersions((prev) => {
+    setSelectedVersions((prev: number[]) => {
       if (prev.includes(version)) {
-        return prev.filter((v) => v !== version);
+        return prev.filter((v: number) => v !== version);
       }
       if (prev.length >= 2) {
         return [prev[1], version];

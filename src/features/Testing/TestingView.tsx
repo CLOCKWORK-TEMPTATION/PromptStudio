@@ -4,19 +4,14 @@ import {
   Plus,
   Play,
   Upload,
-  Download,
   Trash2,
   BarChart3,
   CheckCircle,
-  XCircle,
   Clock,
   Coins,
   FileText,
   Trophy,
-  AlertTriangle,
   RefreshCw,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react';
 import {
   LineChart,
@@ -147,7 +142,7 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
 
   const removeVariant = (id: string) => {
     if (variants.length > 2) {
-      setVariants(variants.filter((v) => v.id !== id));
+      setVariants(variants.filter((v: ABTestVariant) => v.id !== id));
     }
   };
 
@@ -155,7 +150,7 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
     setIsRunning(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    setVariants(variants.map((v) => ({
+    setVariants(variants.map((v: ABTestVariant) => ({
       ...v,
       results: {
         avgLatency: Math.random() * 1000 + 200,
@@ -167,11 +162,11 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
     setIsRunning(false);
   };
 
-  const winner = variants.reduce((best, v) =>
+  const winner = variants.reduce((best: ABTestVariant, v: ABTestVariant) =>
     v.results.qualityScore > best.results.qualityScore ? v : best
   );
 
-  const chartData = variants.map((v) => ({
+  const chartData = variants.map((v: ABTestVariant) => ({
     name: v.name,
     latency: v.results.avgLatency.toFixed(0),
     tokens: v.results.avgTokens,
@@ -230,7 +225,7 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
         </label>
         <textarea
           value={testInput}
-          onChange={(e) => setTestInput(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTestInput(e.target.value)}
           placeholder="Enter the input to test all variants with..."
           rows={3}
           className={clsx(
@@ -243,7 +238,7 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {variants.map((variant) => (
+        {variants.map((variant: ABTestVariant) => (
           <div
             key={variant.id}
             className={clsx(
@@ -286,7 +281,7 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
             <div className="p-4">
               <textarea
                 value={variant.promptContent}
-                onChange={(e) => setVariants(variants.map((v) =>
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setVariants(variants.map((v: ABTestVariant) =>
                   v.id === variant.id ? { ...v, promptContent: e.target.value } : v
                 ))}
                 placeholder="Enter prompt variant..."
@@ -328,7 +323,7 @@ function ABTestingPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
         ))}
       </div>
 
-      {variants.some((v) => v.results.runs > 0) && (
+      {variants.some((v: ABTestVariant) => v.results.runs > 0) && (
         <div className={clsx(
           'rounded-lg border p-4',
           theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
@@ -407,7 +402,7 @@ function GoldenDatasetsPanel({ theme }: { theme: 'light' | 'dark' }) {
   const runDataset = async (datasetId: string) => {
     setIsRunning(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    setDatasets(datasets.map((d) =>
+    setDatasets(datasets.map((d: GoldenDataset) =>
       d.id === datasetId ? { ...d, lastRunAt: new Date().toISOString() } : d
     ));
     setIsRunning(false);
@@ -432,7 +427,7 @@ function GoldenDatasetsPanel({ theme }: { theme: 'light' | 'dark' }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {datasets.map((dataset) => (
+        {datasets.map((dataset: GoldenDataset) => (
           <div
             key={dataset.id}
             className={clsx(
@@ -451,7 +446,7 @@ function GoldenDatasetsPanel({ theme }: { theme: 'light' | 'dark' }) {
                 <FileText className={clsx('w-5 h-5', theme === 'dark' ? 'text-blue-400' : 'text-blue-600')} />
               </div>
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   runDataset(dataset.id);
                 }}
@@ -504,7 +499,7 @@ function GoldenDatasetsPanel({ theme }: { theme: 'light' | 'dark' }) {
             Test Cases
           </h3>
           <div className="space-y-2">
-            {datasets.find((d) => d.id === selectedDataset)?.testCases.map((tc) => (
+            {datasets.find((d: GoldenDataset) => d.id === selectedDataset)?.testCases.map((tc: TestCase) => (
               <div
                 key={tc.id}
                 className={clsx(
@@ -537,17 +532,6 @@ function GoldenDatasetsPanel({ theme }: { theme: 'light' | 'dark' }) {
       )}
     </div>
   );
-}
-
-interface ReasoningPath {
-  nodes: Array<{
-    id: string;
-    content: string;
-    score: number;
-    depth: number;
-  }>;
-  totalScore: number;
-  finalAnswer: string;
 }
 
 interface PathEvaluation {
@@ -664,7 +648,7 @@ function ReasoningPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
             </label>
             <textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
               placeholder="Enter your prompt for reasoning..."
               rows={3}
               className={clsx(
@@ -719,7 +703,7 @@ function ReasoningPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
                       min="1"
                       max="5"
                       value={config.maxDepth}
-                      onChange={(e) => setConfig({ ...config, maxDepth: parseInt(e.target.value) })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, maxDepth: parseInt(e.target.value) })}
                       className="w-full"
                     />
                   </div>
@@ -732,7 +716,7 @@ function ReasoningPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
                       min="2"
                       max="5"
                       value={config.branchingFactor}
-                      onChange={(e) => setConfig({ ...config, branchingFactor: parseInt(e.target.value) })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, branchingFactor: parseInt(e.target.value) })}
                       className="w-full"
                     />
                   </div>
@@ -748,7 +732,7 @@ function ReasoningPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
                     min="2"
                     max="5"
                     value={config.numPaths}
-                    onChange={(e) => setConfig({ ...config, numPaths: parseInt(e.target.value) })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, numPaths: parseInt(e.target.value) })}
                     className="w-full"
                   />
                 </div>
@@ -763,7 +747,7 @@ function ReasoningPanel({ theme, currentPrompt }: { theme: 'light' | 'dark'; cur
                     min="5"
                     max="20"
                     value={config.maxNodes}
-                    onChange={(e) => setConfig({ ...config, maxNodes: parseInt(e.target.value) })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, maxNodes: parseInt(e.target.value) })}
                     className="w-full"
                   />
                 </div>
