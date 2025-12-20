@@ -8,7 +8,8 @@ interface CodePreviewProps {
 }
 
 // Simple syntax highlighting without external dependencies
-function highlightCode(code: string, language: 'python' | 'typescript'): string {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _highlightCode(code: string, language: 'python' | 'typescript'): string {
   // Common patterns for both languages
   const patterns: Array<{ pattern: RegExp; className: string }> = [
     // Comments
@@ -86,7 +87,7 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
-export function CodePreview({ code, language }: CodePreviewProps) {
+export function CodePreview({ code, language: _language }: CodePreviewProps) {
   const [lineNumbers, setLineNumbers] = useState<number[]>([]);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export function CodePreview({ code, language }: CodePreviewProps) {
     <div className="flex text-sm font-mono bg-dark-950">
       {/* Line numbers */}
       <div className="flex-shrink-0 py-4 pl-4 pr-3 text-right text-dark-500 select-none border-r border-dark-800">
-        {lineNumbers.map((num) => (
+        {lineNumbers.map((num: number) => (
           <div key={num} className="leading-6">
             {num}
           </div>
