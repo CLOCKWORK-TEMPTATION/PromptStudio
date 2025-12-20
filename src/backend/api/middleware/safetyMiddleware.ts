@@ -14,7 +14,6 @@ import {
   SafetyMiddlewareConfig,
   DriftAnalysis,
   ContentLocation,
-  SafetyAction,
 } from '../../types/safety.js';
 
 // Extended request interface with safety context
@@ -22,6 +21,7 @@ export interface SafetyRequest extends Request {
   safetyResult?: SafetyCheckResult;
   sanitizedContent?: string;
   originalContent?: string;
+  body: Record<string, unknown>;
 }
 
 // Default middleware configuration
@@ -454,7 +454,7 @@ export async function performSafetyCheck(
 
   // Determine if blocked
   const hasCritical = issues.some(i => i.severity === 'critical');
-  const hasHighSeverity = issues.some(i => i.severity === 'high');
+  const _hasHighSeverity = issues.some(i => i.severity === 'high');
   const blocked = hasCritical;
 
   // Sanitize if requested

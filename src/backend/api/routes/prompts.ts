@@ -1,17 +1,15 @@
 import { Router, Request, Response } from 'express';
-import { PromptService } from '../../services/PromptService';
-import { LLMServiceAdapter } from '../../services/LLMServiceAdapter';
-import { SafetyService } from '../../services/SafetyService';
-import { RAGService } from '../../services/RAGService';
-import { PromptChainService } from '../../services/PromptChainService';
-import { PromptOptimizationService } from '../../services/PromptOptimizationService';
+import { PromptService } from '../../services/PromptService.js';
+import { LLMServiceAdapter } from '../../services/LLMServiceAdapter.js';
+import { SafetyService } from '../../services/SafetyService.js';
+import { PromptOptimizationService } from '../../services/PromptOptimizationService.js';
 import {
   BayesianPromptOptimizer,
   quickOptimize,
   comparePrompts,
-  ExperimentConfig,
-  ExperimentResult,
-} from '../../services/BayesianPromptOptimizer';
+  type ExperimentConfig,
+  type ExperimentResult,
+} from '../../services/BayesianPromptOptimizer.js';
 
 // In-memory store for experiment history (in production, use database)
 const experimentHistory: Map<string, ExperimentResult> = new Map();
@@ -507,7 +505,7 @@ router.delete('/experiments/:experimentId', async (req: Request, res: Response) 
 });
 
 // Get optimization statistics
-router.get('/experiments/stats/summary', async (req: Request, res: Response) => {
+router.get('/experiments/stats/summary', async (_req: Request, res: Response) => {
   try {
     const experiments = Array.from(experimentHistory.values());
 

@@ -19,7 +19,7 @@ function generateColor(): string {
 // Register
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, name, password } = req.body;
+    const { email, name, password: _password } = req.body;
 
     if (!email || !name) {
       res.status(400).json({
@@ -222,7 +222,7 @@ router.patch('/me', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // Guest login (for quick access)
-router.post('/guest', async (req: Request, res: Response) => {
+router.post('/guest', async (_req: Request, res: Response) => {
   try {
     const guestId = uuidv4();
     const guestName = `Guest_${guestId.slice(0, 6)}`;

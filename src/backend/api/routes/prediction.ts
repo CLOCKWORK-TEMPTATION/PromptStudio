@@ -233,7 +233,7 @@ router.post('/response-time', async (req: Request, res: Response) => {
  * @route GET /api/prediction/models
  * @desc Get available models with pricing
  */
-router.get('/models', async (req: Request, res: Response) => {
+router.get('/models', async (_req: Request, res: Response) => {
   try {
     const models = Object.entries(MODEL_PRICING).map(([id, pricing]) => ({
       id,
@@ -284,15 +284,16 @@ router.post('/compare', async (req: Request, res: Response) => {
     );
 
     // Find best options
-    const bestForCost = comparisons.reduce((best, current) =>
+    type ModelComparison = typeof comparisons[number];
+    const bestForCost = comparisons.reduce((best: ModelComparison, current: ModelComparison) =>
       current.costEstimation.totalCost < best.costEstimation.totalCost ? current : best
     );
 
-    const bestForSuccess = comparisons.reduce((best, current) =>
+    const bestForSuccess = comparisons.reduce((best: ModelComparison, current: ModelComparison) =>
       current.successPrediction.probability > best.successPrediction.probability ? current : best
     );
 
-    const bestForSpeed = comparisons.reduce((best, current) =>
+    const bestForSpeed = comparisons.reduce((best: ModelComparison, current: ModelComparison) =>
       current.responseTimeEstimation.estimatedSeconds < best.responseTimeEstimation.estimatedSeconds
         ? current
         : best
