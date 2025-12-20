@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "frontend/dist/**", "use": "@vercel/static" },
+    { "src": "backend/dist/index.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/backend/dist/index.js" },
+    { "src": "/(.*)", "dest": "/frontend/dist/$1" }
+  ],
+  "env": {
+    "DATABASE_URL": "postgresql://postgres:postgres@postgres:5432/promptstudio?schema=public",
+    "REDIS_URL": "redis://redis:6379",
+    "JWT_SECRET": "your-secret-key-change-in-production"
+  }
+}
