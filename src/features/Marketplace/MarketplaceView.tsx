@@ -71,13 +71,13 @@ export function MarketplaceView() {
     .sort((a, b) => {
       switch (sortBy) {
         case 'popular':
-          return b.clone_count - a.clone_count;
+          return b.cloneCount - a.cloneCount;
         case 'recent':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case 'rating':
-          return b.avg_rating - a.avg_rating;
+          return b.avgRating - a.avgRating;
         case 'trending':
-          return b.view_count - a.view_count;
+          return b.viewCount - a.viewCount;
         default:
           return 0;
       }
@@ -241,7 +241,7 @@ export function MarketplaceView() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    {prompt.is_featured && (
+                    {prompt.isFeatured && (
                       <span
                         className={clsx(
                           'px-2 py-0.5 rounded-full text-xs font-medium',
@@ -251,7 +251,7 @@ export function MarketplaceView() {
                         Featured
                       </span>
                     )}
-                    {prompt.is_staff_pick && (
+                    {prompt.isStaffPick && (
                       <span
                         className={clsx(
                           'px-2 py-0.5 rounded-full text-xs font-medium',
@@ -288,9 +288,9 @@ export function MarketplaceView() {
                 </p>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-1">{renderStars(prompt.avg_rating)}</div>
+                  <div className="flex items-center gap-1">{renderStars(prompt.avgRating)}</div>
                   <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
-                    ({prompt.review_count})
+                    ({prompt.reviewCount})
                   </span>
                 </div>
 
@@ -327,20 +327,20 @@ export function MarketplaceView() {
                   <div className="flex items-center gap-2">
                     <User className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                     <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                      {prompt.author_name}
+                      {prompt.authorName}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                       <Eye className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                       <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
-                        {prompt.view_count.toLocaleString()}
+                        {prompt.viewCount.toLocaleString()}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Download className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                       <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
-                        {prompt.clone_count.toLocaleString()}
+                        {prompt.cloneCount.toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -397,12 +397,12 @@ export function MarketplaceView() {
                   <div className="flex items-center gap-2">
                     <User className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                     <span className={clsx('font-medium', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-                      {selectedPrompt.author_name}
+                      {selectedPrompt.authorName}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">{renderStars(selectedPrompt.avg_rating)}</div>
+                  <div className="flex items-center gap-1">{renderStars(selectedPrompt.avgRating)}</div>
                   <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {selectedPrompt.avg_rating.toFixed(1)} ({selectedPrompt.review_count} reviews)
+                    {selectedPrompt.avgRating.toFixed(1)} ({selectedPrompt.reviewCount} reviews)
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -425,19 +425,19 @@ export function MarketplaceView() {
                 <div className="flex items-center gap-2">
                   <Eye className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                   <span className={clsx(theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {selectedPrompt.view_count.toLocaleString()} views
+                    {selectedPrompt.viewCount.toLocaleString()} views
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Download className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                   <span className={clsx(theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {selectedPrompt.clone_count.toLocaleString()} clones
+                    {selectedPrompt.cloneCount.toLocaleString()} clones
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                   <span className={clsx(theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    Updated {new Date(selectedPrompt.updated_at).toLocaleDateString()}
+                    Updated {new Date(selectedPrompt.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -518,7 +518,7 @@ export function MarketplaceView() {
                     theme === 'dark' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'
                   )}
                 >
-                  {selectedPrompt.model_recommendation}
+                  {selectedPrompt.modelRecommendation}
                 </span>
               </div>
             </div>

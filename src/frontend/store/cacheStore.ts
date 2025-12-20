@@ -4,7 +4,7 @@ import type {
   CacheConfig,
   CacheAnalytics,
   SemanticCacheEntry
-} from '@shared/types/cache';
+} from '../../shared/types/cache.js';
 
 interface CacheState {
   config: CacheConfig | null;

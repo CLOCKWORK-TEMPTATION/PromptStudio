@@ -253,3 +253,227 @@ export interface GCPFunctionsConfig extends DeploymentConfig {
   trigger: 'http' | 'pubsub' | 'storage';
   serviceAccount?: string;
 }
+
+// ============================================================
+// AI Model Types
+// ============================================================
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  maxTokens: number;
+  contextWindow: number;
+  pricing?: {
+    input: number;
+    output: number;
+  };
+}
+
+export const AI_MODELS: AIModel[] = [
+  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', maxTokens: 8192, contextWindow: 8192 },
+  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', maxTokens: 4096, contextWindow: 4096 },
+];
+
+export interface ModelConfig {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  topP: number;
+  topK?: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  stopSequences: string[];
+  responseFormat?: string;
+}
+
+export const DEFAULT_MODEL_CONFIG: ModelConfig = {
+  model: 'gpt-3.5-turbo',
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 1,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  stopSequences: [],
+};
+
+// ============================================================
+// Prompt Types
+// ============================================================
+
+export interface Prompt {
+  id: string;
+  content: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  category?: string;
+  modelConfig?: ModelConfig;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PromptVersion {
+  id: string;
+  promptId: string;
+  version: number;
+  content: string;
+  createdAt: Date;
+}
+
+// ============================================================
+// Template Types
+// ============================================================
+
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  category: string;
+  tags: string[];
+  createdAt: Date;
+}
+
+export interface Technique {
+  id: string;
+  name: string;
+  description: string;
+  example: string;
+  category: string;
+}
+
+export const TEMPLATE_CATEGORIES = [
+  'Content Creation',
+  'Code Generation',
+  'Data Analysis',
+  'Creative Writing',
+  'Business',
+  'Education',
+  'Research',
+  'Other',
+];
+
+// ============================================================
+// Marketplace Types
+// ============================================================
+
+export interface MarketplacePrompt {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  tags: string[];
+  authorId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MarketplaceReview {
+  id: string;
+  promptId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}
+
+// ============================================================
+// Analysis Types
+// ============================================================
+
+export interface AnalysisResult {
+  score: number;
+  suggestions: string[];
+  warnings: string[];
+}
+
+export interface PromptComponent {
+  type: string;
+  content: string;
+}
+
+export interface AnalysisSuggestion {
+  type: string;
+  message: string;
+}
+
+export interface AnalysisWarning {
+  type: string;
+  message: string;
+}
+
+export interface TokenEstimate {
+  count: number;
+  cost: number;
+}
+
+export interface TokenVisualization {
+  tokens: Token[];
+  total: number;
+}
+
+export interface Token {
+  text: string;
+  type: string;
+}
+
+// ============================================================
+// Tool Types
+// ============================================================
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: JSONSchema;
+}
+
+export interface JSONSchema {
+  type: string;
+  properties?: Record<string, any>;
+  required?: string[];
+}
+
+// ============================================================
+// Variable Types
+// ============================================================
+
+export interface SmartVariable {
+  name: string;
+  type: string;
+  description: string;
+  defaultValue?: any;
+}
+
+// ============================================================
+// User Types
+// ============================================================
+
+export interface UserPreferences {
+  theme: string;
+  language: string;
+  editor_font_size: number;
+  auto_save: boolean;
+  show_line_numbers: boolean;
+}
+
+export interface EnvironmentProfile {
+  id: string;
+  name: string;
+  description: string;
+  config: ModelConfig;
+}
+
+// ============================================================
+// Language Types
+// ============================================================
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'zh', name: 'Chinese' },
+];
