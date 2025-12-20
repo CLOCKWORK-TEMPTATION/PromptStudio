@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { CloudProvider, DeploymentConfig } from '@/types';
-// @ts-expect-error - lucide-react types not installed
 import { Globe, Shield, Webhook, Key, AlertCircle } from 'lucide-react';
 
 interface DeploymentConfigPanelProps {
@@ -33,7 +32,7 @@ export function DeploymentConfigPanel({
             <input
               type="text"
               value={config.name}
-              onChange={(e) => onChange({ name: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ name: e.target.value })}
               className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
               placeholder="prompt-api"
             />
@@ -42,7 +41,7 @@ export function DeploymentConfigPanel({
             <label className="block text-xs text-dark-400 mb-1.5">Region</label>
             <select
               value={config.region}
-              onChange={(e) => onChange({ region: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange({ region: e.target.value })}
               className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             >
               {regions.map((region) => (
@@ -56,7 +55,7 @@ export function DeploymentConfigPanel({
             <label className="block text-xs text-dark-400 mb-1.5">Environment</label>
             <select
               value={config.environment}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 onChange({ environment: e.target.value as 'development' | 'staging' | 'production' })
               }
               className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
@@ -71,7 +70,7 @@ export function DeploymentConfigPanel({
             <input
               type="number"
               value={config.timeout}
-              onChange={(e) => onChange({ timeout: parseInt(e.target.value) || 30 })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ timeout: parseInt(e.target.value) || 30 })}
               className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
               min={1}
               max={900}
@@ -81,7 +80,7 @@ export function DeploymentConfigPanel({
             <label className="block text-xs text-dark-400 mb-1.5">Memory (MB)</label>
             <select
               value={config.memory}
-              onChange={(e) => onChange({ memory: parseInt(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange({ memory: parseInt(e.target.value) })}
               className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             >
               <option value={128}>128 MB</option>
@@ -117,7 +116,7 @@ export function DeploymentConfigPanel({
               <input
                 type="number"
                 value={config.rateLimit.requestsPerMinute}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onChange({
                     rateLimit: {
                       ...config.rateLimit!,
@@ -134,7 +133,7 @@ export function DeploymentConfigPanel({
               <input
                 type="number"
                 value={config.rateLimit.requestsPerHour}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onChange({
                     rateLimit: {
                       ...config.rateLimit!,
@@ -151,7 +150,7 @@ export function DeploymentConfigPanel({
               <input
                 type="number"
                 value={config.rateLimit.requestsPerDay}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onChange({
                     rateLimit: {
                       ...config.rateLimit!,
@@ -168,7 +167,7 @@ export function DeploymentConfigPanel({
               <input
                 type="number"
                 value={config.rateLimit.burstLimit}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onChange({
                     rateLimit: {
                       ...config.rateLimit!,
@@ -214,7 +213,7 @@ export function DeploymentConfigPanel({
               <input
                 type="url"
                 value={config.webhook.url}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onChange({
                     webhook: { ...config.webhook!, url: e.target.value },
                   })
@@ -228,7 +227,7 @@ export function DeploymentConfigPanel({
               <input
                 type="password"
                 value={config.webhook.secret}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onChange({
                     webhook: { ...config.webhook!, secret: e.target.value },
                   })
@@ -258,7 +257,7 @@ export function DeploymentConfigPanel({
                     <input
                       type="checkbox"
                       checked={config.webhook?.events?.includes(event as any)}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const events = config.webhook?.events || [];
                         onChange({
                           webhook: {
