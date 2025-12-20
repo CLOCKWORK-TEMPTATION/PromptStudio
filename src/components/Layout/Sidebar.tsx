@@ -1,16 +1,20 @@
 import {
   PenTool,
-  LayoutTemplate,
+  Layout,
   BookOpen,
   GitBranch,
   Store,
   History,
-  FlaskConical,
+  TestTube,
   Settings,
   ChevronLeft,
   ChevronRight,
   Zap
 } from 'lucide-react';
+
+// Aliases for icon compatibility
+const LayoutTemplate = Layout;
+const FlaskConical = TestTube;
 import { useAppStore } from '../../stores/appStore';
 import clsx from 'clsx';
 

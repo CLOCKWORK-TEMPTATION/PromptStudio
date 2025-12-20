@@ -1,11 +1,15 @@
 import { Router, Request, Response } from 'express';
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt, { SignOptions, Secret } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../../lib/prisma.js';
 import { config } from '../../config/index.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { LoginSchema, RegisterSchema, UpdateProfileSchema } from '../../schemas/auth.js';
+
+// Type assertion for JWT expiresIn (it's a string like '7d')
+type StringValue = `${number}${'s' | 'm' | 'h' | 'd' | 'w' | 'y'}` | `${number}`;
+const jwtExpiresIn = config.jwt.expiresIn as StringValue;
 
 const router = Router();
 
@@ -54,7 +58,7 @@ router.post('/register', validate(RegisterSchema), async (req: Request, res: Res
     });
 
     // Generate token
-    const signOptions: SignOptions = { expiresIn: config.jwt.expiresIn };
+    const signOptions: SignOptions = { expiresIn: jwtExpiresIn };
     const token = jwt.sign(
       {
         userId: user.id,
@@ -110,7 +114,7 @@ router.post('/login', validate(LoginSchema), async (req: Request, res: Response)
     }
 
     // Generate token
-    const signOptions: SignOptions = { expiresIn: config.jwt.expiresIn };
+    const signOptions: SignOptions = { expiresIn: jwtExpiresIn };
     const token = jwt.sign(
       {
         userId: user.id,

@@ -336,15 +336,19 @@ export interface Prompt {
   modelConfig: ModelConfig;
   createdAt: Date;
   updatedAt: Date;
+  isFavorite?: boolean;
+  usageCount?: number;
 }
 
 export interface PromptVersion {
   id: string;
   promptId: string;
   version: number;
+  versionNumber?: number;
   content: string;
   modelConfig: ModelConfig;
   createdAt: Date;
+  changeSummary?: string;
 }
 
 export interface ModelConfig {
@@ -424,6 +428,14 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   { id: 'other', name: 'Other' },
 ];
 
+export interface MarketplacePromptVariable {
+  name: string;
+  type: string;
+  description?: string;
+  required?: boolean;
+  defaultValue?: any;
+}
+
 export interface MarketplacePrompt {
   id: string;
   title: string;
@@ -432,8 +444,17 @@ export interface MarketplacePrompt {
   category: string;
   tags: string[];
   authorId: string;
+  authorName?: string;
   downloads: number;
   rating: number;
+  avgRating?: number;
+  reviewCount?: number;
+  viewCount?: number;
+  cloneCount?: number;
+  isFeatured?: boolean;
+  isStaffPick?: boolean;
+  variables?: MarketplacePromptVariable[];
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -546,6 +567,7 @@ export interface JSONSchema {
 }
 
 export interface ToolDefinition {
+  id?: string;
   name: string;
   description: string;
   parameters: {
@@ -553,13 +575,19 @@ export interface ToolDefinition {
     properties: Record<string, any>;
     required: string[];
   };
+  mockResponse?: string;
 }
 
 export interface SmartVariable {
+  id?: string;
+  session_id?: string;
+  created_at?: Date;
   name: string;
   type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  variableType?: string;
   description: string;
   defaultValue?: any;
+  isSystem?: boolean;
   validation?: {
     required: boolean;
     min?: number;

@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { AlertCircle, Brain, Shield, DollarSign, Zap, GitBranch, Wrench, ShieldAlert, Loader2 } from 'lucide-react';
+import { AlertCircle, Brain, Shield, DollarSign, Zap, GitBranch, Hammer, ShieldCheck, Loader2 } from 'lucide-react';
+
+// Aliases for icon compatibility
+const Wrench = Hammer;
+const ShieldAlert = ShieldCheck;
 import { ToolPlanViewer } from './ToolPlanViewer';
 import { SafetyWarningsPanel, SafetyCheckResult, SafetyIssue } from './SafetyWarningsPanel';
 

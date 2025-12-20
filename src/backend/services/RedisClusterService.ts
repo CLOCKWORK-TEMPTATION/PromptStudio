@@ -1,8 +1,6 @@
-// @ts-expect-error - ioredis types not installed
 import { Cluster } from 'ioredis';
 
 declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
-declare type Buffer = Uint8Array;
 
 export interface ClusterNode {
     host: string;
@@ -119,7 +117,10 @@ export class RedisClusterService {
      */
     async executeCommand(command: string, ...args: unknown[]): Promise<unknown> {
         try {
-            return await this.cluster.call(command, ...(args as (string | number | Buffer)[]));
+            const stringArgs = args.map(arg =>
+                typeof arg === 'string' || typeof arg === 'number' ? arg : String(arg)
+            );
+            return await this.cluster.call(command, ...stringArgs);
         } catch (error) {
             console.error(`RedisClusterService: Command failed: ${command}`, error);
             throw error;
@@ -353,7 +354,10 @@ export class RedisClusterService {
         const pipeline = this.cluster.pipeline();
 
         for (const cmd of commands) {
-            pipeline.call(cmd.command, ...(cmd.args as (string | number | Buffer)[]));
+            const stringArgs = cmd.args.map(arg =>
+                typeof arg === 'string' || typeof arg === 'number' ? arg : String(arg)
+            );
+            pipeline.call(cmd.command, ...stringArgs);
         }
 
         const result = await pipeline.exec();

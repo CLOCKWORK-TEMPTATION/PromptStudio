@@ -6,8 +6,11 @@ import {
   LogOut,
   Menu,
   X,
-  FlaskConical,
+  Beaker,
 } from 'lucide-react';
+
+// Alias for icon compatibility
+const FlaskConical = Beaker;
 import { useState } from 'react';
 
 export default function Layout() {

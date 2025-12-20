@@ -1,6 +1,4 @@
-// @ts-expect-error - socket.io types not installed
 import { Server as SocketIOServer } from 'socket.io';
-// @ts-expect-error - yjs types not installed
 import * as Y from 'yjs';
 import type { AuthenticatedSocket } from '../index.js';
 import type { CollaborationManager } from '../managers/CollaborationManager.js';
