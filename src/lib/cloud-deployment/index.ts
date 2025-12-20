@@ -1,12 +1,7 @@
 import {
   CloudProvider,
   DeploymentConfig,
-  DeploymentStatus,
-  PromptConfig,
-  RateLimitConfig,
-  WebhookConfig,
-  APIKeyConfig,
-  UsageMetrics
+  PromptConfig
 } from '@/types';
 import { generateVercelDeployment } from './vercel';
 import { generateCloudflareDeployment } from './cloudflare';

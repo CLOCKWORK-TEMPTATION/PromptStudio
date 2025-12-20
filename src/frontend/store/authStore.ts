@@ -1,6 +1,9 @@
+// @ts-ignore - zustand module
 import { create } from 'zustand';
+// @ts-ignore - zustand/middleware module
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
+
 
 interface User {
   id: string;
