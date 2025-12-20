@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { PromptService } from './PromptService.js';
+// PromptService import removed - not used in this file
 import { SafetyService } from './SafetyService.js';
 
 /**
@@ -288,7 +288,7 @@ export class PreSendPredictionService {
    */
   static async predictSuccess(
     prompt: string,
-    model: string
+    _model: string
   ): Promise<SuccessPrediction> {
     const factors: SuccessFactor[] = [];
     let totalScore = 0;
@@ -392,7 +392,7 @@ export class PreSendPredictionService {
    * Generate optimization recommendations
    */
   static generateRecommendations(
-    prompt: string,
+    _prompt: string,
     tokenEstimation: TokenEstimation,
     costEstimation: CostEstimation,
     successPrediction: SuccessPrediction
@@ -460,7 +460,7 @@ export class PreSendPredictionService {
    * Get historical metrics for similar prompts
    */
   static async getHistoricalMetrics(
-    prompt: string,
+    _prompt: string,
     model: string,
     userId?: string
   ): Promise<HistoricalMetrics | undefined> {
@@ -529,7 +529,7 @@ export class PreSendPredictionService {
     tokenEstimation: TokenEstimation,
     costEstimation: CostEstimation,
     successPrediction: SuccessPrediction,
-    model: string
+    _model: string
   ): string[] {
     const warnings: string[] = [];
 

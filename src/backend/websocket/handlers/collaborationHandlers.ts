@@ -49,7 +49,7 @@ export function handleCollaborationEvents(
       if (!userRole && shareToken) {
         await collaborationManager.joinSession(session.id, socket.userId, 'VIEWER');
       } else {
-        await collaborationManager.joinSession(session.id, socket.userId, userRole);
+        await collaborationManager.joinSession(session.id, socket.userId, userRole ?? undefined);
       }
 
       // Join socket room

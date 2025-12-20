@@ -267,7 +267,7 @@ Please refine the prompt by incorporating these suggestions.`,
   private static async storeRefinedVersion(
     promptId: string,
     refinedContent: string,
-    originalPrompt: any,
+    _originalPrompt: unknown,
     iterations: RefinementIteration[],
     finalScore: number
   ) {
