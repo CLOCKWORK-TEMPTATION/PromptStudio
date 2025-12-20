@@ -10,6 +10,7 @@ import { handlePresenceEvents } from './handlers/presenceHandlers.js';
 import { handleCommentEvents } from './handlers/commentHandlers.js';
 
 export interface AuthenticatedSocket extends Socket {
+  id: string;
   userId: string;
   userName: string;
   userEmail: string;
