@@ -1,8 +1,5 @@
-// @ts-expect-error - yjs types not installed
 import * as Y from 'yjs';
 import redis from '../../lib/redis.js';
-
-declare const Buffer: { from: (data: Uint8Array) => unknown };
 
 interface DocumentState {
   doc: Y.Doc;

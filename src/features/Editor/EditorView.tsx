@@ -54,7 +54,7 @@ export function EditorView() {
           content,
           tags,
           category,
-          modelId,
+          model_id: modelId,
         });
         setCurrentPrompt(updated);
       } else {
@@ -63,7 +63,7 @@ export function EditorView() {
           content,
           tags,
           category,
-          modelId,
+          model_id: modelId,
         });
         setCurrentPrompt(created);
       }

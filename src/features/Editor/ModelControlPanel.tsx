@@ -114,9 +114,9 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               'mt-2 flex gap-4 text-xs',
               theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
             )}>
-              <span>Context: {selectedModel.contextWindow.toLocaleString()} tokens</span>
-              <span>Functions: {selectedModel.supportsFunctions ? 'Yes' : 'No'}</span>
-              <span>JSON Mode: {selectedModel.supportsJsonMode ? 'Yes' : 'No'}</span>
+              <span>Context: {selectedModel.context_window.toLocaleString()} tokens</span>
+              <span>Functions: {selectedModel.supports_functions ? 'Yes' : 'No'}</span>
+              <span>JSON Mode: {selectedModel.supports_json_mode ? 'Yes' : 'No'}</span>
             </div>
           </div>
 
@@ -186,7 +186,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
           <SliderControl
             label="Top K"
-            value={currentModelConfig.topK}
+            value={currentModelConfig.topK ?? 40}
             onChange={(v) => updateCurrentModelConfig({ topK: v })}
             min={1}
             max={100}
@@ -232,7 +232,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               value={currentModelConfig.maxTokens}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateCurrentModelConfig({ maxTokens: parseInt(e.target.value) || 2048 })}
               min={1}
-              max={selectedModel.contextWindow}
+              max={selectedModel.context_window}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
