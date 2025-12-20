@@ -15,7 +15,7 @@ def {{functionName}}(input: str, api_key: str) -> str:
     return response.json().get("result", "")
 `;
 
-export function generatePythonSDKTemplate(promptConfig: PromptConfig, options: SDKGenerationOptions): GeneratedSDK {
+export function generatePythonSDKTemplate(_promptConfig: PromptConfig, options: SDKGenerationOptions): GeneratedSDK {
   const code = renderTemplate(pythonTemplate, {
     functionName: options.functionName || 'generate_response',
   });

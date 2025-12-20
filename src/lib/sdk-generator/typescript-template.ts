@@ -15,7 +15,7 @@ export async function {{functionName}}(input: string, apiKey: string): Promise<s
 }
 `;
 
-export function generateTypeScriptSDKTemplate(promptConfig: PromptConfig, options: SDKGenerationOptions): GeneratedSDK {
+export function generateTypeScriptSDKTemplate(_promptConfig: PromptConfig, options: SDKGenerationOptions): GeneratedSDK {
   const code = renderTemplate(tsTemplate, {
     functionName: options.functionName || 'generateResponse',
   });
