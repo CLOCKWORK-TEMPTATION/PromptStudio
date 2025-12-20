@@ -7,7 +7,6 @@ import {
   XCircle,
   ChevronDown,
   ChevronRight,
-  Play,
   RefreshCw,
   GitBranch,
   Zap,

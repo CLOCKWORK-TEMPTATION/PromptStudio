@@ -1,11 +1,14 @@
 import { useCollaborationStore } from '../../store/collaborationStore';
 import { useAuthStore } from '../../store/authStore';
 
-interface RemoteCursorsProps {
-  containerRef: React.RefObject<HTMLDivElement>;
+interface CursorData {
+  x: number;
+  y: number;
+  userColor: string;
+  userName: string;
 }
 
-export default function RemoteCursors({ containerRef }: RemoteCursorsProps) {
+export default function RemoteCursors() {
   const { cursors } = useCollaborationStore();
   const { user } = useAuthStore();
 
@@ -19,7 +22,7 @@ export default function RemoteCursors({ containerRef }: RemoteCursorsProps) {
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {remoteCursors.map(([userId, cursor]) => (
+      {remoteCursors.map(([userId, cursor]: [string, CursorData]) => (
         <div
           key={userId}
           className="mouse-cursor"

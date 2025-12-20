@@ -20,7 +20,7 @@ import {
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
 import { getTemplates, getFeaturedTemplates, getTemplatesByCategory, searchTemplates, incrementTemplateUsage } from '../../services/templateService';
-import type { Template } from '../../types';
+import type { Template, TemplateVariable, TemplateCategory } from '../../types';
 import { TEMPLATE_CATEGORIES } from '../../types';
 import clsx from 'clsx';
 
@@ -138,7 +138,7 @@ export function TemplatesView() {
               type="text"
               placeholder="Search templates..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className={clsx(
                 'flex-1 bg-transparent border-none outline-none text-sm',
                 theme === 'dark' ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
@@ -168,7 +168,7 @@ export function TemplatesView() {
             CATEGORIES
           </div>
 
-          {TEMPLATE_CATEGORIES.map((cat) => {
+          {TEMPLATE_CATEGORIES.map((cat: TemplateCategory) => {
             const Icon = CATEGORY_ICONS[cat.id] || Filter;
             return (
               <button
@@ -201,7 +201,7 @@ export function TemplatesView() {
                 Featured Templates
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {featuredTemplates.slice(0, 3).map((template) => (
+                {featuredTemplates.slice(0, 3).map((template: Template) => (
                   <TemplateCard
                     key={template.id}
                     template={template}
@@ -221,7 +221,7 @@ export function TemplatesView() {
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             )}>
               {selectedCategory
-                ? `${TEMPLATE_CATEGORIES.find((c) => c.id === selectedCategory)?.name || ''} Templates`
+                ? `${TEMPLATE_CATEGORIES.find((c: TemplateCategory) => c.id === selectedCategory)?.name || ''} Templates`
                 : searchQuery
                   ? `Search Results for "${searchQuery}"`
                   : 'All Templates'}
@@ -248,7 +248,7 @@ export function TemplatesView() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {templates.map((template) => (
+                {templates.map((template: Template) => (
                   <TemplateCard
                     key={template.id}
                     template={template}
@@ -281,7 +281,7 @@ export function TemplatesView() {
 
 interface TemplateCardProps {
   template: Template;
-  theme: 'light' | 'dark';
+  theme: string;
   onClick: () => void;
   onUse: () => void;
   getDifficultyColor: (difficulty: string) => string;
@@ -335,7 +335,7 @@ function TemplateCard({ template, theme, onClick, onUse, getDifficultyColor }: T
         </div>
 
         <button
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation();
             onUse();
           }}
@@ -355,7 +355,7 @@ function TemplateCard({ template, theme, onClick, onUse, getDifficultyColor }: T
 
 interface TemplateModalProps {
   template: Template;
-  theme: 'light' | 'dark';
+  theme: string;
   onClose: () => void;
   onUse: () => void;
   onCopy: () => void;
@@ -449,7 +449,7 @@ function TemplateModal({ template, theme, onClose, onUse, onCopy, copied, getDif
                 Variables
               </h3>
               <div className="space-y-2">
-                {template.variables.map((v) => (
+                {template.variables.map((v: TemplateVariable) => (
                   <div
                     key={v.name}
                     className={clsx(

@@ -325,33 +325,65 @@ export interface PromptVersion {
 // Template Types
 // ============================================================
 
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  type?: string;
+  required?: boolean;
+  defaultValue?: string;
+}
+
 export interface Template {
   id: string;
   name: string;
+  title: string;
   description: string;
   content: string;
   category: string;
   tags: string[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  usageCount: number;
+  modelRecommendation: string;
+  variables: TemplateVariable[];
   createdAt: Date;
+}
+
+export interface TechniqueExample {
+  name: string;
+  prompt: string;
+  explanation: string;
 }
 
 export interface Technique {
   id: string;
   name: string;
+  title: string;
+  slug: string;
   description: string;
+  content: string;
   example: string;
   category: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  tags: string[];
+  bestFor: string[];
+  examples: TechniqueExample[];
+  relatedTechniques: string[];
 }
 
-export const TEMPLATE_CATEGORIES = [
-  'Content Creation',
-  'Code Generation',
-  'Data Analysis',
-  'Creative Writing',
-  'Business',
-  'Education',
-  'Research',
-  'Other',
+export interface TemplateCategory {
+  id: string;
+  name: string;
+}
+
+export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
+  { id: 'coding', name: 'Coding' },
+  { id: 'writing', name: 'Writing' },
+  { id: 'analysis', name: 'Analysis' },
+  { id: 'creative', name: 'Creative' },
+  { id: 'data', name: 'Data' },
+  { id: 'business', name: 'Business' },
+  { id: 'customer-service', name: 'Customer Service' },
+  { id: 'education', name: 'Education' },
 ];
 
 // ============================================================

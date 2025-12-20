@@ -20,7 +20,6 @@ export default function ScoreChart({ data, height = 120 }: ScoreChartProps) {
     const range = maxScore - minScore || 0.1; // Prevent division by zero
 
     const padding = 20;
-    const chartWidth = 100; // percentage
     const chartHeight = height - padding * 2;
 
     const points = data.map((point, index) => {
