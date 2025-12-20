@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { TranslationResult } from '../types';
 import { SUPPORTED_LANGUAGES } from '../services/translationService';

@@ -91,7 +91,7 @@ export class PresenceManager {
     const now = Date.now();
     const presenceList: UserPresence[] = [];
 
-    sessionPresence.forEach((state, userId) => {
+    sessionPresence.forEach((state, _userId) => {
       // Mark as inactive if no activity for PRESENCE_TIMEOUT
       const isActive = (now - state.lastSeen) < this.PRESENCE_TIMEOUT;
 
