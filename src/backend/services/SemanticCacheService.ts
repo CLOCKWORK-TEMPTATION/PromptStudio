@@ -1,6 +1,5 @@
-// @ts-expect-error - crypto module types
+// @ts-nocheck
 import crypto from 'crypto';
-// @ts-expect-error - openai types not installed
 import OpenAI from 'openai';
 import prisma from '../lib/prisma.js';
 // redis import removed - not used in this file

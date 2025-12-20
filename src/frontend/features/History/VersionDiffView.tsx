@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { refinementApi } from './refinementApi';

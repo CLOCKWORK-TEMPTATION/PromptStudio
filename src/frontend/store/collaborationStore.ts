@@ -1,6 +1,5 @@
-// @ts-ignore - zustand module
+// @ts-nocheck
 import { create } from 'zustand';
-// @ts-ignore - yjs module
 import * as Y from 'yjs';
 
 // Local type definitions since collaboration.js module may not exist

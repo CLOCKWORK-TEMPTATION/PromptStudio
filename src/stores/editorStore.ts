@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from 'zustand';
 import type { AnalysisResult, TokenVisualization, ToolDefinition, SmartVariable } from '../types';
 

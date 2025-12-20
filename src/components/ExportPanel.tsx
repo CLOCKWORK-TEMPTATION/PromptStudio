@@ -4,7 +4,7 @@ import { exportTranslations, exportMultilingualDocument } from '../services/expo
 import {
   Download,
   FileJson,
-  FileSpreadsheet,
+  Table,
   FileText,
   Settings,
   Globe,
@@ -43,7 +43,7 @@ export const ExportPanel = ({
 
   const formatOptions = [
     { type: 'json' as const, icon: FileJson, label: 'JSON', desc: 'Structured data format' },
-    { type: 'csv' as const, icon: FileSpreadsheet, label: 'CSV', desc: 'Spreadsheet compatible' },
+    { type: 'csv' as const, icon: Table, label: 'CSV', desc: 'Spreadsheet compatible' },
     { type: 'txt' as const, icon: FileText, label: 'Text', desc: 'Plain text format' },
   ];
 
