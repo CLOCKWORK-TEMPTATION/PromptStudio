@@ -215,7 +215,7 @@ export class PromptOptimizationService {
   private static async generateCandidates(
     basePrompt: string,
     count: number,
-    generation: number
+    _generation: number
   ): Promise<string[]> {
     const candidates: string[] = [];
     const variations = [
@@ -259,7 +259,7 @@ export class PromptOptimizationService {
    */
   private static selectNextPrompt(
     history: OptimizationCandidate[],
-    acquisitionFunction: 'ucb' | 'ei' | 'poi'
+    _acquisitionFunction: 'ucb' | 'ei' | 'poi'
   ): string | null {
     if (history.length === 0) return null;
 
