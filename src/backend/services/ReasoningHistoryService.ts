@@ -517,7 +517,7 @@ class ReasoningHistoryServiceClass {
 // Singleton instance for use across the application
 export const ReasoningHistoryService = new ReasoningHistoryServiceClass();
 
-// Static wrapper class for backward compatibility
+// Static wrapper for backward compatibility with routes that use static-like syntax
 export const ReasoningHistoryServiceStatic = {
     createSession: ReasoningHistoryService.createSession.bind(ReasoningHistoryService),
     completeSession: ReasoningHistoryService.completeSession.bind(ReasoningHistoryService),
