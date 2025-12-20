@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   History,
   Search,
@@ -9,7 +9,6 @@ import {
   Copy,
   ArrowRight,
   Filter,
-  Calendar,
   Tag,
   GitCompare,
   RotateCcw,
@@ -65,7 +64,7 @@ export function HistoryView() {
 
   const handleToggleFavorite = async (prompt: Prompt) => {
     await toggleFavorite(prompt.id, !prompt.isFavorite);
-    setPrompts(prompts.map((p) =>
+    setPrompts(prompts.map((p: Prompt) =>
       p.id === prompt.id ? { ...p, isFavorite: !p.isFavorite } : p
     ));
   };
@@ -73,7 +72,7 @@ export function HistoryView() {
   const handleDelete = async (promptId: string) => {
     if (!confirm('Are you sure you want to delete this prompt?')) return;
     await deletePrompt(promptId);
-    setPrompts(prompts.filter((p) => p.id !== promptId));
+    setPrompts(prompts.filter((p: Prompt) => p.id !== promptId));
     if (selectedPrompt?.id === promptId) {
       setSelectedPrompt(null);
     }
@@ -92,10 +91,10 @@ export function HistoryView() {
     setActiveView('editor');
   };
 
-  const filteredPrompts = prompts.filter((p) =>
+  const filteredPrompts = prompts.filter((p: Prompt) =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+    p.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -121,7 +120,7 @@ export function HistoryView() {
               type="text"
               placeholder="Search prompts..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className={clsx(
                 'flex-1 bg-transparent border-none outline-none text-sm',
                 theme === 'dark' ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
@@ -179,7 +178,7 @@ export function HistoryView() {
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredPrompts.map((prompt) => (
+              {filteredPrompts.map((prompt: Prompt) => (
                 <button
                   key={prompt.id}
                   onClick={() => setSelectedPrompt(prompt)}
@@ -275,7 +274,7 @@ export function HistoryView() {
 
             {selectedPrompt.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {selectedPrompt.tags.map((tag) => (
+                {selectedPrompt.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className={clsx(
@@ -335,7 +334,7 @@ export function HistoryView() {
                   Version History
                 </h3>
                 <div className="space-y-2">
-                  {versions.map((version) => (
+                  {versions.map((version: PromptVersion) => (
                     <div
                       key={version.id}
                       className={clsx(
