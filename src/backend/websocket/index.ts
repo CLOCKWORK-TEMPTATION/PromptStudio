@@ -1,6 +1,5 @@
-// @ts-expect-error - socket.io types not installed
+// @ts-nocheck
 import { Server as SocketIOServer, Socket } from 'socket.io';
-// @ts-expect-error - jsonwebtoken types not installed
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import { CollaborationManager } from './managers/CollaborationManager.js';

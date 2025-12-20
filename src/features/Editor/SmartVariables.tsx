@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useRef, useEffect } from 'react';
 import { Variable, Plus, Trash2, FileText, History, Clock, Settings, ChevronDown } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';

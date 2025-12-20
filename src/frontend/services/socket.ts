@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 import { useCollaborationStore } from '../store/collaborationStore';

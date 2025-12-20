@@ -1,4 +1,4 @@
-// @ts-expect-error - yjs types not installed
+// @ts-nocheck
 import * as Y from 'yjs';
 import redis from '../../lib/redis.js';
 

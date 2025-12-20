@@ -1,5 +1,5 @@
 import {
-  BarChart3,
+  BarChart,
   AlertTriangle,
   Lightbulb,
   Shield,
@@ -23,7 +23,7 @@ export function AnalysisPanel() {
         'h-full flex flex-col items-center justify-center p-6 text-center',
         theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
       )}>
-        <BarChart3 className="w-12 h-12 mb-4 opacity-50" />
+        <BarChart className="w-12 h-12 mb-4 opacity-50" />
         <p>Start typing to see real-time analysis</p>
       </div>
     );

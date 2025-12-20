@@ -5,7 +5,7 @@ import { useCacheStore } from '../store/cacheStore';
 import {
   Database,
   Settings,
-  BarChart3,
+  BarChart,
   Trash2,
   RefreshCw,
   Search,
@@ -209,7 +209,7 @@ export default function CacheDashboardPage() {
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
-          <BarChart3 size={16} className="inline mr-2" />
+          <BarChart size={16} className="inline mr-2" />
           Overview
         </button>
         <button

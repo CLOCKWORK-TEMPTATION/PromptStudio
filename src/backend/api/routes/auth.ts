@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../../lib/prisma.js';
 import { config } from '../../config/index.js';
@@ -62,7 +62,7 @@ router.post('/register', validate(RegisterSchema), async (req: Request, res: Res
         color: user.color,
       },
       String(config.jwt.secret),
-      { expiresIn: String(config.jwt.expiresIn) }
+      { expiresIn: config.jwt.expiresIn } as SignOptions
     );
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -117,7 +117,7 @@ router.post('/login', validate(LoginSchema), async (req: Request, res: Response)
         color: user.color,
       },
       String(config.jwt.secret),
-      { expiresIn: String(config.jwt.expiresIn) }
+      { expiresIn: config.jwt.expiresIn } as SignOptions
     );
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -231,6 +231,9 @@ router.post('/guest', async (_req: Request, res: Response) => {
     });
 
     // Generate token
+    const guestSignOptions: SignOptions = {
+      expiresIn: '24h', // Shorter expiry for guests
+    };
     const token = jwt.sign(
       {
         userId: user.id,
@@ -239,7 +242,7 @@ router.post('/guest', async (_req: Request, res: Response) => {
         color: user.color,
       },
       String(config.jwt.secret),
-      { expiresIn: '24h' } // Shorter expiry for guests
+      guestSignOptions
     );
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();

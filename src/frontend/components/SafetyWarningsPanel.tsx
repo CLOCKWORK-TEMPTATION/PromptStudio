@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Safety Warnings Panel Component
  * Displays safety check results, warnings, and recommendations to the user

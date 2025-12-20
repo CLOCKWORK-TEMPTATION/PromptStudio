@@ -17,7 +17,7 @@ import {
   Gauge,
   Lightbulb,
   RefreshCw,
-  BarChart3,
+  BarChart,
 } from 'lucide-react';
 
 // Types
@@ -543,7 +543,7 @@ export function PreSendAnalysis({
               className="w-full p-3 flex items-center justify-between hover:bg-dark-700/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary-400" />
+                <BarChart className="w-4 h-4 text-primary-400" />
                 <span className="text-sm font-medium text-dark-200">
                   عوامل النجاح التفصيلية
                 </span>
