@@ -447,10 +447,10 @@ export interface MarketplacePrompt {
   authorName?: string;
   isFeatured?: boolean;
   isStaffPick?: boolean;
-  avgRating: number;
-  reviewCount: number;
-  viewCount: number;
-  cloneCount: number;
+  avgRating?: number;
+  reviewCount?: number;
+  viewCount?: number;
+  cloneCount?: number;
   downloads?: number;
   rating?: number;
   variables: MarketplacePromptVariable[];
