@@ -14,100 +14,74 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
+import type { MarketplacePrompt, MarketplacePromptVariable } from '../../types';
 import { supabase } from '../../lib/supabase';
 import clsx from 'clsx';
-
-// Extended MarketplacePrompt interface for this component
-interface MarketplacePromptExtended {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  category: string;
-  tags: string[];
-  authorId: string;
-  authorName: string;
-  createdAt: Date;
-  updatedAt: Date;
-  avgRating: number;
-  reviewCount: number;
-  cloneCount: number;
-  viewCount: number;
-  isFeatured: boolean;
-  isStaffPick: boolean;
-  variables: Array<{ name: string; description: string; type: string }>;
-  modelRecommendation: string;
-}
 
 type SortOption = 'popular' | 'recent' | 'rating' | 'trending';
 type CategoryFilter = 'all' | 'coding' | 'writing' | 'analysis' | 'creative' | 'data' | 'business';
 
-// Sample prompts for initial state
-const SAMPLE_PROMPTS: MarketplacePromptExtended[] = [
+const SAMPLE_PROMPTS: MarketplacePrompt[] = [
   {
     id: '1',
     title: 'Code Review Assistant',
-    description: 'A comprehensive prompt for conducting thorough code reviews with actionable feedback.',
-    content: 'You are an expert code reviewer. Analyze the following code and provide detailed feedback on:\n1. Code quality\n2. Potential bugs\n3. Performance improvements\n4. Best practices\n\n{{code}}',
+    description: 'A comprehensive prompt for reviewing code quality, best practices, and potential improvements.',
+    content: 'Review the following code for:\n1. Code quality and readability\n2. Best practices\n3. Potential bugs\n4. Performance improvements\n\n{{code}}',
     category: 'coding',
-    tags: ['code-review', 'development', 'best-practices'],
-    authorId: 'user-1',
+    tags: ['code-review', 'best-practices', 'debugging'],
+    authorId: 'user1',
     authorName: 'DevExpert',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-    avgRating: 4.8,
-    reviewCount: 124,
-    cloneCount: 1520,
-    viewCount: 5430,
     isFeatured: true,
     isStaffPick: false,
-    variables: [{ name: 'code', description: 'The code to review', type: 'string' }],
+    avgRating: 4.8,
+    reviewCount: 156,
+    viewCount: 2340,
+    cloneCount: 892,
+    variables: [{ name: 'code', type: 'string', description: 'The code to review' }],
     modelRecommendation: 'GPT-4',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-03-20'),
   },
   {
     id: '2',
-    title: 'Creative Story Generator',
-    description: 'Generate engaging creative stories with customizable themes and characters.',
-    content: 'Write a {{genre}} story featuring {{characters}} in {{setting}}. The story should be engaging and approximately {{length}} words.',
+    title: 'Creative Story Writer',
+    description: 'Generate engaging stories with rich characters and plot development.',
+    content: 'Write a {{genre}} story about {{topic}}. Include vivid descriptions and engaging dialogue.',
     category: 'creative',
     tags: ['storytelling', 'creative-writing', 'fiction'],
-    authorId: 'user-2',
+    authorId: 'user2',
     authorName: 'StoryMaster',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-12'),
-    avgRating: 4.5,
-    reviewCount: 89,
-    cloneCount: 980,
-    viewCount: 3200,
     isFeatured: false,
     isStaffPick: true,
+    avgRating: 4.5,
+    reviewCount: 89,
+    viewCount: 1567,
+    cloneCount: 445,
     variables: [
-      { name: 'genre', description: 'Story genre', type: 'string' },
-      { name: 'characters', description: 'Main characters', type: 'string' },
-      { name: 'setting', description: 'Story setting', type: 'string' },
-      { name: 'length', description: 'Approximate word count', type: 'number' },
+      { name: 'genre', type: 'string', description: 'Story genre' },
+      { name: 'topic', type: 'string', description: 'Main topic or theme' },
     ],
     modelRecommendation: 'GPT-4',
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-03-18'),
   },
 ];
 
 export function MarketplaceView() {
   const { theme, setActiveView } = useAppStore();
   const { setContent, setTitle } = useEditorStore();
-  const [prompts, setPrompts] = useState<MarketplacePromptExtended[]>(SAMPLE_PROMPTS);
+  const [prompts, setPrompts] = useState<MarketplacePrompt[]>(SAMPLE_PROMPTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [selectedPrompt, setSelectedPrompt] = useState<MarketplacePromptExtended | null>(null);
+  const [selectedPrompt, setSelectedPrompt] = useState<MarketplacePrompt | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [, setIsLoading] = useState(false);
 
   useEffect(() => {
     loadMarketplacePrompts();
   }, []);
 
   const loadMarketplacePrompts = async () => {
-    setIsLoading(true);
     try {
       const { data } = await supabase
         .from('marketplace_prompts')
@@ -116,16 +90,15 @@ export function MarketplaceView() {
         .order('clone_count', { ascending: false });
 
       if (data && data.length > 0) {
-        setPrompts(data as MarketplacePromptExtended[]);
+        setPrompts(data as MarketplacePrompt[]);
       }
     } catch {
       // Error handled silently
     }
-    setIsLoading(false);
   };
 
   const filteredPrompts = prompts
-    .filter((p: MarketplacePromptExtended) => {
+    .filter((p: MarketplacePrompt) => {
       const matchesSearch =
         searchQuery === '' ||
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,7 +107,7 @@ export function MarketplaceView() {
       const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
       return matchesSearch && matchesCategory;
     })
-    .sort((a: MarketplacePromptExtended, b: MarketplacePromptExtended) => {
+    .sort((a: MarketplacePrompt, b: MarketplacePrompt) => {
       switch (sortBy) {
         case 'popular':
           return b.cloneCount - a.cloneCount;
@@ -149,7 +122,7 @@ export function MarketplaceView() {
       }
     });
 
-  const usePrompt = (prompt: MarketplacePromptExtended) => {
+  const usePrompt = (prompt: MarketplacePrompt) => {
     setContent(prompt.content);
     setTitle(prompt.title ?? '');
     setActiveView('editor');
@@ -291,7 +264,7 @@ export function MarketplaceView() {
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPrompts.map((prompt: MarketplacePromptExtended) => {
+          {filteredPrompts.map((prompt: MarketplacePrompt) => {
             const color = getCategoryColor(prompt.category);
 
             return (
@@ -549,7 +522,7 @@ export function MarketplaceView() {
                     Variables
                   </h3>
                   <div className="space-y-2">
-                    {selectedPrompt.variables.map((v: { name: string; description: string; type: string }) => (
+                    {selectedPrompt.variables.map((v: MarketplacePromptVariable) => (
                       <div
                         key={v.name}
                         className={clsx(
