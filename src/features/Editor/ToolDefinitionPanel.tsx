@@ -56,7 +56,7 @@ export function ToolDefinitionPanel() {
   };
 
   const handleSimulate = (tool: ToolDefinition) => {
-    setSimulationResult(JSON.stringify(tool.mock_response, null, 2));
+    setSimulationResult(JSON.stringify(tool.mockResponse, null, 2));
   };
 
   const copyToClipboard = (tool: ToolDefinition) => {
@@ -210,7 +210,7 @@ function ToolCard({
   const handleMockResponseChange = (value: string) => {
     try {
       const parsed = JSON.parse(value);
-      onUpdate({ mock_response: parsed });
+      onUpdate({ mockResponse: parsed });
       setJsonError(null);
     } catch {
       setJsonError('Invalid JSON');
@@ -347,7 +347,7 @@ function ToolCard({
               Mock Response (for simulation)
             </label>
             <textarea
-              value={JSON.stringify(tool.mock_response, null, 2)}
+              value={JSON.stringify(tool.mockResponse, null, 2)}
               onChange={(e) => handleMockResponseChange(e.target.value)}
               rows={4}
               className={clsx(

@@ -11,7 +11,7 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { formatRelativeTime } from '../../lib/utils';
-import type { Comment } from '@shared/types/collaboration';
+import type { Comment } from '../../../shared/types/collaboration.js';
 
 interface CommentsPanelProps {
   sessionId: string;

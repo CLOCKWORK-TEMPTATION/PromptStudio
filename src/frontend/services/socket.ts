@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import * as Y from 'yjs';
 import { useAuthStore } from '../store/authStore';
 import { useCollaborationStore } from '../store/collaborationStore';
-import { CollaborationEvent } from '@shared/types/collaboration';
+import { CollaborationEvent } from '../../shared/types/collaboration.js';
 
 class SocketService {
   private socket: Socket | null = null;

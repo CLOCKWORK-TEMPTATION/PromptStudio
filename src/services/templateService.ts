@@ -79,7 +79,7 @@ export async function incrementTemplateUsage(id: string): Promise<void> {
   if (template) {
     await supabase
       .from('templates')
-      .update({ usage_count: (template.usage_count || 0) + 1 })
+      .update({ usageCount: (template.usageCount || 0) + 1 })
       .eq('id', id);
   }
 }
