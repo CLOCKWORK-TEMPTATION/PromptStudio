@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Store,
   Search,
@@ -6,36 +6,101 @@ import {
   Download,
   Eye,
   Filter,
-  TrendingUp,
-  Award,
   Clock,
   User,
-  ChevronDown,
   X,
   Copy,
   ExternalLink,
-  Heart,
-  MessageSquare,
-  AlertCircle,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
-import type { MarketplacePrompt, MarketplaceReview } from '../../types';
+import { supabase } from '../../lib/supabase';
 import clsx from 'clsx';
+
+// Extended MarketplacePrompt interface for this component
+interface MarketplacePromptExtended {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  tags: string[];
+  authorId: string;
+  authorName: string;
+  createdAt: Date;
+  updatedAt: Date;
+  avgRating: number;
+  reviewCount: number;
+  cloneCount: number;
+  viewCount: number;
+  isFeatured: boolean;
+  isStaffPick: boolean;
+  variables: Array<{ name: string; description: string; type: string }>;
+  modelRecommendation: string;
+}
 
 type SortOption = 'popular' | 'recent' | 'rating' | 'trending';
 type CategoryFilter = 'all' | 'coding' | 'writing' | 'analysis' | 'creative' | 'data' | 'business';
 
+// Sample prompts for initial state
+const SAMPLE_PROMPTS: MarketplacePromptExtended[] = [
+  {
+    id: '1',
+    title: 'Code Review Assistant',
+    description: 'A comprehensive prompt for conducting thorough code reviews with actionable feedback.',
+    content: 'You are an expert code reviewer. Analyze the following code and provide detailed feedback on:\n1. Code quality\n2. Potential bugs\n3. Performance improvements\n4. Best practices\n\n{{code}}',
+    category: 'coding',
+    tags: ['code-review', 'development', 'best-practices'],
+    authorId: 'user-1',
+    authorName: 'DevExpert',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15'),
+    avgRating: 4.8,
+    reviewCount: 124,
+    cloneCount: 1520,
+    viewCount: 5430,
+    isFeatured: true,
+    isStaffPick: false,
+    variables: [{ name: 'code', description: 'The code to review', type: 'string' }],
+    modelRecommendation: 'GPT-4',
+  },
+  {
+    id: '2',
+    title: 'Creative Story Generator',
+    description: 'Generate engaging creative stories with customizable themes and characters.',
+    content: 'Write a {{genre}} story featuring {{characters}} in {{setting}}. The story should be engaging and approximately {{length}} words.',
+    category: 'creative',
+    tags: ['storytelling', 'creative-writing', 'fiction'],
+    authorId: 'user-2',
+    authorName: 'StoryMaster',
+    createdAt: new Date('2024-01-10'),
+    updatedAt: new Date('2024-01-12'),
+    avgRating: 4.5,
+    reviewCount: 89,
+    cloneCount: 980,
+    viewCount: 3200,
+    isFeatured: false,
+    isStaffPick: true,
+    variables: [
+      { name: 'genre', description: 'Story genre', type: 'string' },
+      { name: 'characters', description: 'Main characters', type: 'string' },
+      { name: 'setting', description: 'Story setting', type: 'string' },
+      { name: 'length', description: 'Approximate word count', type: 'number' },
+    ],
+    modelRecommendation: 'GPT-4',
+  },
+];
+
 export function MarketplaceView() {
   const { theme, setActiveView } = useAppStore();
   const { setContent, setTitle } = useEditorStore();
-  const [prompts, setPrompts] = useState<MarketplacePrompt[]>(SAMPLE_PROMPTS);
+  const [prompts, setPrompts] = useState<MarketplacePromptExtended[]>(SAMPLE_PROMPTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [selectedPrompt, setSelectedPrompt] = useState<MarketplacePrompt | null>(null);
+  const [selectedPrompt, setSelectedPrompt] = useState<MarketplacePromptExtended | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
 
   useEffect(() => {
     loadMarketplacePrompts();
@@ -44,31 +109,32 @@ export function MarketplaceView() {
   const loadMarketplacePrompts = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('marketplace_prompts')
         .select('*')
         .eq('status', 'approved')
         .order('clone_count', { ascending: false });
 
       if (data && data.length > 0) {
-        setPrompts(data);
+        setPrompts(data as MarketplacePromptExtended[]);
       }
-    } catch (err) {
+    } catch {
+      // Error handled silently
     }
     setIsLoading(false);
   };
 
   const filteredPrompts = prompts
-    .filter((p) => {
+    .filter((p: MarketplacePromptExtended) => {
       const matchesSearch =
         searchQuery === '' ||
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        p.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
       return matchesSearch && matchesCategory;
     })
-    .sort((a, b) => {
+    .sort((a: MarketplacePromptExtended, b: MarketplacePromptExtended) => {
       switch (sortBy) {
         case 'popular':
           return b.cloneCount - a.cloneCount;
@@ -83,9 +149,9 @@ export function MarketplaceView() {
       }
     });
 
-  const usePrompt = (prompt: MarketplacePrompt) => {
+  const usePrompt = (prompt: MarketplacePromptExtended) => {
     setContent(prompt.content);
-    setTitle(prompt.title);
+    setTitle(prompt.title ?? '');
     setActiveView('editor');
   };
 
@@ -143,7 +209,7 @@ export function MarketplaceView() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               placeholder="Search prompts..."
               className={clsx(
                 'w-80 pl-10 pr-4 py-2 rounded-lg border text-sm transition-colors',
@@ -184,7 +250,7 @@ export function MarketplaceView() {
             <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>Sort by:</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as SortOption)}
               className={clsx(
                 'px-3 py-1.5 rounded-lg border text-sm',
                 theme === 'dark'
@@ -203,7 +269,7 @@ export function MarketplaceView() {
             <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>Category:</span>
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as CategoryFilter)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value as CategoryFilter)}
               className={clsx(
                 'px-3 py-1.5 rounded-lg border text-sm',
                 theme === 'dark'
@@ -225,7 +291,7 @@ export function MarketplaceView() {
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPrompts.map((prompt) => {
+          {filteredPrompts.map((prompt: MarketplacePromptExtended) => {
             const color = getCategoryColor(prompt.category);
 
             return (
@@ -295,7 +361,7 @@ export function MarketplaceView() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {prompt.tags.slice(0, 3).map((tag) => (
+                  {prompt.tags.slice(0, 3).map((tag: string) => (
                     <span
                       key={tag}
                       className={clsx(
@@ -443,7 +509,7 @@ export function MarketplaceView() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {selectedPrompt.tags.map((tag) => (
+                {selectedPrompt.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className={clsx(
@@ -483,7 +549,7 @@ export function MarketplaceView() {
                     Variables
                   </h3>
                   <div className="space-y-2">
-                    {selectedPrompt.variables.map((v) => (
+                    {selectedPrompt.variables.map((v: { name: string; description: string; type: string }) => (
                       <div
                         key={v.name}
                         className={clsx(
