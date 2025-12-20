@@ -264,6 +264,8 @@ export interface AIModel {
   provider: string;
   maxTokens: number;
   contextWindow: number;
+  supportsFunctions?: boolean;
+  supportsJsonMode?: boolean;
   pricing?: {
     input: number;
     output: number;
@@ -308,6 +310,7 @@ export interface Prompt {
   description?: string;
   tags?: string[];
   category?: string;
+  modelId?: string;
   modelConfig?: ModelConfig;
   createdAt: Date;
   updatedAt: Date;
