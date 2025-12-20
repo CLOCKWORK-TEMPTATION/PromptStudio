@@ -33,16 +33,16 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
   const selectedModel = AI_MODELS.find((m) => m.id === modelId) || AI_MODELS[0];
 
   const presets = [
-    { name: 'Creative', config: { temperature: 1.2, top_p: 0.95, frequency_penalty: 0.5, presence_penalty: 0.5 } },
-    { name: 'Balanced', config: { temperature: 0.7, top_p: 1.0, frequency_penalty: 0, presence_penalty: 0 } },
-    { name: 'Precise', config: { temperature: 0.2, top_p: 0.9, frequency_penalty: 0, presence_penalty: 0 } },
-    { name: 'Deterministic', config: { temperature: 0, top_p: 1.0, frequency_penalty: 0, presence_penalty: 0 } },
+    { name: 'Creative', config: { temperature: 1.2, topP: 0.95, frequencyPenalty: 0.5, presencePenalty: 0.5 } },
+    { name: 'Balanced', config: { temperature: 0.7, topP: 1.0, frequencyPenalty: 0, presencePenalty: 0 } },
+    { name: 'Precise', config: { temperature: 0.2, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 } },
+    { name: 'Deterministic', config: { temperature: 0, topP: 1.0, frequencyPenalty: 0, presencePenalty: 0 } },
   ];
 
   const handleAddStopSequence = () => {
-    if (newStopSequence && !currentModelConfig.stop_sequences.includes(newStopSequence)) {
+    if (newStopSequence && !currentModelConfig.stopSequences.includes(newStopSequence)) {
       updateCurrentModelConfig({
-        stop_sequences: [...currentModelConfig.stop_sequences, newStopSequence],
+        stopSequences: [...currentModelConfig.stopSequences, newStopSequence],
       });
       setNewStopSequence('');
     }
@@ -50,7 +50,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
   const handleRemoveStopSequence = (seq: string) => {
     updateCurrentModelConfig({
-      stop_sequences: currentModelConfig.stop_sequences.filter((s) => s !== seq),
+      stopSequences: currentModelConfig.stopSequences.filter((s) => s !== seq),
     });
   };
 
@@ -176,8 +176,8 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
           <SliderControl
             label="Top P"
-            value={currentModelConfig.top_p}
-            onChange={(v) => updateCurrentModelConfig({ top_p: v })}
+            value={currentModelConfig.topP}
+            onChange={(v) => updateCurrentModelConfig({ topP: v })}
             min={0}
             max={1}
             step={0.05}
@@ -188,8 +188,8 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
           <SliderControl
             label="Top K"
-            value={currentModelConfig.top_k}
-            onChange={(v) => updateCurrentModelConfig({ top_k: v })}
+            value={currentModelConfig.topK}
+            onChange={(v) => updateCurrentModelConfig({ topK: v })}
             min={1}
             max={100}
             step={1}
@@ -200,8 +200,8 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
           <SliderControl
             label="Frequency Penalty"
-            value={currentModelConfig.frequency_penalty}
-            onChange={(v) => updateCurrentModelConfig({ frequency_penalty: v })}
+            value={currentModelConfig.frequencyPenalty}
+            onChange={(v) => updateCurrentModelConfig({ frequencyPenalty: v })}
             min={-2}
             max={2}
             step={0.1}
@@ -212,8 +212,8 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
           <SliderControl
             label="Presence Penalty"
-            value={currentModelConfig.presence_penalty}
-            onChange={(v) => updateCurrentModelConfig({ presence_penalty: v })}
+            value={currentModelConfig.presencePenalty}
+            onChange={(v) => updateCurrentModelConfig({ presencePenalty: v })}
             min={-2}
             max={2}
             step={0.1}
@@ -231,8 +231,8 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             </label>
             <input
               type="number"
-              value={currentModelConfig.max_tokens}
-              onChange={(e) => updateCurrentModelConfig({ max_tokens: parseInt(e.target.value) || 2048 })}
+              value={currentModelConfig.maxTokens}
+              onChange={(e) => updateCurrentModelConfig({ maxTokens: parseInt(e.target.value) || 2048 })}
               min={1}
               max={selectedModel.context_window}
               className={clsx(
@@ -252,8 +252,8 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               Response Format
             </label>
             <select
-              value={currentModelConfig.response_format}
-              onChange={(e) => updateCurrentModelConfig({ response_format: e.target.value as ModelConfig['response_format'] })}
+              value={currentModelConfig.responseFormat}
+              onChange={(e) => updateCurrentModelConfig({ responseFormat: e.target.value as ModelConfig['response_format'] })}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -301,9 +301,9 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            {currentModelConfig.stop_sequences.length > 0 && (
+            {currentModelConfig.stopSequences.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {currentModelConfig.stop_sequences.map((seq, index) => (
+                {currentModelConfig.stopSequences.map((seq, index) => (
                   <span
                     key={index}
                     className={clsx(

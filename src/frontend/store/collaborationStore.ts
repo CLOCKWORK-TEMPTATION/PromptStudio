@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Y from 'yjs';
-import type { UserPresence, Comment, CollaborationSession, MemberRole } from '@shared/types/collaboration';
+import type { UserPresence, Comment, CollaborationSession, MemberRole } from '../../shared/types/collaboration.js';
 
 interface CursorPosition {
   userId: string;

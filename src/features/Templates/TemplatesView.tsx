@@ -98,7 +98,7 @@ export function TemplatesView() {
       description: template.description,
       tags: template.tags,
       category: template.category,
-      model_id: template.model_recommendation,
+      model_id: template.modelRecommendation,
     });
     setActiveView('editor');
   };
@@ -330,7 +330,7 @@ function TemplateCard({ template, theme, onClick, onUse, getDifficultyColor }: T
         <div className="flex items-center gap-2 text-sm">
           <Clock className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-600' : 'text-gray-400')} />
           <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}>
-            {template.usage_count} uses
+            {template.usageCount} uses
           </span>
         </div>
 
@@ -396,7 +396,7 @@ function TemplateModal({ template, theme, onClose, onUse, onCopy, copied, getDif
                   {template.difficulty}
                 </span>
                 <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-500' : 'text-gray-500')}>
-                  {template.usage_count} uses
+                  {template.usageCount} uses
                 </span>
               </div>
             </div>

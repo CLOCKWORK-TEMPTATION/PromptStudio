@@ -36,7 +36,7 @@ export async function createPrompt(sessionId: string, prompt: Partial<Prompt>): 
       tags: prompt.tags || [],
       category: prompt.category || 'general',
       model_id: prompt.model_id || 'gpt-4',
-      model_config: prompt.model_config || DEFAULT_MODEL_CONFIG,
+      modelConfig: prompt.modelConfig || DEFAULT_MODEL_CONFIG,
       variables: prompt.variables || [],
     })
     .select()
@@ -79,7 +79,7 @@ export async function archivePrompt(id: string): Promise<void> {
 export async function toggleFavorite(id: string, isFavorite: boolean): Promise<void> {
   const { error } = await supabase
     .from('prompts')
-    .update({ is_favorite: isFavorite })
+    .update({ isFavorite: isFavorite })
     .eq('id', id);
 
   if (error) throw error;
@@ -96,7 +96,7 @@ export async function incrementUsage(id: string): Promise<void> {
     await supabase
       .from('prompts')
       .update({
-        usage_count: (prompt.usage_count || 0) + 1,
+        usageCount: (prompt.usageCount || 0) + 1,
         last_used_at: new Date().toISOString(),
       })
       .eq('id', id);
@@ -133,10 +133,10 @@ export async function createVersion(
     .from('prompt_versions')
     .insert({
       prompt_id: promptId,
-      version_number: nextVersion,
+      versionNumber: nextVersion,
       content,
-      model_config: modelConfig,
-      change_summary: changeSummary,
+      modelConfig: modelConfig,
+      changeSummary: changeSummary,
     })
     .select()
     .single();
@@ -158,7 +158,7 @@ export async function restoreVersion(promptId: string, versionId: string): Promi
     .from('prompts')
     .update({
       content: version.content,
-      model_config: version.model_config,
+      modelConfig: version.modelConfig,
     })
     .eq('id', promptId)
     .select()
