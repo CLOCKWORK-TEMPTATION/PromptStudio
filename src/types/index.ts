@@ -431,9 +431,9 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
 export interface MarketplacePromptVariable {
   name: string;
   type: string;
-  description: string;
+  description?: string;
   required?: boolean;
-  defaultValue?: string;
+  defaultValue?: any;
 }
 
 export interface MarketplacePrompt {
@@ -453,7 +453,7 @@ export interface MarketplacePrompt {
   cloneCount?: number;
   downloads?: number;
   rating?: number;
-  variables: MarketplacePromptVariable[];
+  variables?: MarketplacePromptVariable[];
   modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -567,7 +567,7 @@ export interface JSONSchema {
 }
 
 export interface ToolDefinition {
-  id: string;
+  id?: string;
   name: string;
   description: string;
   parameters: {
@@ -579,14 +579,17 @@ export interface ToolDefinition {
 }
 
 export interface SmartVariable {
-  id: string;
-  session_id: string;
-  name: string;
-  variableType: 'timestamp' | 'history' | 'env' | 'custom' | 'string' | 'number' | 'boolean' | 'array' | 'object';
-  description: string;
-  default_value: string;
-  isSystem?: boolean;
+  id?: string;
+  session_id?: string;
+  created_at?: Date;
   createdAt?: string;
+  name: string;
+  type?: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  variableType?: 'timestamp' | 'history' | 'env' | 'custom' | 'string' | 'number' | 'boolean' | 'array' | 'object';
+  description: string;
+  default_value?: string;
+  defaultValue?: any;
+  isSystem?: boolean;
   validation?: {
     required: boolean;
     min?: number;

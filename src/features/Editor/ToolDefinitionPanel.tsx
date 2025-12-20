@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Wrench,
+  Settings2,
   Plus,
   Trash2,
   ChevronDown,
@@ -10,6 +10,9 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
+
+// Alias for icon compatibility
+const Wrench = Settings2;
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import type { ToolDefinition } from '../../types';

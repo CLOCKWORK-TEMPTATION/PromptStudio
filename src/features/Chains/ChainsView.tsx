@@ -18,10 +18,15 @@ import {
   Trash2,
   PenTool,
   GitMerge,
-  ArrowRightCircle,
-  ArrowLeftCircle,
+  ArrowRight,
+  ArrowLeft,
   Zap,
+  Circle,
 } from 'lucide-react';
+
+// Aliases for icon compatibility
+const ArrowRightCircle = ArrowRight;
+const ArrowLeftCircle = ArrowLeft;
 import { useAppStore } from '../../stores/appStore';
 import clsx from 'clsx';
 

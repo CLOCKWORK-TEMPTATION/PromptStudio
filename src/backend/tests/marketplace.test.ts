@@ -1,4 +1,3 @@
-// @ts-expect-error - vitest types not installed
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MarketplaceService, PublishStatus } from '../services/MarketplaceService.js';
 

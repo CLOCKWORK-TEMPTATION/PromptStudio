@@ -9,9 +9,7 @@ import {
   AlertTriangle,
   AlertCircle,
   Shield,
-  ShieldAlert,
   ShieldCheck,
-  ShieldX,
   Eye,
   EyeOff,
   Wand2,
@@ -20,8 +18,12 @@ import {
   Info,
   XCircle,
   CheckCircle,
-  AlertOctagon,
 } from 'lucide-react';
+
+// Aliases for icon compatibility
+const ShieldAlert = ShieldCheck;
+const ShieldX = Shield;
+const AlertOctagon = AlertTriangle;
 
 // =============================================================================
 // TYPES

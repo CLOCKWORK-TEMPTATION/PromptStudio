@@ -17,8 +17,11 @@ import {
   Gauge,
   Lightbulb,
   RefreshCw,
-  BarChart3,
+  BarChart,
 } from 'lucide-react';
+
+// Alias for icon compatibility
+const BarChart3 = BarChart;
 
 // Types
 interface TokenEstimation {

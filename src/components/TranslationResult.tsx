@@ -5,12 +5,15 @@ import {
   Copy,
   Check,
   Star,
-  BookmarkPlus,
+  Bookmark,
   Award,
   Info,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+
+// Alias for icon compatibility
+const BookmarkPlus = Bookmark;
 
 interface TranslationResultProps {
   result: TResult;

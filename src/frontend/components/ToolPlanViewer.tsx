@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Wrench,
+  Hammer,
   Clock,
   AlertTriangle,
   CheckCircle,
@@ -11,6 +11,9 @@ import {
   GitBranch,
   Zap,
 } from 'lucide-react';
+
+// Alias for icon compatibility
+const Wrench = Hammer;
 
 interface ToolPlan {
   toolName: string;

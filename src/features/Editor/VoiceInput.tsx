@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Loader2, Check, X, Volume2 } from 'lucide-react';
+import { Mic, Loader2, Check, X, Volume2 } from 'lucide-react';
+
+// Alias for icon compatibility - MicOff not available in this version
+const MicOff = Mic;
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import clsx from 'clsx';

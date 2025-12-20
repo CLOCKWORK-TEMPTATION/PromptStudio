@@ -4,11 +4,14 @@ import { exportTranslations, exportMultilingualDocument } from '../services/expo
 import {
   Download,
   FileJson,
-  FileSpreadsheet,
+  Table,
   FileText,
   Settings,
   Globe,
 } from 'lucide-react';
+
+// Alias for consistent naming
+const FileSpreadsheet = Table;
 
 interface ExportPanelProps {
   translations: (TranslationResult | SavedTranslation)[];

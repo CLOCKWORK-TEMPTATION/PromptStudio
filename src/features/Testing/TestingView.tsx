@@ -1,18 +1,24 @@
 import { useState } from 'react';
 import {
-  FlaskConical,
+  Beaker,
   Plus,
   Play,
-  Upload,
+  UploadCloud,
   Trash2,
-  BarChart3,
+  BarChart2,
   CheckCircle,
   Clock,
   Coins,
   FileText,
-  Trophy,
+  Award,
   RefreshCw,
 } from 'lucide-react';
+
+// Aliases for icon compatibility
+const FlaskConical = Beaker;
+const Upload = UploadCloud;
+const BarChart3 = BarChart2;
+const Trophy = Award;
 import {
   LineChart,
   Line,
