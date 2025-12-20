@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -12,7 +12,6 @@ import {
   Share2,
   MoreVertical,
   Trash2,
-  Edit,
 } from 'lucide-react';
 import { formatRelativeTime, copyToClipboard, generateShareUrl } from '../lib/utils';
 
@@ -88,7 +87,7 @@ export default function DashboardPage() {
 
     try {
       await api.delete(`/sessions/${id}`);
-      setSessions(sessions.filter(s => s.id !== id));
+      setSessions(sessions.filter((s: Session) => s.id !== id));
     } catch (error) {
       console.error('Failed to delete session:', error);
     }
@@ -100,7 +99,7 @@ export default function DashboardPage() {
     alert('Share link copied to clipboard!');
   };
 
-  const filteredSessions = sessions.filter(session =>
+  const filteredSessions = sessions.filter((session: Session) =>
     session.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     session.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -130,7 +129,7 @@ export default function DashboardPage() {
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
           placeholder="Search sessions..."
           className="w-full pl-10 pr-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
         />
@@ -160,7 +159,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredSessions.map(session => (
+          {filteredSessions.map((session: Session) => (
             <div
               key={session.id}
               className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow group"
@@ -250,7 +249,7 @@ export default function DashboardPage() {
                 <input
                   type="text"
                   value={newSessionName}
-                  onChange={(e) => setNewSessionName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSessionName(e.target.value)}
                   placeholder="My Awesome Prompt"
                   className="w-full px-3 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   autoFocus
@@ -262,7 +261,7 @@ export default function DashboardPage() {
                 </label>
                 <textarea
                   value={newSessionDesc}
-                  onChange={(e) => setNewSessionDesc(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewSessionDesc(e.target.value)}
                   placeholder="Describe what this session is about..."
                   rows={3}
                   className="w-full px-3 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"

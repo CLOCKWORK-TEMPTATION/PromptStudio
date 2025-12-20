@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import {
   FlaskConical,
@@ -8,10 +8,8 @@ import {
   Zap,
   Target,
   Clock,
-  DollarSign,
   ChevronDown,
   ChevronUp,
-  Check,
   Copy,
   Trash2,
   RefreshCw,
@@ -136,7 +134,7 @@ export default function ExperimentTestingPage() {
       );
 
       const result = response.data.data;
-      setExperiments(prev => [result, ...prev]);
+      setExperiments((prev: ExperimentResult[]) => [result, ...prev]);
       setSelectedExperiment(result);
       setActiveTab('history');
     } catch (err: any) {
@@ -163,7 +161,7 @@ export default function ExperimentTestingPage() {
       );
 
       const result = response.data.data;
-      setExperiments(prev => [result, ...prev]);
+      setExperiments((prev: ExperimentResult[]) => [result, ...prev]);
       setSelectedExperiment(result);
       setActiveTab('history');
     } catch (err: any) {
@@ -177,7 +175,7 @@ export default function ExperimentTestingPage() {
   const deleteExperiment = async (experimentId: string) => {
     try {
       await api.delete(`/prompts/experiments/${experimentId}`);
-      setExperiments(prev => prev.filter(e => e.experimentId !== experimentId));
+      setExperiments((prev: ExperimentResult[]) => prev.filter((e: ExperimentResult) => e.experimentId !== experimentId));
       if (selectedExperiment?.experimentId === experimentId) {
         setSelectedExperiment(null);
       }
@@ -193,7 +191,7 @@ export default function ExperimentTestingPage() {
 
   // Toggle trial expansion
   const toggleTrialExpansion = (trialId: string) => {
-    setExpandedTrials(prev => {
+    setExpandedTrials((prev: Set<string>) => {
       const newSet = new Set(prev);
       if (newSet.has(trialId)) {
         newSet.delete(trialId);
@@ -303,7 +301,7 @@ export default function ExperimentTestingPage() {
             <label className="block text-sm font-medium mb-2">البرومبت الأساسي</label>
             <textarea
               value={promptInput}
-              onChange={(e) => setPromptInput(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPromptInput(e.target.value)}
               placeholder="أدخل البرومبت الذي تريد تحسينه..."
               className="w-full h-40 px-4 py-3 border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary"
               dir="auto"
@@ -326,7 +324,7 @@ export default function ExperimentTestingPage() {
                   min="1"
                   max="20"
                   value={config.maxIterations}
-                  onChange={(e) => setConfig({ ...config, maxIterations: parseInt(e.target.value) })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, maxIterations: parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border rounded-lg bg-background"
                 />
               </div>
@@ -339,7 +337,7 @@ export default function ExperimentTestingPage() {
                   min="2"
                   max="10"
                   value={config.populationSize}
-                  onChange={(e) => setConfig({ ...config, populationSize: parseInt(e.target.value) })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, populationSize: parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border rounded-lg bg-background"
                 />
               </div>
@@ -349,7 +347,7 @@ export default function ExperimentTestingPage() {
                 </label>
                 <select
                   value={config.acquisitionFunction}
-                  onChange={(e) => setConfig({ ...config, acquisitionFunction: e.target.value as any })}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setConfig({ ...config, acquisitionFunction: e.target.value as 'ucb' | 'ei' | 'poi' | 'thompson' })}
                   className="w-full px-3 py-2 border rounded-lg bg-background"
                 >
                   <option value="ucb">UCB (استكشاف متوازن)</option>
@@ -368,7 +366,7 @@ export default function ExperimentTestingPage() {
                   max="5"
                   step="0.1"
                   value={config.explorationWeight}
-                  onChange={(e) => setConfig({ ...config, explorationWeight: parseFloat(e.target.value) })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig({ ...config, explorationWeight: parseFloat(e.target.value) })}
                   className="w-full px-3 py-2 border rounded-lg bg-background"
                 />
               </div>
@@ -432,7 +430,7 @@ export default function ExperimentTestingPage() {
                 <p className="text-sm">ابدأ بتشغيل تجربة جديدة</p>
               </div>
             ) : (
-              experiments.map((exp) => (
+              experiments.map((exp: ExperimentResult) => (
                 <div
                   key={exp.experimentId}
                   onClick={() => setSelectedExperiment(exp)}
@@ -447,7 +445,7 @@ export default function ExperimentTestingPage() {
                       {exp.status === 'completed' ? 'مكتمل' : exp.status === 'early_stopped' ? 'توقف مبكر' : 'فشل'}
                     </span>
                     <button
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         deleteExperiment(exp.experimentId);
                       }}
@@ -548,7 +546,7 @@ export default function ExperimentTestingPage() {
                     فعالية الطفرات
                   </h3>
                   <div className="space-y-3">
-                    {Object.entries(selectedExperiment.summary.mutationEffectiveness)
+                    {(Object.entries(selectedExperiment.summary.mutationEffectiveness) as [string, number][])
                       .sort(([, a], [, b]) => b - a)
                       .map(([type, score]) => (
                         <div key={type} className="flex items-center gap-3">
@@ -576,7 +574,7 @@ export default function ExperimentTestingPage() {
                     سجل التجارب التفصيلي
                   </h3>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {selectedExperiment.trials.map((trial) => (
+                    {selectedExperiment.trials.map((trial: ExperimentTrial) => (
                       <div key={trial.id} className="border rounded-lg overflow-hidden">
                         <button
                           onClick={() => toggleTrialExpansion(trial.id)}

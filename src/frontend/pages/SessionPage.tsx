@@ -1,10 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import * as Y from 'yjs';
 import { useCollaborationStore } from '../store/collaborationStore';
-import { useAuthStore } from '../store/authStore';
 import { socketService } from '../services/socket';
-import { api } from '../services/api';
 import CollaborativeEditor from '../components/collaboration/CollaborativeEditor';
 import PresenceAvatars from '../components/collaboration/PresenceAvatars';
 import RemoteCursors from '../components/collaboration/RemoteCursors';
@@ -20,7 +17,6 @@ import {
   Loader2,
   Wifi,
   WifiOff,
-  Copy,
   Check,
 } from 'lucide-react';
 import { copyToClipboard, generateShareUrl } from '../lib/utils';
@@ -28,16 +24,13 @@ import { copyToClipboard, generateShareUrl } from '../lib/utils';
 export default function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const {
     currentSession,
     isConnected,
     isLoading,
     error,
     userRole,
-    presence,
     setLoading,
-    setError,
     reset,
   } = useCollaborationStore();
 
