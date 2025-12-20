@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import { analyzePrompt, detectVariables } from '../../services/analysisService';
@@ -18,12 +19,12 @@ export function PromptEditor() {
   } = useEditorStore();
 
   const editorRef = useRef<unknown>(null);
-  const analysisTimeoutRef = useRef<NodeJS.Timeout>();
+  const analysisTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const handleEditorMount: OnMount = (editor) => {
+  const handleEditorMount: OnMount = (editor: editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
 
-    editor.onDidChangeCursorPosition((e) => {
+    editor.onDidChangeCursorPosition((e: { position: { column: number; lineNumber: number } }) => {
       setCursorPosition(e.position.column + (e.position.lineNumber - 1) * 1000);
     });
 

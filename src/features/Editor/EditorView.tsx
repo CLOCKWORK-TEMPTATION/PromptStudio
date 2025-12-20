@@ -1,14 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Save,
   Share2,
   Download,
   Copy,
   Check,
-  Star,
-  StarOff,
-  MoreVertical,
-  Play,
   Tag,
 } from 'lucide-react';
 import { PromptEditor } from './PromptEditor';
@@ -35,7 +31,6 @@ export function EditorView() {
     tags,
     setTags,
     category,
-    setCategory,
     modelId,
     isDirty,
     setIsDirty,
@@ -59,7 +54,7 @@ export function EditorView() {
           content,
           tags,
           category,
-          model_id: modelId,
+          modelId,
         });
         setCurrentPrompt(updated);
       } else {
@@ -68,7 +63,7 @@ export function EditorView() {
           content,
           tags,
           category,
-          model_id: modelId,
+          modelId,
         });
         setCurrentPrompt(created);
       }
@@ -106,7 +101,7 @@ export function EditorView() {
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
+    setTags(tags.filter((t: string) => t !== tagToRemove));
   };
 
   useEffect(() => {
@@ -132,7 +127,7 @@ export function EditorView() {
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
               placeholder="Untitled Prompt"
               className={clsx(
                 'text-xl font-semibold bg-transparent border-none outline-none min-w-0 flex-1',
@@ -141,7 +136,7 @@ export function EditorView() {
             />
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              {tags.map((tag) => (
+              {tags.map((tag: string) => (
                 <span
                   key={tag}
                   className={clsx(
@@ -162,8 +157,8 @@ export function EditorView() {
                 <input
                   type="text"
                   value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === 'Enter') handleAddTag();
                     if (e.key === 'Escape') setShowTagInput(false);
                   }}

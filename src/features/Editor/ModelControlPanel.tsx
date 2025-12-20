@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Settings2,
   ChevronDown,
@@ -7,11 +7,9 @@ import {
   Gauge,
   Hash,
   Ban,
-  FileJson,
   Plus,
   X,
   Info,
-  Save,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
@@ -50,7 +48,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
   const handleRemoveStopSequence = (seq: string) => {
     updateCurrentModelConfig({
-      stopSequences: currentModelConfig.stopSequences.filter((s) => s !== seq),
+      stopSequences: currentModelConfig.stopSequences.filter((s: string) => s !== seq),
     });
   };
 
@@ -98,7 +96,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             </label>
             <select
               value={modelId}
-              onChange={(e) => setModelId(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setModelId(e.target.value)}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -116,9 +114,9 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               'mt-2 flex gap-4 text-xs',
               theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
             )}>
-              <span>Context: {selectedModel.context_window.toLocaleString()} tokens</span>
-              <span>Functions: {selectedModel.supports_functions ? 'Yes' : 'No'}</span>
-              <span>JSON Mode: {selectedModel.supports_json_mode ? 'Yes' : 'No'}</span>
+              <span>Context: {selectedModel.contextWindow.toLocaleString()} tokens</span>
+              <span>Functions: {selectedModel.supportsFunctions ? 'Yes' : 'No'}</span>
+              <span>JSON Mode: {selectedModel.supportsJsonMode ? 'Yes' : 'No'}</span>
             </div>
           </div>
 
@@ -232,9 +230,9 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             <input
               type="number"
               value={currentModelConfig.maxTokens}
-              onChange={(e) => updateCurrentModelConfig({ maxTokens: parseInt(e.target.value) || 2048 })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateCurrentModelConfig({ maxTokens: parseInt(e.target.value) || 2048 })}
               min={1}
-              max={selectedModel.context_window}
+              max={selectedModel.contextWindow}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -253,7 +251,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             </label>
             <select
               value={currentModelConfig.responseFormat}
-              onChange={(e) => updateCurrentModelConfig({ responseFormat: e.target.value as ModelConfig['response_format'] })}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateCurrentModelConfig({ responseFormat: e.target.value as ModelConfig['responseFormat'] })}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -278,7 +276,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               <input
                 type="text"
                 value={newStopSequence}
-                onChange={(e) => setNewStopSequence(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStopSequence(e.target.value)}
                 placeholder="Add stop sequence..."
                 className={clsx(
                   'flex-1 px-3 py-2 rounded-lg border transition-colors text-sm',
@@ -286,7 +284,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                 )}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddStopSequence()}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAddStopSequence()}
               />
               <button
                 onClick={handleAddStopSequence}
@@ -303,7 +301,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             </div>
             {currentModelConfig.stopSequences.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {currentModelConfig.stopSequences.map((seq, index) => (
+                {currentModelConfig.stopSequences.map((seq: string, index: number) => (
                   <span
                     key={index}
                     className={clsx(
@@ -402,7 +400,7 @@ function SliderControl({
       <input
         type="range"
         value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value))}
         min={min}
         max={max}
         step={step}
