@@ -573,7 +573,7 @@ function extractContent(body: any): string | null {
 
   // Check for hierarchical prompts
   if (body.hierarchicalPrompt) {
-    const parts = [];
+    const parts: string[] = [];
     if (body.hierarchicalPrompt.systemPrompt) parts.push(body.hierarchicalPrompt.systemPrompt);
     if (body.hierarchicalPrompt.processPrompt) parts.push(body.hierarchicalPrompt.processPrompt);
     if (body.hierarchicalPrompt.taskPrompt) parts.push(body.hierarchicalPrompt.taskPrompt);

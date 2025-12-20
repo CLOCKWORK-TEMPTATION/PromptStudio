@@ -516,3 +516,14 @@ class ReasoningHistoryServiceClass {
 
 // Singleton instance for use across the application
 export const ReasoningHistoryService = new ReasoningHistoryServiceClass();
+
+// Static wrapper class for backward compatibility
+export const ReasoningHistoryServiceStatic = {
+    createSession: ReasoningHistoryService.createSession.bind(ReasoningHistoryService),
+    completeSession: ReasoningHistoryService.completeSession.bind(ReasoningHistoryService),
+    storeComparison: ReasoningHistoryService.storeComparison.bind(ReasoningHistoryService),
+    getSession: ReasoningHistoryService.getSession.bind(ReasoningHistoryService),
+    getRecentSessions: ReasoningHistoryService.getRecentSessions.bind(ReasoningHistoryService),
+    getOverallStatistics: ReasoningHistoryService.getOverallStatistics.bind(ReasoningHistoryService),
+    getPromptStatistics: ReasoningHistoryService.getPromptStatistics.bind(ReasoningHistoryService),
+};

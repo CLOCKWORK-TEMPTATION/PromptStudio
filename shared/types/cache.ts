@@ -39,7 +39,7 @@ export interface SemanticCacheEntry {
   createdAt: string;
   expiresAt: string;
   lastAccessedAt: string;
-  userId?: string;
+  userId?: string | null;
   tags: CacheTag[];
 }
 

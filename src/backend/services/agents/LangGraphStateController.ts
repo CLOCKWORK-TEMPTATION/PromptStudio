@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { logger } from '../../lib/logger';
+import { logger } from '../../lib/logger.js';
 import { z } from 'zod';
 
 // State and transition schemas
@@ -19,40 +19,39 @@ const StateSchema = z.object({
     })
 });
 
-const TransitionSchema = z.object({
-    from: z.string(),
-    to: z.string(),
-    condition: z.function().optional(),
-    action: z.function().optional(),
-    metadata: z.record(z.any()).optional()
-});
-
-const GraphConfigSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    initialState: z.string(),
-    states: z.array(StateSchema),
-    transitions: z.array(TransitionSchema),
-    maxExecutionTime: z.number().default(300000), // 5 minutes
-    maxSteps: z.number().default(50)
-});
-
+// Manual type definitions for transitions since z.function() doesn't infer properly
 type State = z.infer<typeof StateSchema>;
-type Transition = z.infer<typeof TransitionSchema>;
-type GraphConfig = z.infer<typeof GraphConfigSchema>;
 
 export interface ExecutionContext {
     graphId: string;
     currentState: string;
-    data: Record<string, any>;
+    data: Record<string, unknown>;
     history: Array<{
         from: string;
         to: string;
         timestamp: Date;
-        data: Record<string, any>;
+        data: Record<string, unknown>;
     }>;
     startTime: Date;
     stepCount: number;
+}
+
+interface Transition {
+    from: string;
+    to: string;
+    condition?: (context: ExecutionContext) => boolean;
+    action?: (context: ExecutionContext) => Promise<Record<string, unknown>>;
+    metadata?: Record<string, unknown>;
+}
+
+interface GraphConfig {
+    id: string;
+    name: string;
+    initialState: string;
+    states: State[];
+    transitions: Transition[];
+    maxExecutionTime: number;
+    maxSteps: number;
 }
 
 export class LangGraphStateController extends EventEmitter {

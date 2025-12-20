@@ -92,7 +92,6 @@ export enum CollaborationEvent {
   COMMENT_REPLY = 'comment_reply',
   COMMENT_RESOLVE = 'comment_resolve',
 
-
   // Error events
   ERROR = 'error',
 }
