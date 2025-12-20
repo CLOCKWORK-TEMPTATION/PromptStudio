@@ -352,7 +352,8 @@ export class RedisClusterService {
             pipeline.call(cmd.command, ...(cmd.args as (string | number | Buffer)[]));
         }
 
-        return await pipeline.exec();
+        const result = await pipeline.exec();
+        return result || [];
     }
 
     /**

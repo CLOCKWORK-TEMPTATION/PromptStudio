@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { LLMServiceAdapter } from '../../services/LLMServiceAdapter.js';
 import { AnalysisService } from '../../services/analysisService.js';
-import { ReasoningHistoryService } from '../../services/ReasoningHistoryService.js';
+import { ReasoningHistoryServiceStatic as ReasoningHistoryService } from '../../services/ReasoningHistoryService.js';
 
 const router = Router();
 
