@@ -5,14 +5,12 @@ import {
   Plus,
   Trash2,
   Settings,
-  History,
   Brain,
   Database,
   CheckCircle,
   XCircle,
   Clock,
   ArrowRight,
-  ChevronDown,
   ChevronUp,
   Loader2,
   Sparkles,
@@ -93,7 +91,7 @@ export function PromptChainEditor({
   // State
   const [chainId, setChainId] = useState(initialChainId);
   const [chainName, setChainName] = useState('');
-  const [chainDescription, setChainDescription] = useState('');
+  const [chainDescription] = useState('');
   const [stages, setStages] = useState<ChainStage[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('standard');
   const [templates, setTemplates] = useState<PipelineTemplate[]>([]);
@@ -122,7 +120,7 @@ export function PromptChainEditor({
 
   // Apply template when selected
   useEffect(() => {
-    const template = templates.find((t) => t.type === selectedTemplate);
+    const template = templates.find((t: PipelineTemplate) => t.type === selectedTemplate);
     if (template) {
       applyTemplate(template);
     }
@@ -294,24 +292,24 @@ export function PromptChainEditor({
   };
 
   const handleRemoveStage = (stageId: string) => {
-    setStages(stages.filter((s) => s.id !== stageId));
+    setStages(stages.filter((s: ChainStage) => s.id !== stageId));
   };
 
   const handleUpdateStage = (stageId: string, updates: Partial<ChainStage>) => {
     setStages(
-      stages.map((s) => (s.id === stageId ? { ...s, ...updates } : s))
+      stages.map((s: ChainStage) => (s.id === stageId ? { ...s, ...updates } : s))
     );
   };
 
   const getStageStatus = (stageId: string): 'pending' | 'running' | 'success' | 'error' => {
     if (!executionResult) {
-      const stageIndex = stages.findIndex((s) => s.id === stageId);
+      const stageIndex = stages.findIndex((s: ChainStage) => s.id === stageId);
       if (isExecuting && stageIndex === currentStageIndex) return 'running';
       if (isExecuting && stageIndex < currentStageIndex) return 'success';
       return 'pending';
     }
 
-    const result = executionResult.stageResults.find((r) => r.stageId === stageId);
+    const result = executionResult.stageResults.find((r: StageResult) => r.stageId === stageId);
     if (!result) return 'pending';
     return executionResult.success ? 'success' : 'error';
   };
