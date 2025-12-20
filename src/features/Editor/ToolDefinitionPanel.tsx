@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Wrench,
   Plus,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
-import type { ToolDefinition, JSONSchema } from '../../types';
+import type { ToolDefinition } from '../../types';
 import clsx from 'clsx';
 
 export function ToolDefinitionPanel() {
@@ -124,7 +124,7 @@ export function ToolDefinitionPanel() {
             Add Tool Definition
           </button>
 
-          {toolDefinitions.map((tool) => (
+          {toolDefinitions.map((tool: ToolDefinition) => (
             <ToolCard
               key={tool.id}
               tool={tool}
@@ -242,7 +242,7 @@ function ToolCard({
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={(e) => { e.stopPropagation(); onSimulate(); }}
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onSimulate(); }}
             className={clsx(
               'p-1.5 rounded transition-colors',
               theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
@@ -252,7 +252,7 @@ function ToolCard({
             <Play className="w-4 h-4" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onCopy(); }}
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onCopy(); }}
             className={clsx(
               'p-1.5 rounded transition-colors',
               theme === 'dark' ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
@@ -262,7 +262,7 @@ function ToolCard({
             {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
             className={clsx(
               'p-1.5 rounded transition-colors',
               theme === 'dark' ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-gray-500 hover:text-red-600'
@@ -289,7 +289,7 @@ function ToolCard({
             <input
               type="text"
               value={tool.name}
-              onChange={(e) => onUpdate({ name: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ name: e.target.value })}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border font-mono text-sm',
                 theme === 'dark'
@@ -308,7 +308,7 @@ function ToolCard({
             </label>
             <textarea
               value={tool.description}
-              onChange={(e) => onUpdate({ description: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onUpdate({ description: e.target.value })}
               rows={2}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border text-sm resize-none',
@@ -328,7 +328,7 @@ function ToolCard({
             </label>
             <textarea
               value={JSON.stringify(tool.parameters, null, 2)}
-              onChange={(e) => handleParametersChange(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleParametersChange(e.target.value)}
               rows={6}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border font-mono text-sm resize-none',
@@ -348,7 +348,7 @@ function ToolCard({
             </label>
             <textarea
               value={JSON.stringify(tool.mockResponse, null, 2)}
-              onChange={(e) => handleMockResponseChange(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleMockResponseChange(e.target.value)}
               rows={4}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border font-mono text-sm resize-none',

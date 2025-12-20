@@ -304,11 +304,14 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
 export interface Prompt {
   id: string;
   content: string;
-  title?: string;
+  title: string;
   description?: string;
-  tags?: string[];
+  tags: string[];
   category?: string;
+  model_id?: string;
   modelConfig?: ModelConfig;
+  isFavorite?: boolean;
+  usageCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -317,7 +320,9 @@ export interface PromptVersion {
   id: string;
   promptId: string;
   version: number;
+  versionNumber?: number;
   content: string;
+  changeSummary?: string;
   createdAt: Date;
 }
 
@@ -358,6 +363,12 @@ export const TEMPLATE_CATEGORIES = [
 // Marketplace Types
 // ============================================================
 
+export interface MarketplacePromptVariable {
+  name: string;
+  type: string;
+  description: string;
+}
+
 export interface MarketplacePrompt {
   id: string;
   title: string;
@@ -366,6 +377,15 @@ export interface MarketplacePrompt {
   category: string;
   tags: string[];
   authorId: string;
+  authorName?: string;
+  isFeatured?: boolean;
+  isStaffPick?: boolean;
+  avgRating: number;
+  reviewCount: number;
+  viewCount: number;
+  cloneCount: number;
+  variables: MarketplacePromptVariable[];
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -424,14 +444,23 @@ export interface Token {
 // ============================================================
 
 export interface ToolDefinition {
+  id: string;
+  session_id?: string;
+  prompt_id?: string;
   name: string;
   description: string;
   parameters: JSONSchema;
+  returns?: JSONSchema;
+  mock_response?: unknown;
+  mockResponse?: unknown;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface JSONSchema {
   type: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   required?: string[];
 }
 

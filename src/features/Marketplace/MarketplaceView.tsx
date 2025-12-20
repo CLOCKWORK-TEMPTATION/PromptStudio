@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Store,
   Search,
@@ -6,25 +6,66 @@ import {
   Download,
   Eye,
   Filter,
-  TrendingUp,
-  Award,
   Clock,
   User,
-  ChevronDown,
   X,
   Copy,
   ExternalLink,
-  Heart,
-  MessageSquare,
-  AlertCircle,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
-import type { MarketplacePrompt, MarketplaceReview } from '../../types';
+import type { MarketplacePrompt, MarketplacePromptVariable } from '../../types';
+import { supabase } from '../../lib/supabase';
 import clsx from 'clsx';
 
 type SortOption = 'popular' | 'recent' | 'rating' | 'trending';
 type CategoryFilter = 'all' | 'coding' | 'writing' | 'analysis' | 'creative' | 'data' | 'business';
+
+const SAMPLE_PROMPTS: MarketplacePrompt[] = [
+  {
+    id: '1',
+    title: 'Code Review Assistant',
+    description: 'A comprehensive prompt for reviewing code quality, best practices, and potential improvements.',
+    content: 'Review the following code for:\n1. Code quality and readability\n2. Best practices\n3. Potential bugs\n4. Performance improvements\n\n{{code}}',
+    category: 'coding',
+    tags: ['code-review', 'best-practices', 'debugging'],
+    authorId: 'user1',
+    authorName: 'DevExpert',
+    isFeatured: true,
+    isStaffPick: false,
+    avgRating: 4.8,
+    reviewCount: 156,
+    viewCount: 2340,
+    cloneCount: 892,
+    variables: [{ name: 'code', type: 'string', description: 'The code to review' }],
+    modelRecommendation: 'GPT-4',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-03-20'),
+  },
+  {
+    id: '2',
+    title: 'Creative Story Writer',
+    description: 'Generate engaging stories with rich characters and plot development.',
+    content: 'Write a {{genre}} story about {{topic}}. Include vivid descriptions and engaging dialogue.',
+    category: 'creative',
+    tags: ['storytelling', 'creative-writing', 'fiction'],
+    authorId: 'user2',
+    authorName: 'StoryMaster',
+    isFeatured: false,
+    isStaffPick: true,
+    avgRating: 4.5,
+    reviewCount: 89,
+    viewCount: 1567,
+    cloneCount: 445,
+    variables: [
+      { name: 'genre', type: 'string', description: 'Story genre' },
+      { name: 'topic', type: 'string', description: 'Main topic or theme' },
+    ],
+    modelRecommendation: 'GPT-4',
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-03-18'),
+  },
+];
 
 export function MarketplaceView() {
   const { theme, setActiveView } = useAppStore();
@@ -35,16 +76,14 @@ export function MarketplaceView() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [selectedPrompt, setSelectedPrompt] = useState<MarketplacePrompt | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     loadMarketplacePrompts();
   }, []);
 
   const loadMarketplacePrompts = async () => {
-    setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('marketplace_prompts')
         .select('*')
         .eq('status', 'approved')
@@ -53,22 +92,22 @@ export function MarketplaceView() {
       if (data && data.length > 0) {
         setPrompts(data);
       }
-    } catch (err) {
+    } catch {
+      // Error handled silently
     }
-    setIsLoading(false);
   };
 
   const filteredPrompts = prompts
-    .filter((p) => {
+    .filter((p: MarketplacePrompt) => {
       const matchesSearch =
         searchQuery === '' ||
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        p.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
       return matchesSearch && matchesCategory;
     })
-    .sort((a, b) => {
+    .sort((a: MarketplacePrompt, b: MarketplacePrompt) => {
       switch (sortBy) {
         case 'popular':
           return b.cloneCount - a.cloneCount;
@@ -143,7 +182,7 @@ export function MarketplaceView() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               placeholder="Search prompts..."
               className={clsx(
                 'w-80 pl-10 pr-4 py-2 rounded-lg border text-sm transition-colors',
@@ -184,7 +223,7 @@ export function MarketplaceView() {
             <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>Sort by:</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as SortOption)}
               className={clsx(
                 'px-3 py-1.5 rounded-lg border text-sm',
                 theme === 'dark'
@@ -203,7 +242,7 @@ export function MarketplaceView() {
             <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>Category:</span>
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as CategoryFilter)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value as CategoryFilter)}
               className={clsx(
                 'px-3 py-1.5 rounded-lg border text-sm',
                 theme === 'dark'
@@ -225,7 +264,7 @@ export function MarketplaceView() {
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPrompts.map((prompt) => {
+          {filteredPrompts.map((prompt: MarketplacePrompt) => {
             const color = getCategoryColor(prompt.category);
 
             return (
@@ -295,7 +334,7 @@ export function MarketplaceView() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {prompt.tags.slice(0, 3).map((tag) => (
+                  {prompt.tags.slice(0, 3).map((tag: string) => (
                     <span
                       key={tag}
                       className={clsx(
@@ -443,7 +482,7 @@ export function MarketplaceView() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {selectedPrompt.tags.map((tag) => (
+                {selectedPrompt.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className={clsx(
@@ -483,7 +522,7 @@ export function MarketplaceView() {
                     Variables
                   </h3>
                   <div className="space-y-2">
-                    {selectedPrompt.variables.map((v) => (
+                    {selectedPrompt.variables.map((v: MarketplacePromptVariable) => (
                       <div
                         key={v.name}
                         className={clsx(
