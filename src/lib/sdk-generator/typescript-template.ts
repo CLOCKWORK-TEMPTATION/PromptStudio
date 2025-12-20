@@ -8,7 +8,7 @@ import axios from 'axios';
 
 export async function {{functionName}}(input: string, apiKey: string): Promise<string> {
   const url = 'https://api.promptstudio.ai/v1/execute';
-  const headers = { Authorization: `Bearer ${apiKey}` };
+  const headers = { Authorization: \`Bearer \${apiKey}\` };
   const data = { prompt: input };
   const response = await axios.post(url, data, { headers });
   return response.data.result || '';

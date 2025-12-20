@@ -1,4 +1,4 @@
-
+import { PromptConfig, SDKGenerationOptions, GeneratedSDK } from '@/types';
 import { generatePythonSDKTemplate } from './python-template';
 import { generateTypeScriptSDKTemplate } from './typescript-template';
 

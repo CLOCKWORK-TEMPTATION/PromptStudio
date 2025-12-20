@@ -342,4 +342,16 @@ export class MarketplaceService {
   }
 
   // Get marketplace statistics
-
+  static async getMarketplaceStats() {
+    const totalPrompts = await prisma.marketplacePrompt.count({
+      where: { status: 'approved' }
+    });
+    
+    const totalReviews = await prisma.marketplaceReview.count();
+    
+    return {
+      totalPrompts,
+      totalReviews
+    };
+  }
+}
