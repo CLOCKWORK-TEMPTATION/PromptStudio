@@ -93,7 +93,7 @@ export interface PromptVariable {
 // ============================================================
 
 export interface SDKGenerationOptions {
-  language: 'python' | 'typescript';
+  language: 'python' | 'typescript' | 'curl';
   asyncMode: boolean;
   includeRetryLogic: boolean;
   includeErrorHandling: boolean;
@@ -107,7 +107,7 @@ export interface SDKGenerationOptions {
 }
 
 export interface GeneratedSDK {
-  language: 'python' | 'typescript';
+  language: 'python' | 'typescript' | 'curl';
   code: string;
   types?: string;
   filename: string;

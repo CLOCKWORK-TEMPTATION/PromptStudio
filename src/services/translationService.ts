@@ -9,7 +9,7 @@ export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   { code: 'zh', name: 'Chinese', nativeName: '中文', direction: 'ltr', flag: '🇨🇳' },
 ];
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const culturalAdaptations: Record<Language, Record<string, string[]>> = {
   ar: {
