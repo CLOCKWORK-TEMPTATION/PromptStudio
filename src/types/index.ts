@@ -399,16 +399,30 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
 // Template & Technique Types
 // ============================================================
 
-export const TEMPLATE_CATEGORIES = [
-  'Content Creation',
-  'Code Generation',
-  'Data Analysis',
-  'Creative Writing',
-  'Business',
-  'Education',
-  'Research',
-  'Other'
-] as const;
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  defaultValue?: string;
+  required?: boolean;
+}
+
+export interface TemplateCategory {
+  id: string;
+  name: string;
+}
+
+export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
+  { id: 'coding', name: 'Code Generation' },
+  { id: 'writing', name: 'Content Creation' },
+  { id: 'analysis', name: 'Data Analysis' },
+  { id: 'creative', name: 'Creative Writing' },
+  { id: 'data', name: 'Data Processing' },
+  { id: 'business', name: 'Business' },
+  { id: 'customer-service', name: 'Customer Service' },
+  { id: 'education', name: 'Education' },
+  { id: 'research', name: 'Research' },
+  { id: 'other', name: 'Other' },
+];
 
 export interface MarketplacePrompt {
   id: string;
@@ -469,7 +483,7 @@ export interface Template {
   variables: TemplateVariable[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   usageCount: number;
-  modelRecommendation: string;
+  modelRecommendation?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -42,7 +42,7 @@ type Comparison = z.infer<typeof ComparisonSchema>;
 
 type Session = z.infer<typeof SessionSchema>;
 
-export class ReasoningHistoryService {
+class ReasoningHistoryServiceClass {
     private sessions: Map<string, Session> = new Map();
     private comparisons: Map<string, Comparison> = new Map();
     private maxSessions: number = 1000;
@@ -513,3 +513,6 @@ export class ReasoningHistoryService {
         };
     }
 }
+
+// Singleton instance for use across the application
+export const ReasoningHistoryService = new ReasoningHistoryServiceClass();
