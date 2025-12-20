@@ -183,8 +183,8 @@ Evaluate this reasoning path.`,
 
     const openai = new OpenAI({ apiKey: config.openai.apiKey });
 
-    const evaluationsSummary = allEvaluations.map(evaluation =>
-      `${evaluation.pathId}: Score ${evaluation.score.toFixed(2)} - ${evaluation.reasoning}`
+    const evaluationsSummary = allEvaluations.map(evalItem =>
+      `${evalItem.pathId}: Score ${evalItem.score.toFixed(2)} - ${evalItem.reasoning}`
     ).join('\n');
 
     const response = await openai.chat.completions.create({
