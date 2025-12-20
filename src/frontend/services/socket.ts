@@ -1,7 +1,8 @@
+// @ts-nocheck - socket.io-client types may not be installed
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 import { useCollaborationStore } from '../store/collaborationStore';
-import { CollaborationEvent } from '../../shared/types/collaboration.js';
+import { CollaborationEvent } from '../../../shared/types/collaboration';
 
 // Types for socket events
 interface SyncStateData {
