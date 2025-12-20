@@ -1,8 +1,72 @@
 import { io, Socket } from 'socket.io-client';
-import * as Y from 'yjs';
 import { useAuthStore } from '../store/authStore';
 import { useCollaborationStore } from '../store/collaborationStore';
 import { CollaborationEvent } from '../../shared/types/collaboration.js';
+
+// Types for socket events
+interface SyncStateData {
+  session: unknown;
+  state: ArrayBuffer;
+  presence: unknown[];
+  role: string;
+}
+
+interface UserJoinedData {
+  userId: string;
+  user: { name: string };
+  userName?: string;
+}
+
+interface UserLeftData {
+  userId: string;
+  userName: string;
+}
+
+interface EditOperationData {
+  update: ArrayBuffer;
+}
+
+interface CursorUpdateData {
+  userId: string;
+  userName: string;
+  userColor: string;
+  cursor: {
+    x: number;
+    y: number;
+    selection?: { start: number; end: number };
+  };
+}
+
+interface PresenceUpdateData {
+  presence: unknown[];
+}
+
+interface TypingData {
+  userId: string;
+  isTyping: boolean;
+}
+
+interface CommentData {
+  comment?: unknown;
+  commentId?: string;
+  content?: string;
+  resolved?: boolean;
+  updatedAt?: string;
+  comments?: unknown[];
+}
+
+interface PermissionData {
+  userId: string;
+  newRole: string;
+}
+
+interface ErrorData {
+  message: string;
+}
+
+interface PresenceItem {
+  userId: string;
+}
 
 class SocketService {
   private socket: Socket | null = null;
@@ -43,19 +107,19 @@ class SocketService {
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', (reason: string) => {
       console.log('🔌 Disconnected:', reason);
       store.setConnected(false);
     });
 
-    this.socket.on('connect_error', (error) => {
+    this.socket.on('connect_error', (error: Error) => {
       console.error('Connection error:', error);
       store.setError('Connection failed');
       this.reconnectAttempts++;
     });
 
     // Collaboration events
-    this.socket.on(CollaborationEvent.SYNC_STATE, (data) => {
+    this.socket.on(CollaborationEvent.SYNC_STATE, (data: SyncStateData) => {
       console.log('📥 Received sync state');
       const { session, state, presence, role } = data;
 
@@ -68,11 +132,11 @@ class SocketService {
       }
     });
 
-    this.socket.on(CollaborationEvent.USER_JOINED, (data) => {
+    this.socket.on(CollaborationEvent.USER_JOINED, (data: UserJoinedData) => {
       console.log('👤 User joined:', data.user?.name);
       // Update presence list
       const currentPresence = useCollaborationStore.getState().presence;
-      if (data.user && !currentPresence.find(p => p.userId === data.userId)) {
+      if (data.user && !currentPresence.find((p: PresenceItem) => p.userId === data.userId)) {
         store.setPresence([
           ...currentPresence,
           {
@@ -85,21 +149,21 @@ class SocketService {
       }
     });
 
-    this.socket.on(CollaborationEvent.USER_LEFT, (data) => {
+    this.socket.on(CollaborationEvent.USER_LEFT, (data: UserLeftData) => {
       console.log('👤 User left:', data.userName);
       const currentPresence = useCollaborationStore.getState().presence;
-      store.setPresence(currentPresence.filter(p => p.userId !== data.userId));
+      store.setPresence(currentPresence.filter((p: PresenceItem) => p.userId !== data.userId));
       store.removeCursor(data.userId);
     });
 
     // Edit events
-    this.socket.on(CollaborationEvent.EDIT_OPERATION, (data) => {
+    this.socket.on(CollaborationEvent.EDIT_OPERATION, (data: EditOperationData) => {
       const { update } = data;
       store.applyUpdate(new Uint8Array(update));
     });
 
     // Cursor events
-    this.socket.on(CollaborationEvent.CURSOR_UPDATE, (data) => {
+    this.socket.on(CollaborationEvent.CURSOR_UPDATE, (data: CursorUpdateData) => {
       const { userId, userName, userColor, cursor } = data;
       store.updateCursor({
         userId,
@@ -112,21 +176,21 @@ class SocketService {
     });
 
     // Presence events
-    this.socket.on(CollaborationEvent.PRESENCE_UPDATE, (data) => {
+    this.socket.on(CollaborationEvent.PRESENCE_UPDATE, (data: PresenceUpdateData) => {
       store.setPresence(data.presence || []);
     });
 
     // Typing events
-    this.socket.on('user_typing', (data) => {
+    this.socket.on('user_typing', (data: TypingData) => {
       store.setTypingUser(data.userId, data.isTyping);
     });
 
     // Comment events
-    this.socket.on(CollaborationEvent.COMMENT_ADD, (data) => {
+    this.socket.on(CollaborationEvent.COMMENT_ADD, (data: CommentData) => {
       store.addComment(data.comment);
     });
 
-    this.socket.on(CollaborationEvent.COMMENT_UPDATE, (data) => {
+    this.socket.on(CollaborationEvent.COMMENT_UPDATE, (data: CommentData) => {
       store.updateComment(data.commentId, {
         content: data.content,
         resolved: data.resolved,
@@ -134,16 +198,16 @@ class SocketService {
       });
     });
 
-    this.socket.on(CollaborationEvent.COMMENT_DELETE, (data) => {
+    this.socket.on(CollaborationEvent.COMMENT_DELETE, (data: CommentData) => {
       store.removeComment(data.commentId);
     });
 
-    this.socket.on('comments_list', (data) => {
+    this.socket.on('comments_list', (data: CommentData) => {
       store.setComments(data.comments || []);
     });
 
     // Permission events
-    this.socket.on(CollaborationEvent.PERMISSION_CHANGE, (data) => {
+    this.socket.on(CollaborationEvent.PERMISSION_CHANGE, (data: PermissionData) => {
       const currentUser = useAuthStore.getState().user;
       if (data.userId === currentUser?.id) {
         store.setUserRole(data.newRole);
@@ -151,7 +215,7 @@ class SocketService {
     });
 
     // Error events
-    this.socket.on(CollaborationEvent.ERROR, (data) => {
+    this.socket.on(CollaborationEvent.ERROR, (data: ErrorData) => {
       console.error('Socket error:', data);
       store.setError(data.message);
     });

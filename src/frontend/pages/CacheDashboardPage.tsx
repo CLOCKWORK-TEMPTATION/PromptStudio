@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCacheStore } from '../store/cacheStore';
+import type { SemanticCacheEntry, CacheTag } from '../../shared/types/cache.js';
 import {
   Database,
   Settings,
@@ -19,8 +20,6 @@ import {
 } from 'lucide-react';
 import { formatDateTime, formatRelativeTime, formatNumber, formatCurrency, truncate } from '../lib/utils';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -91,7 +90,7 @@ export default function CacheDashboardPage() {
     if (!invalidateValue.trim()) return;
 
     if (invalidateType === 'tag') {
-      await invalidateByTags(invalidateValue.split(',').map(t => t.trim()));
+      await invalidateByTags(invalidateValue.split(',').map((t: string) => t.trim()));
     } else {
       await invalidateByPattern(invalidateValue);
     }
@@ -111,7 +110,7 @@ export default function CacheDashboardPage() {
   };
 
   const filteredEntries = entries.filter(
-    entry =>
+    (entry: SemanticCacheEntry) =>
       entry.prompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.response.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -245,11 +244,11 @@ export default function CacheDashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="date"
-                      tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      tickFormatter={(date: string) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     />
                     <YAxis />
                     <Tooltip
-                      labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                      labelFormatter={(date: string) => new Date(date).toLocaleDateString()}
                     />
                     <Area
                       type="monotone"
@@ -281,7 +280,7 @@ export default function CacheDashboardPage() {
                 Top Tags
               </h3>
               <div className="flex flex-wrap gap-2">
-                {analytics.topTags.map((tag) => (
+                {analytics.topTags.map((tag: { tag: string; count: number }) => (
                   <span
                     key={tag.tag}
                     className="px-3 py-1 bg-muted rounded-full text-sm"
@@ -305,7 +304,7 @@ export default function CacheDashboardPage() {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 placeholder="Search prompts and responses..."
                 className="w-full pl-10 pr-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
               />
@@ -339,7 +338,7 @@ export default function CacheDashboardPage() {
                 No cache entries found
               </div>
             ) : (
-              filteredEntries.map((entry) => (
+              filteredEntries.map((entry: SemanticCacheEntry) => (
                 <div key={entry.id} className="p-4">
                   <div
                     className="flex items-start justify-between cursor-pointer"
@@ -361,7 +360,7 @@ export default function CacheDashboardPage() {
                       </p>
                       {entry.tags.length > 0 && (
                         <div className="flex gap-1 mt-2">
-                          {entry.tags.map((tag) => (
+                          {entry.tags.map((tag: CacheTag) => (
                             <span
                               key={tag.id}
                               className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
@@ -374,7 +373,7 @@ export default function CacheDashboardPage() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       <button
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
                           if (confirm('Delete this cache entry?')) {
                             deleteEntry(entry.id);
@@ -500,7 +499,7 @@ export default function CacheDashboardPage() {
                 max="1"
                 step="0.01"
                 value={localConfig.similarityThreshold}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setLocalConfig({
                     ...localConfig,
                     similarityThreshold: parseFloat(e.target.value),
@@ -523,7 +522,7 @@ export default function CacheDashboardPage() {
               <input
                 type="number"
                 value={localConfig.defaultTTLSeconds}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setLocalConfig({
                     ...localConfig,
                     defaultTTLSeconds: parseInt(e.target.value) || 3600,
@@ -546,7 +545,7 @@ export default function CacheDashboardPage() {
               <input
                 type="number"
                 value={localConfig.maxCacheSize}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setLocalConfig({
                     ...localConfig,
                     maxCacheSize: parseInt(e.target.value) || 10000,
@@ -600,7 +599,7 @@ export default function CacheDashboardPage() {
               <input
                 type="text"
                 value={invalidateValue}
-                onChange={(e) => setInvalidateValue(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInvalidateValue(e.target.value)}
                 placeholder={
                   invalidateType === 'tag'
                     ? 'Enter tags (comma-separated)'
