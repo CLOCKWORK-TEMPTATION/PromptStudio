@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslationStore } from './store/translationStore';
 import {
-  translateToMultipleLanguages,
+  translateMultiple,
   SUPPORTED_LANGUAGES,
 } from './services/translationService';
 import { TranslationResult } from './types';
@@ -65,14 +65,14 @@ function App() {
 
     setIsTranslating(true);
     try {
-      const results = await translateToMultipleLanguages(
+      const results = await translateMultiple(
         sourceText,
         sourceLanguage,
         targetLanguages,
         culturalContext
       );
       setCurrentTranslations(results);
-      results.forEach((result) => addToHistory(result));
+      results.forEach((result: TranslationResult) => addToHistory(result));
     } catch (error) {
       console.error('Translation error:', error);
     } finally {

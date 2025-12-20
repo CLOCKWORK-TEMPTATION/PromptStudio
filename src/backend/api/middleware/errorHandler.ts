@@ -6,25 +6,62 @@ export interface AppError extends Error {
   details?: unknown;
 }
 
+import { ZodError } from 'zod';
+
 export function errorHandler(
-  err: AppError,
+  err: AppError | ZodError | Error,
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
-  console.error('Error:', err);
+  // If headers already sent, delegate to default Express handler
+  if (res.headersSent) {
+    return next(err);
+  }
 
-  const statusCode = err.statusCode || 500;
-  const code = err.code || 'INTERNAL_ERROR';
-  const message = err.message || 'An unexpected error occurred';
+  console.error('Error:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
 
-  res.status(statusCode).json({
+  // Handle Zod Validation Errors (if not caught by middleware)
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: err.errors.map(e => ({
+          path: e.path.join('.'),
+          message: e.message
+        }))
+      },
+    });
+    return;
+  }
+
+  // Handle AppError
+  if ('statusCode' in err && err.statusCode) {
+    res.status(err.statusCode).json({
+      success: false,
+      error: {
+        code: (err as AppError).code || 'ERROR',
+        message: err.message,
+        details: process.env.NODE_ENV === 'development' ? (err as AppError).details : undefined,
+      },
+    });
+    return;
+  }
+
+  // Handle Generic Errors
+  res.status(500).json({
     success: false,
     error: {
-      code,
-      message,
-      details: process.env.NODE_ENV === 'development' ? err.details : undefined,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'An unexpected error occurred',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined,
     },
   });
 }

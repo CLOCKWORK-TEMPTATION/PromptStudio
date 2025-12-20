@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import prisma from '../../lib/prisma.js';
 import { config } from '../../config/index.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { LoginSchema, RegisterSchema, UpdateProfileSchema } from '../../schemas/auth.js';
 
 const router = Router();
 
@@ -17,17 +19,10 @@ function generateColor(): string {
 }
 
 // Register
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', validate(RegisterSchema), async (req: Request, res: Response) => {
   try {
-    const { email, name, password } = req.body;
-
-    if (!email || !name) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Email and name are required' },
-      });
-      return;
-    }
+    const { email, name } = req.body;
+    // Note: Password hashing and storage should be implemented here. Currently missing in original code.
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -89,17 +84,9 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // Login (simplified - in production use proper password hashing)
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', validate(LoginSchema), async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Email is required' },
-      });
-      return;
-    }
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -188,7 +175,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // Update profile
-router.patch('/me', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/me', authMiddleware, validate(UpdateProfileSchema), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { name, avatar, color } = req.body;

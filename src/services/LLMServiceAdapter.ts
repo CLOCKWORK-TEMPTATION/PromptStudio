@@ -1,11 +1,10 @@
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 
 export class LLMServiceAdapter {
-  private openai: OpenAIApi;
+  private openai: OpenAI;
 
   constructor(apiKey: string) {
-    const configuration = new Configuration({ apiKey });
-    this.openai = new OpenAIApi(configuration);
+    this.openai = new OpenAI({ apiKey });
   }
 
   async translate({
@@ -26,7 +25,7 @@ export class LLMServiceAdapter {
       const cached = await cache(cacheKey);
       if (cached) return cached;
     }
-    const completion = await this.openai.createChatCompletion({
+    const completion = await this.openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -35,7 +34,7 @@ export class LLMServiceAdapter {
       temperature: 0.2,
       max_tokens: 512,
     });
-    const result = completion.data.choices[0]?.message?.content?.trim() || '';
+    const result = completion.choices[0]?.message?.content?.trim() || '';
     if (cache) await cache(cacheKey, result);
     return result;
   }

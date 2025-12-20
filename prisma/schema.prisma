@@ -6,6 +6,190 @@ datasource db {
   provider = "postgresql"
 }
 
+// Multi-Tenant Support
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?  @unique
+  apiKey    String   @unique @default(uuid())
+  config    Json     @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users                 User[]
+  roles                 Role[]
+  auditLogs             AuditLog[]
+  webhooks              Webhook[]
+  operationalMetrics    OperationalMetrics[]
+  requestSignatures     RequestSignature[]
+  collaborationSessions CollaborationSession[]
+  marketplacePrompts    MarketplacePrompt[]
+
+  @@index([domain])
+  @@index([isActive])
+}
+
+// RBAC System
+model Role {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  tenantId    String?
+  isSystem    Boolean  @default(false) // System roles cannot be deleted
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant      Tenant?          @relation(fields: [tenantId], references: [id])
+  userRoles   UserRole[]
+  permissions RolePermission[]
+
+  @@unique([name, tenantId])
+  @@index([tenantId])
+  @@index([isActive])
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  resource    String // e.g., "prompts", "sessions", "marketplace"
+  action      String // e.g., "create", "read", "update", "delete", "publish"
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  id           String @id @default(uuid())
+  roleId       String
+  permissionId String
+
+  // Relations
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+// Audit Logging
+model AuditLog {
+  id           String   @id @default(uuid())
+  tenantId     String?
+  userId       String?
+  action       String // e.g., "CREATE", "UPDATE", "DELETE", "LOGIN"
+  resource     String // e.g., "user", "prompt", "session"
+  resourceId   String?
+  details      Json     @default("{}")
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+  success      Boolean  @default(true)
+  errorMessage String?
+
+  // Relations
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([timestamp])
+  @@index([tenantId, timestamp])
+  @@index([tenantId, action])
+  @@index([tenantId, resource])
+  @@index([userId, timestamp])
+}
+
+// Webhooks
+model Webhook {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  url       String
+  secret    String // For signature verification
+  events    String[] // Array of events to trigger on
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([isActive])
+}
+
+// Performance and Partitioning Indexes
+// Multi-tenant query optimization
+
+// Operational Analytics
+model OperationalMetrics {
+  id         String   @id @default(uuid())
+  tenantId   String?
+  date       DateTime @db.Date
+  metricType String // "usage", "cost", "quality", "reliability"
+  metricName String
+  value      Float
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  // Relations
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, date, metricType, metricName])
+  @@index([tenantId])
+  @@index([date])
+  @@index([metricType])
+  @@index([tenantId, date, metricType])
+  @@index([tenantId, metricType, date])
+}
+
+// Request Signing
+model RequestSignature {
+  id        String    @id @default(uuid())
+  userId    String?
+  tenantId  String?
+  signature String
+  timestamp DateTime
+  expiresAt DateTime
+  usedAt    DateTime?
+  isValid   Boolean   @default(true)
+
+  // Relations
+  user   User?   @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([signature])
+  @@index([expiresAt])
+}
+
 // User model
 model User {
   id        String   @id @default(uuid())
@@ -13,6 +197,7 @@ model User {
   name      String
   avatar    String?
   color     String   @default("#3B82F6")
+  tenantId  String? // For multi-tenancy
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -24,6 +209,14 @@ model User {
   cacheEntries       SemanticCache[]
   marketplacePrompts MarketplacePrompt[]
   marketplaceReviews MarketplaceReview[]
+  userRoles          UserRole[]
+  auditLogs          AuditLog[]
+  tenant             Tenant?                @relation(fields: [tenantId], references: [id])
+  requestSignatures  RequestSignature[]
+
+  // Performance indexes for multi-tenant queries
+  @@index([tenantId, updatedAt])
+  @@index([email, tenantId])
 }
 
 // Collaboration Session
@@ -34,6 +227,7 @@ model CollaborationSession {
   content     String   @default("")
   isActive    Boolean  @default(true)
   shareToken  String   @unique @default(uuid())
+  tenantId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -46,9 +240,14 @@ model CollaborationSession {
   editHistory EditHistory[]
   comments    Comment[]
   snapshots   SessionSnapshot[]
+  tenant      Tenant?           @relation(fields: [tenantId], references: [id])
 
   @@index([ownerId])
   @@index([shareToken])
+  @@index([tenantId])
+  @@index([tenantId, ownerId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, isActive])
 }
 
 // Session Members with permissions
@@ -177,6 +376,9 @@ model CacheStatistics {
   @@unique([date])
 }
 
+// Partitioning and Performance Indexes
+// Add composite indexes for better query performance
+
 // Cache Configuration
 model CacheConfig {
   id                  String  @id @default(uuid())
@@ -198,6 +400,7 @@ model MarketplacePrompt {
   authorName  String  @default("Anonymous")
   title       String
   description String
+  tenantId    String?
   content     String
 
   // Hierarchical Prompt Structure
@@ -248,6 +451,7 @@ model MarketplacePrompt {
   reviews        MarketplaceReview[]
   promptVersions PromptVersion[]
   promptChains   PromptChain[]
+  tenant         Tenant?             @relation(fields: [tenantId], references: [id])
 
   @@index([status])
   @@index([category])
@@ -255,6 +459,11 @@ model MarketplacePrompt {
   @@index([avgRating])
   @@index([persona])
   @@index([domain])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+  @@index([tenantId, avgRating])
+  @@index([tenantId, createdAt])
 }
 
 // Prompt Version for Self-Refinement History

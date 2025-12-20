@@ -17,10 +17,10 @@ import {
   Menu,
   X,
 } from 'lucide-react';
-import { usePromptStudioStore } from '@/store';
-import { SDKGenerator } from '@/components/SDKGenerator';
-import { CloudDeployment } from '@/components/CloudDeployment';
-import { PromptEditor } from '@/components/PromptEditor';
+import { usePromptStudioStore } from '../store';
+import { SDKGenerator } from '../components/SDKGenerator';
+import { CloudDeployment } from '../components/CloudDeployment';
+import { PromptEditor } from '../components/PromptEditor';
 
 type Tab = 'editor' | 'sdk' | 'deploy';
 

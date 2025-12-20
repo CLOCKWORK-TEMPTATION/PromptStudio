@@ -1,14 +1,14 @@
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 
 const apiKey = process.env.OPENAI_API_KEY || '';
-const openai = new OpenAIApi(new Configuration({ apiKey }));
+const openai = new OpenAI({ apiKey });
 
 export async function createEmbedding(text: string): Promise<number[]> {
-  const res = await openai.createEmbedding({
+  const res = await openai.embeddings.create({
     model: 'text-embedding-ada-002',
     input: text,
   });
-  return res.data.data[0].embedding;
+  return res.data[0].embedding;
 }
 
 export function cosineSimilarity(a: number[], b: number[]): number {

@@ -15,8 +15,11 @@ import chainRoutes from './api/routes/chains.js';
 import reasoningRoutes from './api/routes/reasoning.js';
 import refinementRoutes from './api/routes/refinement.js';
 import predictionRoutes from './api/routes/prediction.js';
+import qualityRoutes from './api/routes/quality.js';
+import agentsRoutes from './api/routes/agents';
 import { errorHandler } from './api/middleware/errorHandler.js';
 import { authMiddleware } from './api/middleware/auth.js';
+import { healthCheckService, requestTrackingMiddleware } from './services/HealthCheckService.js';
 
 dotenv.config();
 
@@ -40,10 +43,19 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(requestTrackingMiddleware);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check endpoint (before auth middleware)
+app.get('/health', (req, res) => healthCheckService.healthCheckHandler(req, res));
+
+// Simple status endpoint
+app.get('/status', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // API Routes
@@ -57,6 +69,8 @@ app.use('/api/chains', chainRoutes);
 app.use('/api/reasoning', reasoningRoutes);
 app.use('/api/refinement', refinementRoutes);
 app.use('/api/prediction', predictionRoutes);
+app.use('/api/quality', qualityRoutes);
+app.use('/api/agents', agentsRoutes);
 
 // Error handler
 app.use(errorHandler);
@@ -64,13 +78,68 @@ app.use(errorHandler);
 // Setup WebSocket handlers
 setupWebSocket(io);
 
+// Track WebSocket connections
+io.on('connection', (socket) => {
+  const connectionCount = io.engine.clientsCount;
+  healthCheckService.setActiveConnections(connectionCount);
+  
+  socket.on('disconnect', () => {
+    const connectionCount = io.engine.clientsCount;
+    healthCheckService.setActiveConnections(connectionCount);
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 
 httpServer.listen(PORT, () => {
   console.log(`🚀 PromptStudio Backend running on port ${PORT}`);
   console.log(`📡 WebSocket server ready`);
+  console.log(`🤖 Agent Orchestration System: ACTIVE`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔍 Health check: http://localhost:${PORT}/health`);
+  console.log(`📊 Status: http://localhost:${PORT}/status`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  
+  // Close HTTP server
+  httpServer.close(() => {
+    console.log('✅ HTTP server closed');
+  });
+  
+  // Close WebSocket server
+  io.close(() => {
+    console.log('✅ WebSocket server closed');
+  });
+  
+  // Cleanup health check service
+  await healthCheckService.cleanup();
+  console.log('✅ Health check service cleaned up');
+  
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  
+  // Close HTTP server
+  httpServer.close(() => {
+    console.log('✅ HTTP server closed');
+  });
+  
+  // Close WebSocket server
+  io.close(() => {
+    console.log('✅ WebSocket server closed');
+  });
+  
+  // Cleanup health check service
+  await healthCheckService.cleanup();
+  console.log('✅ Health check service cleaned up');
+  
+  process.exit(0);
 });
 
 export { io };

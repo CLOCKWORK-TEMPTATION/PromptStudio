@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { PromptConfig, SDKGenerationOptions, DeploymentConfig, CloudProvider, GeneratedSDK, DeploymentStatus } from '@/types';
+import { PromptConfig, SDKGenerationOptions, DeploymentConfig, CloudProvider, GeneratedSDK, DeploymentStatus } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PromptStudioState {

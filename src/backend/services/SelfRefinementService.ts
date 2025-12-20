@@ -1,507 +1,318 @@
-import OpenAI from 'openai';
-import { config } from '../config/index.js';
-import prisma from '../lib/prisma.js';
-import {
-  OutputEvaluationService,
-  EvaluationResult,
-  RefinementSuggestion,
-} from './OutputEvaluationService.js';
-import { PromptService, HierarchicalPrompt } from './PromptService.js';
+import { z } from 'zod';
+import { qualityEvaluationService } from './QualityEvaluationService';
+import { automaticPromptOptimizer } from './AutomaticPromptOptimizer';
 
-export interface RefinementConfig {
-  maxIterations: number;
-  targetScore: number;
-  autoApply: boolean;
-  preserveIntent: boolean;
-  evaluateSafety: boolean;
-  evaluateStyle: boolean;
-  evaluateAccuracy: boolean;
-}
+const RefinementSuggestionSchema = z.object({
+  id: z.string(),
+  prompt_id: z.string(),
+  current_version: z.number(),
+  suggested_content: z.string(),
+  justification: z.string(),
+  expected_improvements: z.array(z.string()),
+  confidence_score: z.number().min(0).max(1),
+  metrics_before: z.object({
+    overall_score: z.number(),
+    relevance: z.number(),
+    coherence: z.number(),
+    groundedness: z.number()
+  }),
+  metrics_after: z.object({
+    overall_score: z.number(),
+    relevance: z.number(),
+    coherence: z.number(),
+    groundedness: z.number()
+  }).optional(),
+  status: z.enum(['pending', 'approved', 'rejected', 'testing']),
+  created_at: z.date(),
+  tested_at: z.date().optional()
+});
 
-export interface RefinementIteration {
-  iteration: number;
-  originalPrompt: string;
-  refinedPrompt: string;
-  evaluation: EvaluationResult;
-  appliedSuggestions: RefinementSuggestion[];
-  improvementDelta: number;
-  timestamp: Date;
-}
-
-export interface RefinementResult {
-  success: boolean;
-  originalPrompt: string;
-  finalPrompt: string;
-  iterations: RefinementIteration[];
-  totalImprovement: number;
-  finalScore: number;
-  versionId?: string;
-  executionTimeMs: number;
-}
-
-export interface RefinementHistoryEntry {
-  id: string;
-  promptId: string;
-  version: number;
-  originalContent: string;
-  refinedContent: string;
-  originalScore: number;
-  refinedScore: number;
-  refinementReason: string;
-  appliedSuggestions: RefinementSuggestion[];
-  createdAt: Date;
-}
+export type RefinementSuggestion = z.infer<typeof RefinementSuggestionSchema>;
 
 export class SelfRefinementService {
-  private static openai: OpenAI | null = null;
+  private refinementHistory: Map<string, RefinementSuggestion[]> = new Map();
+  private activeRefinements: Map<string, NodeJS.Timeout> = new Map();
 
-  private static getOpenAI(): OpenAI {
-    if (!this.openai) {
-      if (!config.openai.apiKey) {
-        throw new Error('OPENAI_API_KEY is not configured');
-      }
-      this.openai = new OpenAI({ apiKey: config.openai.apiKey });
-    }
-    return this.openai;
-  }
-
-  private static defaultConfig: RefinementConfig = {
-    maxIterations: 3,
-    targetScore: 0.85,
-    autoApply: false,
-    preserveIntent: true,
-    evaluateSafety: true,
-    evaluateStyle: true,
-    evaluateAccuracy: true,
-  };
-
-  /**
-   * Execute self-refinement loop for a prompt
-   */
-  static async refinePrompt(
+  // Start continuous refinement loop for a prompt
+  async startRefinementLoop(
     promptId: string,
-    testOutput: string,
-    config: Partial<RefinementConfig> = {}
-  ): Promise<RefinementResult> {
-    const startTime = Date.now();
-    const refinementConfig = { ...this.defaultConfig, ...config };
-
-    // Get the current prompt
-    const prompt = await prisma.marketplacePrompt.findUnique({
-      where: { id: promptId },
-      include: { promptVersions: { orderBy: { version: 'desc' }, take: 1 } },
-    });
-
-    if (!prompt) {
-      throw new Error('Prompt not found');
-    }
-
-    const iterations: RefinementIteration[] = [];
-    let currentPrompt = prompt.content;
-    let currentScore = 0;
-    let bestPrompt = currentPrompt;
-    let bestScore = 0;
+    currentContent: string,
+    testCases: Array<{ input: string; expected?: string }>,
+    intervalHours: number = 24
+  ): Promise<void> {
+    // Stop existing loop if running
+    this.stopRefinementLoop(promptId);
 
     // Initial evaluation
-    const initialEvaluation = await OutputEvaluationService.evaluateOutput(
-      { prompt: currentPrompt, output: testOutput },
-      {
-        accuracy: refinementConfig.evaluateAccuracy,
-        style: refinementConfig.evaluateStyle,
-        safety: refinementConfig.evaluateSafety,
+    await this.evaluateAndSuggest(promptId, currentContent, testCases);
+
+    // Schedule periodic refinement
+    const interval = setInterval(async () => {
+      try {
+        await this.evaluateAndSuggest(promptId, currentContent, testCases);
+      } catch (error) {
+        console.error(`Refinement loop error for prompt ${promptId}:`, error);
       }
-    );
+    }, intervalHours * 60 * 60 * 1000);
 
-    currentScore = initialEvaluation.overallScore;
-    bestScore = currentScore;
-
-    // Refinement loop
-    for (let i = 0; i < refinementConfig.maxIterations; i++) {
-      // Check if target score reached
-      if (currentScore >= refinementConfig.targetScore) {
-        break;
-      }
-
-      // Get current evaluation for suggestions
-      const evaluation = i === 0 ? initialEvaluation : await OutputEvaluationService.evaluateOutput(
-        { prompt: currentPrompt, output: testOutput },
-        {
-          accuracy: refinementConfig.evaluateAccuracy,
-          style: refinementConfig.evaluateStyle,
-          safety: refinementConfig.evaluateSafety,
-        }
-      );
-
-      // Apply refinements based on suggestions
-      const refinedPrompt = await this.applyRefinements(
-        currentPrompt,
-        evaluation.suggestedRefinements,
-        refinementConfig.preserveIntent
-      );
-
-      // Evaluate the refined prompt
-      const refinedEvaluation = await OutputEvaluationService.evaluateOutput(
-        { prompt: refinedPrompt, output: testOutput },
-        {
-          accuracy: refinementConfig.evaluateAccuracy,
-          style: refinementConfig.evaluateStyle,
-          safety: refinementConfig.evaluateSafety,
-        }
-      );
-
-      const improvement = refinedEvaluation.overallScore - currentScore;
-
-      iterations.push({
-        iteration: i + 1,
-        originalPrompt: currentPrompt,
-        refinedPrompt,
-        evaluation: refinedEvaluation,
-        appliedSuggestions: evaluation.suggestedRefinements,
-        improvementDelta: improvement,
-        timestamp: new Date(),
-      });
-
-      // Update best if improved
-      if (refinedEvaluation.overallScore > bestScore) {
-        bestPrompt = refinedPrompt;
-        bestScore = refinedEvaluation.overallScore;
-      }
-
-      // Update current for next iteration
-      currentPrompt = refinedPrompt;
-      currentScore = refinedEvaluation.overallScore;
-
-      // Stop if no improvement
-      if (improvement <= 0) {
-        break;
-      }
-    }
-
-    const totalImprovement = bestScore - initialEvaluation.overallScore;
-
-    // Store the refined version
-    let versionId: string | undefined;
-    if (totalImprovement > 0) {
-      const version = await this.storeRefinedVersion(
-        promptId,
-        bestPrompt,
-        prompt,
-        iterations,
-        bestScore
-      );
-      versionId = version.id;
-    }
-
-    return {
-      success: totalImprovement > 0,
-      originalPrompt: prompt.content,
-      finalPrompt: bestPrompt,
-      iterations,
-      totalImprovement,
-      finalScore: bestScore,
-      versionId,
-      executionTimeMs: Date.now() - startTime,
-    };
+    this.activeRefinements.set(promptId, interval);
   }
 
-  /**
-   * Apply refinement suggestions to a prompt
-   */
-  private static async applyRefinements(
-    prompt: string,
-    suggestions: RefinementSuggestion[],
-    preserveIntent: boolean
-  ): Promise<string> {
-    if (suggestions.length === 0) {
-      return prompt;
+  // Stop refinement loop
+  stopRefinementLoop(promptId: string): void {
+    const interval = this.activeRefinements.get(promptId);
+    if (interval) {
+      clearInterval(interval);
+      this.activeRefinements.delete(promptId);
     }
+  }
+
+  // Evaluate current prompt and suggest improvements
+  private async evaluateAndSuggest(
+    promptId: string,
+    currentContent: string,
+    testCases: Array<{ input: string; expected?: string }>
+  ): Promise<RefinementSuggestion> {
+    // Evaluate current performance
+    const currentResults = await qualityEvaluationService.evaluatePrompt(
+      currentContent,
+      testCases
+    );
+
+    const avgMetrics = this.calculateAverageMetrics(currentResults);
+
+    // Generate improvement suggestion
+    const suggestion = await this.generateRefinementSuggestion(
+      promptId,
+      currentContent,
+      avgMetrics,
+      testCases
+    );
+
+    // Store suggestion
+    const history = this.refinementHistory.get(promptId) || [];
+    history.push(suggestion);
+    this.refinementHistory.set(promptId, history);
+
+    return suggestion;
+  }
+
+  // Generate refinement suggestion using AI
+  private async generateRefinementSuggestion(
+    promptId: string,
+    currentContent: string,
+    currentMetrics: any,
+    testCases: Array<{ input: string; expected?: string }>
+  ): Promise<RefinementSuggestion> {
+    const analysisPrompt = `
+Analyze this prompt and suggest specific improvements:
+
+Current Prompt: ${currentContent}
+
+Current Performance Metrics:
+- Overall Score: ${(currentMetrics.overall_score * 100).toFixed(1)}%
+- Relevance: ${(currentMetrics.relevance * 100).toFixed(1)}%
+- Coherence: ${(currentMetrics.coherence * 100).toFixed(1)}%
+- Groundedness: ${(currentMetrics.groundedness * 100).toFixed(1)}%
+
+Test Cases: ${testCases.map(tc => tc.input).join(', ')}
+
+Provide:
+1. Improved version of the prompt
+2. Specific justification for changes
+3. Expected improvements
+4. Confidence score (0-1)
+
+Format as JSON:
+{
+  "improved_prompt": "...",
+  "justification": "...",
+  "expected_improvements": ["...", "..."],
+  "confidence": 0.8
+}`;
 
     try {
-      const openai = this.getOpenAI();
-
-      const suggestionsList = suggestions
-        .map((s, i) => `${i + 1}. [${s.type}] ${s.description}: "${s.suggestedChange}"`)
-        .join('\n');
-
+      const openai = new (require('openai').OpenAI)({ apiKey: process.env.OPENAI_API_KEY });
       const response = await openai.chat.completions.create({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert prompt engineer. Your task is to refine the given prompt by applying the suggested improvements.
-
-Guidelines:
-- ${preserveIntent ? 'Preserve the original intent and core purpose of the prompt' : 'Focus on maximum improvement even if intent shifts slightly'}
-- Apply suggestions thoughtfully, not mechanically
-- Maintain coherence and readability
-- Do not add unnecessary complexity
-- Keep the same general structure unless improvement requires restructuring
-
-Return ONLY the refined prompt text, nothing else.`,
-          },
-          {
-            role: 'user',
-            content: `Original Prompt:
-${prompt}
-
-Suggestions to apply:
-${suggestionsList}
-
-Please refine the prompt by incorporating these suggestions.`,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 2048,
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: analysisPrompt }],
+        max_tokens: 800,
+        temperature: 0.3
       });
 
-      return response.choices[0]?.message?.content?.trim() || prompt;
+      const result = JSON.parse(response.choices[0]?.message?.content || '{}');
+
+      return {
+        id: `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        prompt_id: promptId,
+        current_version: 1,
+        suggested_content: result.improved_prompt || currentContent,
+        justification: result.justification || 'AI-generated improvement',
+        expected_improvements: result.expected_improvements || ['General improvement'],
+        confidence_score: result.confidence || 0.5,
+        metrics_before: currentMetrics,
+        status: 'pending',
+        created_at: new Date()
+      };
     } catch (error) {
-      console.error('Failed to apply refinements:', error);
-      return prompt;
+      console.error('Failed to generate refinement suggestion:', error);
+      
+      return {
+        id: `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        prompt_id: promptId,
+        current_version: 1,
+        suggested_content: currentContent,
+        justification: 'Failed to generate suggestion',
+        expected_improvements: [],
+        confidence_score: 0,
+        metrics_before: currentMetrics,
+        status: 'rejected',
+        created_at: new Date()
+      };
     }
   }
 
-  /**
-   * Store refined version in database
-   */
-  private static async storeRefinedVersion(
-    promptId: string,
-    refinedContent: string,
-    originalPrompt: any,
-    iterations: RefinementIteration[],
-    finalScore: number
-  ) {
-    const refinementReasons = iterations
-      .flatMap(i => i.appliedSuggestions.map(s => s.description))
-      .join('; ');
+  // Test a refinement suggestion
+  async testRefinementSuggestion(
+    suggestionId: string,
+    testCases: Array<{ input: string; expected?: string }>
+  ): Promise<RefinementSuggestion> {
+    const suggestion = this.findSuggestionById(suggestionId);
+    if (!suggestion) {
+      throw new Error('Suggestion not found');
+    }
 
-    // Parse hierarchical components from refined content
-    const components = this.parseHierarchicalComponents(refinedContent);
-
-    return await PromptService.createPromptVersion(
-      promptId,
-      refinedContent,
-      components,
-      refinementReasons,
-      finalScore
+    // Test the suggested prompt
+    const testResults = await qualityEvaluationService.evaluatePrompt(
+      suggestion.suggested_content,
+      testCases
     );
+
+    const avgMetrics = this.calculateAverageMetrics(testResults);
+
+    // Update suggestion with test results
+    const updatedSuggestion: RefinementSuggestion = {
+      ...suggestion,
+      metrics_after: avgMetrics,
+      status: 'testing',
+      tested_at: new Date()
+    };
+
+    // Update in history
+    this.updateSuggestionInHistory(updatedSuggestion);
+
+    return updatedSuggestion;
   }
 
-  /**
-   * Parse hierarchical prompt components from text
-   */
-  private static parseHierarchicalComponents(content: string): HierarchicalPrompt {
-    const components: HierarchicalPrompt = {};
-
-    // Try to extract sections based on common patterns
-    const systemMatch = content.match(/# System Instructions?\n([\s\S]*?)(?=\n# |$)/i);
-    const processMatch = content.match(/# Process Guidelines?\n([\s\S]*?)(?=\n# |$)/i);
-    const taskMatch = content.match(/# Task\n([\s\S]*?)(?=\n# |$)/i);
-    const outputMatch = content.match(/# Output Format?\n([\s\S]*?)(?=\n# |$)/i);
-
-    if (systemMatch) components.systemPrompt = systemMatch[1].trim();
-    if (processMatch) components.processPrompt = processMatch[1].trim();
-    if (taskMatch) components.taskPrompt = taskMatch[1].trim();
-    if (outputMatch) components.outputPrompt = outputMatch[1].trim();
-
-    // If no sections found, put everything in taskPrompt
-    if (Object.keys(components).length === 0) {
-      components.taskPrompt = content;
+  // Approve or reject a suggestion
+  async decideSuggestion(
+    suggestionId: string,
+    decision: 'approved' | 'rejected',
+    reason?: string
+  ): Promise<RefinementSuggestion> {
+    const suggestion = this.findSuggestionById(suggestionId);
+    if (!suggestion) {
+      throw new Error('Suggestion not found');
     }
 
-    return components;
+    const updatedSuggestion: RefinementSuggestion = {
+      ...suggestion,
+      status: decision
+    };
+
+    this.updateSuggestionInHistory(updatedSuggestion);
+
+    return updatedSuggestion;
   }
 
-  /**
-   * Get refinement history for a prompt
-   */
-  static async getRefinementHistory(promptId: string): Promise<RefinementHistoryEntry[]> {
-    const versions = await prisma.promptVersion.findMany({
-      where: { promptId },
-      orderBy: { version: 'desc' },
-    });
-
-    const history: RefinementHistoryEntry[] = [];
-
-    for (let i = 0; i < versions.length - 1; i++) {
-      const current = versions[i];
-      const previous = versions[i + 1];
-
-      history.push({
-        id: current.id,
-        promptId: current.promptId,
-        version: current.version,
-        originalContent: previous.content,
-        refinedContent: current.content,
-        originalScore: previous.qualityScore || 0,
-        refinedScore: current.qualityScore || 0,
-        refinementReason: current.refinementReason || '',
-        appliedSuggestions: [],
-        createdAt: current.createdAt,
-      });
-    }
-
-    return history;
+  // Get refinement history for a prompt
+  getRefinementHistory(promptId: string): RefinementSuggestion[] {
+    return this.refinementHistory.get(promptId) || [];
   }
 
-  /**
-   * Compare two versions and get diff
-   */
-  static async compareVersions(
-    promptId: string,
-    version1: number,
-    version2: number
-  ): Promise<{
-    version1Content: string;
-    version2Content: string;
-    similarity: number;
-    changes: string[];
-    improvement: number;
-  }> {
-    const [v1, v2] = await Promise.all([
-      prisma.promptVersion.findFirst({
-        where: { promptId, version: version1 },
-      }),
-      prisma.promptVersion.findFirst({
-        where: { promptId, version: version2 },
-      }),
-    ]);
-
-    if (!v1 || !v2) {
-      throw new Error('One or both versions not found');
+  // Get pending suggestions
+  getPendingSuggestions(promptId?: string): RefinementSuggestion[] {
+    if (promptId) {
+      return this.getRefinementHistory(promptId).filter(s => s.status === 'pending');
     }
 
-    const comparison = PromptService.compareVersions(v1.content, v2.content);
+    const allSuggestions: RefinementSuggestion[] = [];
+    for (const history of this.refinementHistory.values()) {
+      allSuggestions.push(...history.filter(s => s.status === 'pending'));
+    }
+    return allSuggestions;
+  }
+
+  // Calculate average metrics from evaluation results
+  private calculateAverageMetrics(results: any[]): any {
+    if (results.length === 0) {
+      return {
+        overall_score: 0,
+        relevance: 0,
+        coherence: 0,
+        groundedness: 0
+      };
+    }
+
+    const totals = results.reduce((acc, result) => ({
+      overall_score: acc.overall_score + result.metrics.overall_score,
+      relevance: acc.relevance + result.metrics.relevance,
+      coherence: acc.coherence + result.metrics.coherence,
+      groundedness: acc.groundedness + result.metrics.groundedness
+    }), { overall_score: 0, relevance: 0, coherence: 0, groundedness: 0 });
 
     return {
-      version1Content: v1.content,
-      version2Content: v2.content,
-      similarity: comparison.similarity,
-      changes: comparison.changes,
-      improvement: (v2.qualityScore || 0) - (v1.qualityScore || 0),
+      overall_score: totals.overall_score / results.length,
+      relevance: totals.relevance / results.length,
+      coherence: totals.coherence / results.length,
+      groundedness: totals.groundedness / results.length
     };
   }
 
-  /**
-   * Suggest refinements without applying them
-   */
-  static async suggestRefinements(
-    promptContent: string,
-    testOutput: string
-  ): Promise<{
-    currentScore: number;
-    suggestions: RefinementSuggestion[];
-    estimatedImprovement: number;
-  }> {
-    const evaluation = await OutputEvaluationService.evaluateOutput({
-      prompt: promptContent,
-      output: testOutput,
-    });
-
-    // Estimate improvement based on suggestion types
-    let estimatedImprovement = 0;
-    for (const suggestion of evaluation.suggestedRefinements) {
-      switch (suggestion.priority) {
-        case 'high':
-          estimatedImprovement += 0.1;
-          break;
-        case 'medium':
-          estimatedImprovement += 0.05;
-          break;
-        case 'low':
-          estimatedImprovement += 0.02;
-          break;
-      }
+  // Find suggestion by ID
+  private findSuggestionById(suggestionId: string): RefinementSuggestion | null {
+    for (const history of this.refinementHistory.values()) {
+      const suggestion = history.find(s => s.id === suggestionId);
+      if (suggestion) return suggestion;
     }
+    return null;
+  }
 
-    estimatedImprovement = Math.min(estimatedImprovement, 1 - evaluation.overallScore);
+  // Update suggestion in history
+  private updateSuggestionInHistory(updatedSuggestion: RefinementSuggestion): void {
+    const history = this.refinementHistory.get(updatedSuggestion.prompt_id) || [];
+    const index = history.findIndex(s => s.id === updatedSuggestion.id);
+    if (index !== -1) {
+      history[index] = updatedSuggestion;
+      this.refinementHistory.set(updatedSuggestion.prompt_id, history);
+    }
+  }
+
+  // Get refinement statistics
+  getRefinementStats(promptId: string): {
+    totalSuggestions: number;
+    approvedSuggestions: number;
+    rejectedSuggestions: number;
+    pendingSuggestions: number;
+    averageImprovement: number;
+  } {
+    const history = this.getRefinementHistory(promptId);
+    
+    const approved = history.filter(s => s.status === 'approved');
+    const improvements = approved
+      .filter(s => s.metrics_after)
+      .map(s => s.metrics_after!.overall_score - s.metrics_before.overall_score);
 
     return {
-      currentScore: evaluation.overallScore,
-      suggestions: evaluation.suggestedRefinements,
-      estimatedImprovement,
+      totalSuggestions: history.length,
+      approvedSuggestions: approved.length,
+      rejectedSuggestions: history.filter(s => s.status === 'rejected').length,
+      pendingSuggestions: history.filter(s => s.status === 'pending').length,
+      averageImprovement: improvements.length > 0 
+        ? improvements.reduce((sum, imp) => sum + imp, 0) / improvements.length 
+        : 0
     };
-  }
-
-  /**
-   * Run continuous refinement in background
-   */
-  static async startContinuousRefinement(
-    promptId: string,
-    testOutputs: string[],
-    config: Partial<RefinementConfig> = {}
-  ): Promise<{
-    jobId: string;
-    estimatedDuration: number;
-  }> {
-    // In a production environment, this would use a job queue
-    // For now, we'll run it synchronously
-    const jobId = `refinement_${promptId}_${Date.now()}`;
-
-    // Run refinement for each test output
-    const results: RefinementResult[] = [];
-    for (const output of testOutputs) {
-      const result = await this.refinePrompt(promptId, output, config);
-      results.push(result);
-    }
-
-    return {
-      jobId,
-      estimatedDuration: testOutputs.length * 5000, // Estimate 5 seconds per output
-    };
-  }
-
-  /**
-   * Apply a specific version as the active version
-   */
-  static async applyVersion(promptId: string, versionId: string): Promise<boolean> {
-    const version = await prisma.promptVersion.findUnique({
-      where: { id: versionId },
-    });
-
-    if (!version || version.promptId !== promptId) {
-      throw new Error('Version not found or does not belong to this prompt');
-    }
-
-    await prisma.marketplacePrompt.update({
-      where: { id: promptId },
-      data: {
-        content: version.content,
-        systemPrompt: version.systemPrompt,
-        processPrompt: version.processPrompt,
-        taskPrompt: version.taskPrompt,
-        outputPrompt: version.outputPrompt,
-        successProbability: version.qualityScore,
-      },
-    });
-
-    return true;
-  }
-
-  /**
-   * Rollback to a previous version
-   */
-  static async rollbackToVersion(promptId: string, version: number): Promise<boolean> {
-    const targetVersion = await prisma.promptVersion.findFirst({
-      where: { promptId, version },
-    });
-
-    if (!targetVersion) {
-      throw new Error('Target version not found');
-    }
-
-    await prisma.marketplacePrompt.update({
-      where: { id: promptId },
-      data: {
-        content: targetVersion.content,
-        systemPrompt: targetVersion.systemPrompt,
-        processPrompt: targetVersion.processPrompt,
-        taskPrompt: targetVersion.taskPrompt,
-        outputPrompt: targetVersion.outputPrompt,
-        successProbability: targetVersion.qualityScore,
-      },
-    });
-
-    return true;
   }
 }
+
+export const selfRefinementService = new SelfRefinementService();

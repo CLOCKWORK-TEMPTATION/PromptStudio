@@ -22,20 +22,26 @@ export const crdtManager = new CRDTManager();
 
 export function setupWebSocket(io: SocketIOServer): void {
   // Authentication middleware
+  // Authentication middleware
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token || socket.handshake.query.token;
 
-      if (!token) {
+      if (!token || typeof token !== 'string') {
+        console.warn(`[WebSocket] Connection attempt without valid token from ${socket.handshake.address}`);
         return next(new Error('Authentication token required'));
       }
 
-      const decoded = jwt.verify(token as string, config.jwt.secret) as {
+      const decoded = jwt.verify(token, config.jwt.secret) as {
         userId: string;
         email: string;
         name: string;
         color?: string;
       };
+
+      if (!decoded.userId) {
+        return next(new Error('Invalid token payload'));
+      }
 
       (socket as AuthenticatedSocket).userId = decoded.userId;
       (socket as AuthenticatedSocket).userName = decoded.name;
@@ -44,6 +50,7 @@ export function setupWebSocket(io: SocketIOServer): void {
 
       next();
     } catch (error) {
+      console.error(`[WebSocket] Auth failed for ${socket.handshake.address}:`, error instanceof Error ? error.message : 'Unknown error');
       next(new Error('Invalid authentication token'));
     }
   });

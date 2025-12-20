@@ -2,6 +2,15 @@
 // Translation Types (Intelligent Translation System)
 // ============================================================
 
+export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية', direction: 'rtl', flag: '🇸🇦' },
+  { code: 'en', name: 'English', nativeName: 'English', direction: 'ltr', flag: '🇺🇸' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', direction: 'ltr', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', nativeName: 'Français', direction: 'ltr', flag: '🇫🇷' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', direction: 'ltr', flag: '🇩🇪' },
+  { code: 'zh', name: 'Chinese', nativeName: '中文', direction: 'ltr', flag: '🇨🇳' },
+];
+
 export type Language = 'ar' | 'en' | 'es' | 'fr' | 'de' | 'zh';
 
 export interface LanguageInfo {
@@ -252,4 +261,246 @@ export interface GCPFunctionsConfig extends DeploymentConfig {
   runtime: 'nodejs18' | 'nodejs20' | 'python311' | 'python312';
   trigger: 'http' | 'pubsub' | 'storage';
   serviceAccount?: string;
+}
+
+// ============================================================
+// Analysis Types
+// ============================================================
+
+export interface AnalysisResult {
+  clarity_score: number;
+  specificity_score: number;
+  structure_score: number;
+  overall_score: number;
+  components: PromptComponent[];
+  suggestions: AnalysisSuggestion[];
+  warnings: AnalysisWarning[];
+  token_estimate: TokenEstimate;
+}
+
+export interface PromptComponent {
+  type: 'role' | 'constraint' | 'example' | 'output_format';
+  content: string;
+  start: number;
+  end: number;
+}
+
+export interface AnalysisSuggestion {
+  type: 'addition' | 'improvement';
+  message: string;
+  impact: 'high' | 'medium' | 'low';
+  suggestion: string;
+}
+
+export interface AnalysisWarning {
+  type: 'sensitive_data' | 'security' | 'cost';
+  message: string;
+  severity: 'critical' | 'warning' | 'info';
+  location?: { start: number; end: number };
+}
+
+export interface TokenEstimate {
+  gpt4: number;
+  gpt35: number;
+  claude: number;
+  llama: number;
+  estimated_cost: Record<string, number>;
+}
+
+export interface TokenVisualization {
+  tokens: Token[];
+  total: number;
+  model: string;
+}
+
+export interface Token {
+  text: string;
+  id: number;
+  start: number;
+  end: number;
+}
+
+// ============================================================
+// Prompt & Model Types
+// ============================================================
+
+export interface Prompt {
+  id: string;
+  title: string;
+  content: string;
+  description?: string;
+  tags?: string[];
+  category?: string;
+  model_id?: string;
+  variables: PromptVariable[];
+  modelConfig: ModelConfig;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PromptVersion {
+  id: string;
+  promptId: string;
+  version: number;
+  content: string;
+  modelConfig: ModelConfig;
+  createdAt: Date;
+}
+
+export interface ModelConfig {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  stopSequences: string[];
+  topK?: number;
+  responseFormat?: 'text' | 'json_object' | 'json_schema';
+}
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  context_window: number;
+  supports_functions: boolean;
+  supports_json_mode: boolean;
+}
+
+export const AI_MODELS: AIModel[] = [
+  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', context_window: 8192, supports_functions: true, supports_json_mode: true },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', context_window: 128000, supports_functions: true, supports_json_mode: true },
+  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', context_window: 16385, supports_functions: true, supports_json_mode: true },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
+  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
+  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic', context_window: 200000, supports_functions: true, supports_json_mode: false },
+  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', context_window: 32760, supports_functions: true, supports_json_mode: false },
+];
+
+export const DEFAULT_MODEL_CONFIG: ModelConfig = {
+  model: 'gpt-4',
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 1,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  stopSequences: [],
+  topK: 40,
+  responseFormat: 'text'
+};
+
+// ============================================================
+// Template & Technique Types
+// ============================================================
+
+export const TEMPLATE_CATEGORIES = [
+  'Content Creation',
+  'Code Generation',
+  'Data Analysis',
+  'Creative Writing',
+  'Business',
+  'Education',
+  'Research',
+  'Other'
+] as const;
+
+export interface MarketplacePrompt {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  tags: string[];
+  authorId: string;
+  downloads: number;
+  rating: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MarketplaceReview {
+  id: string;
+  promptId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  category: string;
+  tags: string[];
+  variables: PromptVariable[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Technique {
+  id: string;
+  name: string;
+  description: string;
+  example: string;
+  category: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  tags: string[];
+}
+
+// ============================================================
+// User & App State Types
+// ============================================================
+
+export interface UserPreferences {
+  theme: 'light' | 'dark';
+  language: string;
+  editor_font_size: number;
+  auto_save: boolean;
+  show_line_numbers: boolean;
+}
+
+export interface EnvironmentProfile {
+  id: string;
+  name: string;
+  description: string;
+  modelConfig: ModelConfig;
+  variables: Record<string, string>;
+}
+
+// ============================================================
+// Editor & Tool Types
+// ============================================================
+
+export interface JSONSchema {
+  type: string;
+  properties?: Record<string, any>;
+  required?: string[];
+  items?: any;
+  [key: string]: any;
+}
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: {
+    type: string;
+    properties: Record<string, any>;
+    required: string[];
+  };
+}
+
+export interface SmartVariable {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  description: string;
+  defaultValue?: any;
+  validation?: {
+    required: boolean;
+    min?: number;
+    max?: number;
+    pattern?: string;
+  };
 }

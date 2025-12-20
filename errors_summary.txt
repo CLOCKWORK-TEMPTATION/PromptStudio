@@ -1,0 +1,154 @@
+src/backend/api/routes/reasoning.ts(23,45): error TS2339: Property 'createSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(51,35): error TS2339: Property 'completeSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(57,37): error TS2339: Property 'completeSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(116,45): error TS2339: Property 'createSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(139,54): error TS2339: Property 'storeComparison' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(157,35): error TS2339: Property 'completeSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(163,37): error TS2339: Property 'completeSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(243,52): error TS2339: Property 'getRecentSessions' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(264,51): error TS2339: Property 'getSession' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(285,49): error TS2339: Property 'getOverallStatistics' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/reasoning.ts(308,49): error TS2339: Property 'getPromptStatistics' does not exist on type 'typeof ReasoningHistoryService'.
+src/backend/api/routes/refinement.ts(24,48): error TS2339: Property 'refinePrompt' does not exist on type 'typeof SelfRefinementService'.
+src/backend/api/routes/refinement.ts(124,53): error TS2339: Property 'suggestRefinements' does not exist on type 'typeof SelfRefinementService'.
+src/backend/api/routes/refinement.ts(146,49): error TS2339: Property 'getRefinementHistory' does not exist on type 'typeof SelfRefinementService'.
+src/backend/api/routes/refinement.ts(192,52): error TS2339: Property 'compareVersions' does not exist on type 'typeof SelfRefinementService'.
+src/backend/api/routes/refinement.ts(299,49): error TS2339: Property 'applyVersion' does not exist on type 'typeof SelfRefinementService'.
+src/backend/api/routes/refinement.ts(326,49): error TS2339: Property 'rollbackToVersion' does not exist on type 'typeof SelfRefinementService'.
+src/backend/api/routes/refinement.ts(353,48): error TS2339: Property 'startContinuousRefinement' does not exist on type 'typeof SelfRefinementService'.
+src/backend/services/PreSendPredictionService.ts(469,39): error TS2339: Property 'promptExecution' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/backend/services/SemanticCacheService.ts(65,34): error TS2339: Property 'id' does not exist on type 'CacheConfig'.
+src/backend/services/SemanticCacheService.ts(69,36): error TS2339: Property 'defaultTTLSeconds' does not exist on type 'Partial<CacheConfig>'.
+src/backend/services/SemanticCacheService.ts(69,71): error TS2339: Property 'defaultTTLSeconds' does not exist on type 'CacheConfig'.
+src/backend/services/SemanticCacheService.ts(70,31): error TS2339: Property 'maxCacheSize' does not exist on type 'Partial<CacheConfig>'.
+src/backend/services/SemanticCacheService.ts(70,61): error TS2339: Property 'maxCacheSize' does not exist on type 'CacheConfig'.
+src/backend/services/SemanticCacheService.ts(71,36): error TS2339: Property 'invalidationRules' does not exist on type 'Partial<CacheConfig>'.
+src/backend/services/SemanticCacheService.ts(71,71): error TS2339: Property 'invalidationRules' does not exist on type 'CacheConfig'.
+src/backend/services/SemanticCacheService.ts(261,31): error TS2339: Property 'maxCacheSize' does not exist on type 'CacheConfig'.
+src/backend/services/SemanticCacheService.ts(265,33): error TS2339: Property 'maxCacheSize' does not exist on type 'CacheConfig'.
+src/backend/services/SemanticCacheService.ts(276,38): error TS2339: Property 'defaultTTLSeconds' does not exist on type 'CacheConfig'.
+src/features/Editor/SmartVariables.tsx(57,54): error TS2339: Property 'id' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(146,55): error TS2339: Property 'variable_type' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(149,35): error TS2339: Property 'id' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(165,37): error TS2339: Property 'is_system' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(196,34): error TS2339: Property 'is_system' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(198,72): error TS2339: Property 'id' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(291,51): error TS2339: Property 'variable_type' does not exist on type 'SmartVariable'.
+src/features/Editor/SmartVariables.tsx(294,31): error TS2339: Property 'id' does not exist on type 'SmartVariable'.
+src/features/Editor/TokenizerVisualization.tsx(171,71): error TS2339: Property 'pricing' does not exist on type 'AIModel'.
+src/features/Editor/ToolDefinitionPanel.tsx(55,28): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(59,45): error TS2339: Property 'mock_response' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(72,22): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(129,25): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(131,47): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(132,65): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(132,82): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(133,64): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(134,57): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(137,41): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/features/Editor/ToolDefinitionPanel.tsx(350,42): error TS2339: Property 'mock_response' does not exist on type 'ToolDefinition'.
+src/features/History/HistoryView.tsx(67,45): error TS2339: Property 'is_favorite' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(69,52): error TS2339: Property 'is_favorite' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(87,27): error TS2339: Property 'description' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(88,20): error TS2339: Property 'tags' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(89,24): error TS2339: Property 'category' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(90,24): error TS2339: Property 'model_id' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(98,7): error TS2339: Property 'tags' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(200,29): error TS2339: Property 'is_favorite' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(213,60): error TS2551: Property 'updated_at' does not exist on type 'Prompt'. Did you mean 'updatedAt'?
+src/features/History/HistoryView.tsx(233,74): error TS2551: Property 'updated_at' does not exist on type 'Prompt'. Did you mean 'updatedAt'?
+src/features/History/HistoryView.tsx(236,37): error TS2339: Property 'usage_count' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(248,35): error TS2339: Property 'is_favorite' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(276,29): error TS2339: Property 'tags' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(278,33): error TS2339: Property 'tags' does not exist on type 'Prompt'.
+src/features/History/HistoryView.tsx(348,44): error TS2339: Property 'version_number' does not exist on type 'PromptVersion'.
+src/features/History/HistoryView.tsx(351,65): error TS2551: Property 'created_at' does not exist on type 'PromptVersion'. Did you mean 'createdAt'?
+src/features/History/HistoryView.tsx(354,32): error TS2339: Property 'change_summary' does not exist on type 'PromptVersion'.
+src/features/History/HistoryView.tsx(356,36): error TS2339: Property 'change_summary' does not exist on type 'PromptVersion'.
+src/features/Marketplace/MarketplaceView.tsx(74,20): error TS2339: Property 'clone_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(74,36): error TS2339: Property 'clone_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(76,29): error TS2551: Property 'created_at' does not exist on type 'MarketplacePrompt'. Did you mean 'createdAt'?
+src/features/Marketplace/MarketplaceView.tsx(76,64): error TS2551: Property 'created_at' does not exist on type 'MarketplacePrompt'. Did you mean 'createdAt'?
+src/features/Marketplace/MarketplaceView.tsx(78,20): error TS2339: Property 'avg_rating' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(78,35): error TS2339: Property 'avg_rating' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(80,20): error TS2339: Property 'view_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(80,35): error TS2339: Property 'view_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(244,29): error TS2339: Property 'is_featured' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(254,29): error TS2339: Property 'is_staff_pick' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(291,80): error TS2339: Property 'avg_rating' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(293,30): error TS2339: Property 'review_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(330,31): error TS2339: Property 'author_name' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(337,33): error TS2339: Property 'view_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(343,33): error TS2339: Property 'clone_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(400,39): error TS2339: Property 'author_name' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(403,88): error TS2339: Property 'avg_rating' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(405,37): error TS2339: Property 'avg_rating' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(405,77): error TS2339: Property 'review_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(428,37): error TS2339: Property 'view_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(434,37): error TS2339: Property 'clone_count' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(440,54): error TS2551: Property 'updated_at' does not exist on type 'MarketplacePrompt'. Did you mean 'updatedAt'?
+src/features/Marketplace/MarketplaceView.tsx(480,31): error TS2339: Property 'variables' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(486,37): error TS2339: Property 'variables' does not exist on type 'MarketplacePrompt'.
+src/features/Marketplace/MarketplaceView.tsx(521,35): error TS2339: Property 'model_recommendation' does not exist on type 'MarketplacePrompt'.
+src/features/Settings/SettingsView.tsx(150,33): error TS2551: Property 'top_p' does not exist on type 'ModelConfig'. Did you mean 'topP'?
+src/features/Settings/SettingsView.tsx(151,33): error TS2551: Property 'top_k' does not exist on type 'ModelConfig'. Did you mean 'topK'?
+src/features/Settings/SettingsView.tsx(152,45): error TS2551: Property 'frequency_penalty' does not exist on type 'ModelConfig'. Did you mean 'frequencyPenalty'?
+src/features/Settings/SettingsView.tsx(153,44): error TS2551: Property 'presence_penalty' does not exist on type 'ModelConfig'. Did you mean 'presencePenalty'?
+src/features/Settings/SettingsView.tsx(154,38): error TS2551: Property 'max_tokens' does not exist on type 'ModelConfig'. Did you mean 'maxTokens'?
+src/features/Settings/SettingsView.tsx(155,42): error TS2551: Property 'stop_sequences' does not exist on type 'ModelConfig'. Did you mean 'stopSequences'?
+src/features/Settings/SettingsView.tsx(156,43): error TS2551: Property 'response_format' does not exist on type 'ModelConfig'. Did you mean 'responseFormat'?
+src/features/Settings/SettingsView.tsx(507,37): error TS2551: Property 'top_p' does not exist on type 'ModelConfig'. Did you mean 'topP'?
+src/features/Settings/SettingsView.tsx(515,37): error TS2551: Property 'max_tokens' does not exist on type 'ModelConfig'. Did you mean 'maxTokens'?
+src/features/Settings/SettingsView.tsx(523,37): error TS2551: Property 'response_format' does not exist on type 'ModelConfig'. Did you mean 'responseFormat'?
+src/features/Settings/SettingsView.tsx(581,83): error TS2551: Property 'max_tokens' does not exist on type 'ModelConfig'. Did you mean 'maxTokens'?
+src/features/Settings/SettingsView.tsx(645,27): error TS2339: Property 'pricing' does not exist on type 'AIModel'.
+src/features/Settings/SettingsView.tsx(770,27): error TS2339: Property 'is_active' does not exist on type 'EnvironmentProfile'.
+src/features/Settings/SettingsView.tsx(784,30): error TS2339: Property 'is_active' does not exist on type 'EnvironmentProfile'.
+src/features/Settings/SettingsView.tsx(796,53): error TS2339: Property 'default_role' does not exist on type 'EnvironmentProfile'.
+src/features/Settings/SettingsView.tsx(800,29): error TS2339: Property 'is_active' does not exist on type 'EnvironmentProfile'.
+src/features/Techniques/TechniquesView.tsx(66,7): error TS2339: Property 'title' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(143,56): error TS2339: Property 'slug' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(171,38): error TS2339: Property 'title' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(201,66): error TS2339: Property 'slug' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(205,38): error TS2339: Property 'title' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(239,45): error TS2339: Property 'content' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(251,32): error TS2339: Property 'best_for' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(257,38): error TS2339: Property 'best_for' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(272,32): error TS2551: Property 'examples' does not exist on type 'Technique'. Did you mean 'example'?
+src/features/Techniques/TechniquesView.tsx(278,38): error TS2551: Property 'examples' does not exist on type 'Technique'. Did you mean 'example'?
+src/features/Techniques/TechniquesView.tsx(312,32): error TS2339: Property 'related_techniques' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(318,38): error TS2339: Property 'related_techniques' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(319,62): error TS2339: Property 'slug' does not exist on type 'Technique'.
+src/features/Techniques/TechniquesView.tsx(332,34): error TS2339: Property 'title' does not exist on type 'Technique'.
+src/features/Templates/TemplatesView.tsx(97,26): error TS2339: Property 'title' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(101,26): error TS2339: Property 'model_recommendation' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(172,45): error TS2339: Property 'id' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'id' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(175,26): error TS2339: Property 'id' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'id' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(176,56): error TS2339: Property 'id' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'id' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(179,44): error TS2339: Property 'id' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'id' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(185,28): error TS2339: Property 'name' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'name' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(224,56): error TS2339: Property 'id' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'id' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(224,82): error TS2339: Property 'name' does not exist on type '"Content Creation" | "Code Generation" | "Data Analysis" | "Creative Writing" | "Business" | "Education" | "Research" | "Other"'.
+  Property 'name' does not exist on type '"Content Creation"'.
+src/features/Templates/TemplatesView.tsx(310,113): error TS2339: Property 'difficulty' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(311,21): error TS2339: Property 'difficulty' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(319,19): error TS2339: Property 'title' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(333,23): error TS2339: Property 'usage_count' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(389,27): error TS2339: Property 'title' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(394,47): error TS2339: Property 'difficulty' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(396,29): error TS2339: Property 'difficulty' does not exist on type 'Template'.
+src/features/Templates/TemplatesView.tsx(399,29): error TS2339: Property 'usage_count' does not exist on type 'Template'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/services/promptService.ts(35,27): error TS2339: Property 'description' does not exist on type 'Partial<Prompt>'.
+src/services/promptService.ts(36,20): error TS2339: Property 'tags' does not exist on type 'Partial<Prompt>'.
+src/services/promptService.ts(37,24): error TS2339: Property 'category' does not exist on type 'Partial<Prompt>'.
+src/services/promptService.ts(38,24): error TS2339: Property 'model_id' does not exist on type 'Partial<Prompt>'.
+src/services/promptService.ts(39,28): error TS2551: Property 'model_config' does not exist on type 'Partial<Prompt>'. Did you mean 'modelConfig'?
+src/stores/editorStore.ts(187,57): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.
+src/stores/editorStore.ts(190,60): error TS2339: Property 'id' does not exist on type 'ToolDefinition'.

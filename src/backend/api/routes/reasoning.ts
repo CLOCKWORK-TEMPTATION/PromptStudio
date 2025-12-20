@@ -20,7 +20,7 @@ router.post('/tree-of-thought', async (req: Request, res: Response) => {
     }
 
     // Create session
-    session = ReasoningHistoryService.createSession(prompt, 'tree-of-thought', {
+    session = await ReasoningHistoryService.createSession(prompt, 'tree-of-thought', {
       maxDepth: maxDepth || 3,
       branchingFactor: branchingFactor || 3,
     });
@@ -48,13 +48,13 @@ router.post('/tree-of-thought', async (req: Request, res: Response) => {
     };
 
     // Complete session
-    ReasoningHistoryService.completeSession(session.id, response);
+    await ReasoningHistoryService.completeSession(session.id, response);
 
     res.json(response);
   } catch (error) {
     console.error('Tree-of-Thought error:', error);
     if (session) {
-      ReasoningHistoryService.completeSession(
+      await ReasoningHistoryService.completeSession(
         session.id,
         null,
         'failed',
@@ -113,7 +113,7 @@ router.post('/multi-path-reasoning', async (req: Request, res: Response) => {
     const pathCount = numPaths || 3;
 
     // Create session
-    session = ReasoningHistoryService.createSession(prompt, 'multi-path', {
+    session = await ReasoningHistoryService.createSession(prompt, 'multi-path', {
       numPaths: pathCount,
       maxDepth: maxDepth || 3,
       branchingFactor: branchingFactor || 2,
@@ -136,7 +136,7 @@ router.post('/multi-path-reasoning', async (req: Request, res: Response) => {
     const executionTime = Date.now() - startTime;
 
     // Store comparison
-    const comparison = ReasoningHistoryService.storeComparison(
+    const comparison = await ReasoningHistoryService.storeComparison(
       session.id,
       paths,
       selection,
@@ -154,13 +154,13 @@ router.post('/multi-path-reasoning', async (req: Request, res: Response) => {
     };
 
     // Complete session
-    ReasoningHistoryService.completeSession(session.id, response);
+    await ReasoningHistoryService.completeSession(session.id, response);
 
     res.json(response);
   } catch (error) {
     console.error('Multi-path reasoning error:', error);
     if (session) {
-      ReasoningHistoryService.completeSession(
+      await ReasoningHistoryService.completeSession(
         session.id,
         null,
         'failed',
@@ -240,7 +240,7 @@ router.post('/evaluate-path', async (req: Request, res: Response) => {
 router.get('/history', async (req: Request, res: Response) => {
   try {
     const { limit } = req.query;
-    const sessions = ReasoningHistoryService.getRecentSessions(
+    const sessions = await ReasoningHistoryService.getRecentSessions(
       limit ? parseInt(limit as string) : 10
     );
 
@@ -261,7 +261,7 @@ router.get('/history', async (req: Request, res: Response) => {
 router.get('/session/:sessionId', async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
-    const session = ReasoningHistoryService.getSession(sessionId);
+    const session = await ReasoningHistoryService.getSession(sessionId);
 
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
@@ -282,7 +282,7 @@ router.get('/session/:sessionId', async (req: Request, res: Response) => {
  */
 router.get('/statistics', async (req: Request, res: Response) => {
   try {
-    const stats = ReasoningHistoryService.getOverallStatistics();
+    const stats = await ReasoningHistoryService.getOverallStatistics();
 
     res.json({
       success: true,
@@ -305,7 +305,7 @@ router.post('/prompt-statistics', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const stats = ReasoningHistoryService.getPromptStatistics(prompt);
+    const stats = await ReasoningHistoryService.getPromptStatistics(prompt);
 
     res.json({
       success: true,
@@ -320,7 +320,11 @@ router.post('/prompt-statistics', async (req: Request, res: Response) => {
 /**
  * Helper function to count total nodes in a tree
  */
-function countNodes(nodes: any[]): number {
+interface TreeNode {
+  children?: TreeNode[];
+}
+
+function countNodes(nodes: TreeNode[]): number {
   let count = nodes.length;
   for (const node of nodes) {
     if (node.children && node.children.length > 0) {
