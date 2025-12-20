@@ -21,7 +21,7 @@ export function SDKOptionsPanel({ options, onChange, language }: SDKOptionsPanel
           <input
             type="text"
             value={options.functionName}
-            onChange={(e) => onChange({ functionName: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ functionName: e.target.value })}
             className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             placeholder={language === 'python' ? 'generate_response' : 'generateResponse'}
           />
@@ -33,7 +33,7 @@ export function SDKOptionsPanel({ options, onChange, language }: SDKOptionsPanel
           <input
             type="text"
             value={options.className}
-            onChange={(e) => onChange({ className: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ className: e.target.value })}
             className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             placeholder="PromptClient"
           />
@@ -45,7 +45,7 @@ export function SDKOptionsPanel({ options, onChange, language }: SDKOptionsPanel
           <input
             type="number"
             value={options.timeout}
-            onChange={(e) => onChange({ timeout: parseInt(e.target.value) || 30000 })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ timeout: parseInt(e.target.value) || 30000 })}
             className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             min={1000}
             max={300000}
@@ -59,7 +59,7 @@ export function SDKOptionsPanel({ options, onChange, language }: SDKOptionsPanel
           <input
             type="number"
             value={options.retryAttempts}
-            onChange={(e) => onChange({ retryAttempts: parseInt(e.target.value) || 3 })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ retryAttempts: parseInt(e.target.value) || 3 })}
             className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             min={0}
             max={10}
@@ -72,7 +72,7 @@ export function SDKOptionsPanel({ options, onChange, language }: SDKOptionsPanel
           <input
             type="number"
             value={options.retryDelay}
-            onChange={(e) => onChange({ retryDelay: parseInt(e.target.value) || 1000 })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ retryDelay: parseInt(e.target.value) || 1000 })}
             className="w-full px-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none"
             min={100}
             max={30000}
@@ -136,7 +136,7 @@ function ToggleOption({ label, description, checked, onChange }: ToggleOptionPro
         <input
           type="checkbox"
           checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
           className="sr-only"
         />
         <div
