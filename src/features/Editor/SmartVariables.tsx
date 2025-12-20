@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Variable, Plus, Trash2, FileText, History, Clock, User, Settings, ChevronDown } from 'lucide-react';
+import { Variable, Plus, Trash2, FileText, History, Clock, Settings, ChevronDown } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import type { SmartVariable } from '../../types';
@@ -54,7 +54,7 @@ export function SmartVariables() {
   };
 
   const handleRemoveVariable = (id: string) => {
-    setSmartVariables(smartVariables.filter((v) => v.id !== id));
+    setSmartVariables(smartVariables.filter((v: SmartVariable) => v.id !== id));
   };
 
   const insertVariable = (name: string) => {
@@ -132,7 +132,7 @@ export function SmartVariables() {
               type="text"
               placeholder="Search variables..."
               value={filterQuery}
-              onChange={(e) => setFilterQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterQuery(e.target.value)}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border text-sm',
                 theme === 'dark'
@@ -227,7 +227,7 @@ export function SmartVariables() {
                   type="text"
                   placeholder="Name"
                   value={newVarName}
-                  onChange={(e) => setNewVarName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVarName(e.target.value)}
                   className={clsx(
                     'flex-1 px-3 py-2 rounded-lg border text-sm',
                     theme === 'dark'
@@ -239,7 +239,7 @@ export function SmartVariables() {
                   type="text"
                   placeholder="Default value"
                   value={newVarValue}
-                  onChange={(e) => setNewVarValue(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVarValue(e.target.value)}
                   className={clsx(
                     'flex-1 px-3 py-2 rounded-lg border text-sm',
                     theme === 'dark'
