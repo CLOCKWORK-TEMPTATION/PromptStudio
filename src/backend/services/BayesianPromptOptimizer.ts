@@ -1,4 +1,4 @@
-import { PromptService } from './PromptService';
+import { PromptService } from './PromptService.js';
 
 /**
  * Experiment trial result
