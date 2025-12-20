@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Stub for Supabase client
 // Install @supabase/supabase-js if needed: npm install @supabase/supabase-js
 

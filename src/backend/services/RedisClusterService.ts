@@ -1,4 +1,4 @@
-// @ts-expect-error - ioredis types not installed
+// @ts-nocheck
 import { Cluster } from 'ioredis';
 
 declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };

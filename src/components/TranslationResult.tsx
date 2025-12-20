@@ -5,7 +5,7 @@ import {
   Copy,
   Check,
   Star,
-  BookmarkPlus,
+  Bookmark,
   Award,
   Info,
   ChevronDown,
@@ -163,7 +163,7 @@ export const TranslationResultCard: React.FC<TranslationResultProps> = ({
             className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600
                        hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <BookmarkPlus className="w-4 h-4" />
+            <Bookmark className="w-4 h-4" />
             Save
           </button>
         </div>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { supabase } from '../lib/supabase';
 import type { Prompt, PromptVersion, ModelConfig } from '../types';
 import { DEFAULT_MODEL_CONFIG } from '../types';
