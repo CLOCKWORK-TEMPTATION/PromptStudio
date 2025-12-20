@@ -1,5 +1,6 @@
 // @ts-expect-error - socket.io types not installed
 import { Server as SocketIOServer, Socket } from 'socket.io';
+// @ts-expect-error - jsonwebtoken types not installed
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import { CollaborationManager } from './managers/CollaborationManager.js';
@@ -23,7 +24,7 @@ export interface AuthenticatedSocket extends Socket {
   leave: (room: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   to: (room: string) => { emit: (event: string, data: any) => boolean };
-  handshake: { auth: { token?: string }; query: { token?: string } };
+  handshake: { auth: { token?: string }; query: { token?: string }; address: string };
 }
 
 // Managers instances
@@ -33,8 +34,7 @@ export const crdtManager = new CRDTManager();
 
 export function setupWebSocket(io: SocketIOServer): void {
   // Authentication middleware
-  // Authentication middleware
-  io.use(async (socket, next) => {
+  io.use(async (socket: Socket, next: (err?: Error) => void) => {
     try {
       const token = socket.handshake.auth.token || socket.handshake.query.token;
 
