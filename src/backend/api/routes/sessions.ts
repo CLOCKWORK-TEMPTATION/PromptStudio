@@ -1,6 +1,16 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../../lib/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
+import type { User, SessionMember, CollaborationSession } from '@prisma/client';
+
+// Types for Prisma query results with includes
+type SessionWithIncludes = CollaborationSession & {
+  owner: User;
+  members: (SessionMember & { user: User })[];
+  _count: { comments: number; editHistory: number };
+};
+
+type MemberWithUser = SessionMember & { user: User };
 
 const router = Router();
 
@@ -33,7 +43,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: sessions.map(session => ({
+      data: sessions.map((session: SessionWithIncludes) => ({
         id: session.id,
         name: session.name,
         description: session.description,
@@ -115,7 +125,7 @@ router.post('/', async (req: Request, res: Response) => {
           avatar: session.owner.avatar,
           color: session.owner.color,
         },
-        members: session.members.map(m => ({
+        members: session.members.map((m: MemberWithUser) => ({
           id: m.id,
           userId: m.userId,
           role: m.role,
@@ -207,7 +217,7 @@ router.get('/:id', async (req: Request, res: Response) => {
           avatar: session.owner.avatar,
           color: session.owner.color,
         },
-        members: session.members.map(m => ({
+        members: session.members.map((m: MemberWithUser) => ({
           id: m.id,
           userId: m.userId,
           role: m.role,
