@@ -513,3 +513,17 @@ export class ReasoningHistoryService {
         };
     }
 }
+
+// Singleton instance for compatibility with static-like usage
+const reasoningHistoryServiceInstance = new ReasoningHistoryService();
+
+// Static wrapper class for backward compatibility
+export const ReasoningHistoryServiceStatic = {
+    createSession: reasoningHistoryServiceInstance.createSession.bind(reasoningHistoryServiceInstance),
+    completeSession: reasoningHistoryServiceInstance.completeSession.bind(reasoningHistoryServiceInstance),
+    storeComparison: reasoningHistoryServiceInstance.storeComparison.bind(reasoningHistoryServiceInstance),
+    getSession: reasoningHistoryServiceInstance.getSession.bind(reasoningHistoryServiceInstance),
+    getRecentSessions: reasoningHistoryServiceInstance.getRecentSessions.bind(reasoningHistoryServiceInstance),
+    getOverallStatistics: reasoningHistoryServiceInstance.getOverallStatistics.bind(reasoningHistoryServiceInstance),
+    getPromptStatistics: reasoningHistoryServiceInstance.getPromptStatistics.bind(reasoningHistoryServiceInstance),
+};

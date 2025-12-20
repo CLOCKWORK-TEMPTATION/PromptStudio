@@ -5,11 +5,11 @@
  * with shared context across MCP (Model Context Protocol) for efficient coordination.
  */
 
-import { LLMServiceAdapter } from '../LLMServiceAdapter';
-import { SemanticCacheService } from '../SemanticCacheService';
-import { ReasoningHistoryService } from './ReasoningHistoryService';
-import { MCPClient } from '../../lib/mcp-client';
-import { logger } from '../../lib/logger';
+import { LLMServiceAdapter } from '../LLMServiceAdapter.js';
+import { SemanticCacheService } from '../SemanticCacheService.js';
+import { ReasoningHistoryService } from '../ReasoningHistoryService.js';
+import { MCPClient } from '../../lib/mcp-client.js';
+import { logger } from '../../lib/logger.js';
 import { z } from 'zod';
 
 // Define schemas for validation

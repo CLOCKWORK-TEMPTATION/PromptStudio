@@ -260,9 +260,9 @@ export class RBACService {
         }
 
         // Create default roles
-        const adminRoleId = await this.createRole('Admin', 'Full system access', null);
-        const editorRoleId = await this.createRole('Editor', 'Can edit and publish content', null);
-        const viewerRoleId = await this.createRole('Viewer', 'Read-only access', null);
+        const adminRoleId = await this.createRole('Admin', 'Full system access', undefined);
+        const editorRoleId = await this.createRole('Editor', 'Can edit and publish content', undefined);
+        const viewerRoleId = await this.createRole('Viewer', 'Read-only access', undefined);
 
         // Assign permissions to roles
         const adminPermissions = systemPermissions;
