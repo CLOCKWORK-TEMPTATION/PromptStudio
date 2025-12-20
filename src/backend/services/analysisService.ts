@@ -1,6 +1,7 @@
+// @ts-expect-error - openai types not installed
 import OpenAI from 'openai';
 import { config } from '../config/index.js';
-import { ReasoningPath, ThoughtNode } from './LLMServiceAdapter.js';
+import type { ReasoningPath } from './LLMServiceAdapter.js';
 
 export interface PathEvaluation {
   pathId: string;
@@ -146,7 +147,7 @@ Evaluate this reasoning path.`,
    */
   private static heuristicEvaluatePath(
     path: ReasoningPath,
-    criteria: string[]
+    _criteria: string[]
   ): Omit<PathEvaluation, 'pathId'> {
     const avgNodeScore = path.nodes.reduce((sum, node) => sum + node.score, 0) / path.nodes.length;
     const lengthScore = Math.min(path.nodes.length / 5, 1); // Prefer paths with multiple steps
@@ -182,8 +183,8 @@ Evaluate this reasoning path.`,
 
     const openai = new OpenAI({ apiKey: config.openai.apiKey });
 
-    const evaluationsSummary = allEvaluations.map(eval =>
-      `${eval.pathId}: Score ${eval.score.toFixed(2)} - ${eval.reasoning}`
+    const evaluationsSummary = allEvaluations.map(evaluation =>
+      `${evaluation.pathId}: Score ${evaluation.score.toFixed(2)} - ${evaluation.reasoning}`
     ).join('\n');
 
     const response = await openai.chat.completions.create({

@@ -391,10 +391,10 @@ export class SemanticCacheService {
       }),
     ]);
 
-    const totalHits = stats.reduce((sum, s) => sum + s.totalHits, 0);
-    const totalMisses = stats.reduce((sum, s) => sum + s.totalMisses, 0);
-    const tokensSaved = stats.reduce((sum, s) => sum + s.tokensSaved, 0);
-    const costSaved = stats.reduce((sum, s) => sum + s.costSaved, 0);
+    const totalHits = stats.reduce((sum: number, s: { totalHits: number }) => sum + s.totalHits, 0);
+    const totalMisses = stats.reduce((sum: number, s: { totalMisses: number }) => sum + s.totalMisses, 0);
+    const tokensSaved = stats.reduce((sum: number, s: { tokensSaved: number }) => sum + s.tokensSaved, 0);
+    const costSaved = stats.reduce((sum: number, s: { costSaved: number }) => sum + s.costSaved, 0);
 
     const hitRate = totalHits + totalMisses > 0
       ? totalHits / (totalHits + totalMisses)
@@ -411,8 +411,8 @@ export class SemanticCacheService {
       cacheSize: totalEntries,
       oldestEntry: oldestEntry?.createdAt.toISOString() || '',
       newestEntry: newestEntry?.createdAt.toISOString() || '',
-      topTags: topTags.map(t => ({ tag: t.name, count: t._count.name })),
-      dailyStats: stats.map(s => ({
+      topTags: topTags.map((t: { name: string; _count: { name: number } }) => ({ tag: t.name, count: t._count.name })),
+      dailyStats: stats.map((s: { id: string; date: Date; totalHits: number; totalMisses: number; tokensSaved: number; costSaved: number }) => ({
         id: s.id,
         date: s.date.toISOString(),
         totalHits: s.totalHits,
@@ -468,7 +468,7 @@ export class SemanticCacheService {
     ]);
 
     return {
-      entries: entries.map(e => this.formatEntry(e)),
+      entries: entries.map((e: unknown) => this.formatEntry(e)),
       total,
     };
   }

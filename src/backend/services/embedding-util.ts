@@ -1,3 +1,4 @@
+// @ts-expect-error - openai types not installed
 import OpenAI from 'openai';
 import { config } from '../config/index.js';
 

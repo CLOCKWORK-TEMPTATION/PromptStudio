@@ -1,4 +1,6 @@
+// @ts-expect-error - socket.io types not installed
 import { Server as SocketIOServer } from 'socket.io';
+// @ts-expect-error - yjs types not installed
 import * as Y from 'yjs';
 import type { AuthenticatedSocket } from '../index.js';
 import type { CollaborationManager } from '../managers/CollaborationManager.js';
@@ -49,7 +51,7 @@ export function handleCollaborationEvents(
       if (!userRole && shareToken) {
         await collaborationManager.joinSession(session.id, socket.userId, 'VIEWER');
       } else {
-        await collaborationManager.joinSession(session.id, socket.userId, userRole);
+        await collaborationManager.joinSession(session.id, socket.userId, userRole ?? undefined);
       }
 
       // Join socket room

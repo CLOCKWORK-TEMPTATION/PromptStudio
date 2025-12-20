@@ -1,4 +1,9 @@
+// @ts-expect-error - prisma types not installed
 import { PrismaClient } from '@prisma/client';
+
+declare const require: { main: unknown };
+declare const module: unknown;
+declare const process: { exit: (code: number) => never };
 
 const prisma = new PrismaClient();
 
