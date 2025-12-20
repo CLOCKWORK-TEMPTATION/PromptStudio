@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { useCacheStore } from '../store/cacheStore';
-// @ts-ignore - lucide-react module
 import {
   Database,
   Settings,

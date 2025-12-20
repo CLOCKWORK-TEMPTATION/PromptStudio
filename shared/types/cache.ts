@@ -24,21 +24,22 @@ export interface CacheEntry {
 export interface CacheTag {
   id: string;
   name: string;
-  cacheId: string;
+  cacheId?: string;
+  createdAt?: Date;
 }
 
 export interface SemanticCacheEntry {
   id: string;
   prompt: string;
-  promptHash: string;
-  embedding: number[];
+  promptHash?: string;
+  embedding?: number[];
   response: string;
   model?: string;
   hitCount: number;
   tokensSaved: number;
-  createdAt: string;
-  expiresAt: string;
-  lastAccessedAt: string;
+  createdAt: string | Date;
+  expiresAt: string | Date;
+  lastAccessedAt: string | Date;
   userId?: string | null;
   tags: CacheTag[];
 }
@@ -84,17 +85,25 @@ export interface CacheInvalidateResponse {
 }
 
 export interface DailyStats {
-  id: string;
+  id?: string;
   date: string;
   totalHits: number;
   totalMisses: number;
-  tokensSaved: number;
-  costSaved: number;
+  totalEntries?: number;
+  tokensSaved?: number;
+  costSaved?: number;
+}
+
+export interface DailyCacheStat {
+  date: string;
+  totalHits: number;
+  totalMisses: number;
 }
 
 export interface CacheAnalytics {
   totalEntries?: number;
   hitRate: number;
+  missRate?: number;
   totalHits: number;
   totalMisses: number;
   tokensSaved: number;
@@ -105,5 +114,5 @@ export interface CacheAnalytics {
   oldestEntry?: string;
   newestEntry?: string;
   topTags?: Array<{ tag: string; count: number }>;
-  dailyStats?: DailyStats[];
+  dailyStats?: DailyStats[] | DailyCacheStat[];
 }

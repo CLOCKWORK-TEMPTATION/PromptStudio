@@ -14,14 +14,14 @@ export interface CollaborationSession {
   id: string;
   name: string;
   description?: string;
-  content: string;
-  isActive: boolean;
-  shareToken: string | null;
-  ownerId: string;
-  owner: User;
-  members: CollaborationMember[];
-  createdAt: string;
-  updatedAt: string;
+  content?: string;
+  isActive?: boolean;
+  shareToken?: string | null;
+  ownerId?: string;
+  owner?: User;
+  members?: CollaborationMember[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface CollaborationMember {
@@ -64,6 +64,7 @@ export enum CollaborationEvent {
   JOIN_SESSION = 'join_session',
   LEAVE_SESSION = 'leave_session',
   SESSION_UPDATE = 'session_update',
+  SYNC_STATE = 'sync_state',
 
   // User events
   USER_JOINED = 'user_joined',
@@ -74,7 +75,6 @@ export enum CollaborationEvent {
 
   // Sync events
   SYNC_REQUEST = 'sync_request',
-  SYNC_STATE = 'sync_state',
 
   // Permission events
   PERMISSION_CHANGE = 'permission_change',

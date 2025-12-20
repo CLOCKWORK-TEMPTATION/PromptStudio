@@ -1,49 +1,62 @@
 // Stub for Supabase client
 // Install @supabase/supabase-js if needed: npm install @supabase/supabase-js
 
-// Type stub for Supabase client
-interface SupabaseQueryResult<T = Record<string, unknown>> {
-  data: T[] | null;
+// Type definition for Supabase-like query builder
+interface QueryResult<T> {
+  data: T | null;
   error: Error | null;
 }
 
-interface SupabaseQueryBuilder {
-  select: (columns?: string) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
-  insert: (data: Record<string, unknown>) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
-  update: (data: Record<string, unknown>) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
-  delete: () => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
-  eq: (column: string, value: unknown) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
-  order: (column: string, options?: { ascending?: boolean }) => SupabaseQueryBuilder & Promise<SupabaseQueryResult>;
-  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
-  single: () => Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
-  then: <TResult>(onfulfilled?: ((value: SupabaseQueryResult) => TResult | PromiseLike<TResult>) | null) => Promise<TResult>;
+// Use a simpler approach - single type parameter that gets modified by methods
+interface QueryBuilder<T> {
+  select(columns?: string): QueryBuilder<T>;
+  insert(data: unknown): QueryBuilder<T>;
+  update(data: unknown): QueryBuilder<T>;
+  delete(): QueryBuilder<T>;
+  eq(column: string, value: unknown): QueryBuilder<T>;
+  or(filter: string): QueryBuilder<T>;
+  order(column: string, options?: { ascending?: boolean }): QueryBuilder<T>;
+  limit(count: number): QueryBuilder<T>;
+  single(): Promise<QueryResult<T>>;
+  maybeSingle(): Promise<QueryResult<T | null>>;
+  then<TResult1 = QueryResult<T>, TResult2 = never>(
+    onfulfilled?: ((value: QueryResult<T>) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ): Promise<TResult1 | TResult2>;
 }
 
 interface SupabaseClient {
-  from: (table: string) => SupabaseQueryBuilder;
+  from<T = unknown>(table: string): QueryBuilder<T>;
 }
 
-// Create a mock Supabase client stub
-const createMockQueryBuilder = (): SupabaseQueryBuilder => {
-  const builder: SupabaseQueryBuilder = {
-    select: () => builder,
-    insert: () => builder,
-    update: () => builder,
-    delete: () => builder,
-    eq: () => builder,
-    order: () => builder,
-    maybeSingle: async () => ({ data: null, error: null }),
-    single: async () => ({ data: null, error: null }),
+// Create a stub client that throws helpful errors
+const createStubClient = (): SupabaseClient => {
+  const createQueryBuilder = <T>(): QueryBuilder<T> => {
+    const builder: QueryBuilder<T> = {
+      select: () => builder,
+      insert: () => builder,
+      update: () => builder,
+      delete: () => builder,
+      eq: () => builder,
+      or: () => builder,
+      order: () => builder,
+      limit: () => builder,
+      single: () => Promise.resolve({ data: null, error: new Error('Supabase client not configured') }),
+      maybeSingle: () => Promise.resolve({ data: null, error: new Error('Supabase client not configured') }),
+      then: (onfulfilled) => {
+        const result: QueryResult<T> = { data: null, error: new Error('Supabase client not configured') };
+        return Promise.resolve(onfulfilled ? onfulfilled(result) : result);
+      },
+    };
+    return builder;
   };
-  return builder;
+
+  return {
+    from: <T>() => createQueryBuilder<T>(),
+  };
 };
 
-const mockSupabase: SupabaseClient = {
-  from: () => createMockQueryBuilder(),
-};
-
-// Export null for runtime check, but type as SupabaseClient for type safety
-export const supabase: SupabaseClient | null = null;
+export const supabase: SupabaseClient = createStubClient();
 
 // Stub functions for session management
 export async function getOrCreateSession(): Promise<string> {
