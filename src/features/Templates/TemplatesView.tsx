@@ -284,6 +284,7 @@ export function TemplatesView() {
 }
 
 interface TemplateCardProps {
+  key?: string | number;
   template: Template;
   theme: string;
   onClick: () => void;
