@@ -1,4 +1,7 @@
+// @ts-expect-error - prisma client types
 import { PrismaClient } from '@prisma/client';
+
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
 
 export interface Permission {
     resource: string;
@@ -42,7 +45,7 @@ export class RBACService {
                 }
 
                 const hasPermission = userRole.role.permissions.some(
-                    rp => rp.permission.resource === permission.resource &&
+                    (rp: { permission: { resource: string; action: string } }) => rp.permission.resource === permission.resource &&
                         rp.permission.action === permission.action
                 );
 
@@ -260,9 +263,9 @@ export class RBACService {
         }
 
         // Create default roles
-        const adminRoleId = await this.createRole('Admin', 'Full system access', null);
-        const editorRoleId = await this.createRole('Editor', 'Can edit and publish content', null);
-        const viewerRoleId = await this.createRole('Viewer', 'Read-only access', null);
+        const adminRoleId = await this.createRole('Admin', 'Full system access', undefined);
+        const editorRoleId = await this.createRole('Editor', 'Can edit and publish content', undefined);
+        const viewerRoleId = await this.createRole('Viewer', 'Read-only access', undefined);
 
         // Assign permissions to roles
         const adminPermissions = systemPermissions;
@@ -298,7 +301,7 @@ export class RBACService {
         });
 
         return userRoles
-            .filter(ur => !ur.role.tenantId || ur.role.tenantId === tenantId)
-            .map(ur => ur.role);
+            .filter((ur: { role: { tenantId?: string | null } }) => !ur.role.tenantId || ur.role.tenantId === tenantId)
+            .map((ur: { role: { id: string; name: string; description?: string | null; tenantId?: string | null; isSystem: boolean; isActive: boolean; createdAt: Date; updatedAt: Date } }) => ur.role);
     }
 }
