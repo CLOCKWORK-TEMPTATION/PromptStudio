@@ -1,5 +1,5 @@
 import React from 'react';
-import { Language, LanguageInfo } from '../types';
+import { Language } from '../types';
 import { SUPPORTED_LANGUAGES } from '../services/translationService';
 import { ChevronDown } from 'lucide-react';
 
@@ -10,17 +10,15 @@ interface LanguageSelectorProps {
   label?: string;
 }
 
-export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
+export const LanguageSelector = ({
   selectedLanguage,
   onSelect,
   excludeLanguages = [],
   label,
-}) => {
+}: LanguageSelectorProps) => {
   const availableLanguages = SUPPORTED_LANGUAGES.filter(
     (lang) => !excludeLanguages.includes(lang.code)
   );
-
-  const selectedLang = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage);
 
   return (
     <div className="relative">
@@ -32,7 +30,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       <div className="relative">
         <select
           value={selectedLanguage}
-          onChange={(e) => onSelect(e.target.value as Language)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onSelect(e.target.value as Language)}
           className="appearance-none w-full px-4 py-3 bg-white border border-gray-300 rounded-lg
                      focus:ring-2 focus:ring-primary-500 focus:border-transparent
                      cursor-pointer text-gray-900 font-medium pr-10"
@@ -56,12 +54,12 @@ interface MultiLanguageSelectorProps {
   label?: string;
 }
 
-export const MultiLanguageSelector: React.FC<MultiLanguageSelectorProps> = ({
+export const MultiLanguageSelector = ({
   selectedLanguages,
   onToggle,
   excludeLanguages = [],
   label,
-}) => {
+}: MultiLanguageSelectorProps) => {
   const availableLanguages = SUPPORTED_LANGUAGES.filter(
     (lang) => !excludeLanguages.includes(lang.code)
   );
