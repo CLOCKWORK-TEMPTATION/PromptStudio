@@ -1,7 +1,18 @@
+// @ts-ignore - supabase-js module
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+declare const import_meta_env: {
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_ANON_KEY?: string;
+};
+
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const importMeta = (import.meta as any);
+const processEnv = typeof process !== 'undefined' ? process.env : {};
+const supabaseUrl = importMeta.env?.VITE_SUPABASE_URL || processEnv?.VITE_SUPABASE_URL;
+const supabaseAnonKey = importMeta.env?.VITE_SUPABASE_ANON_KEY || processEnv?.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
