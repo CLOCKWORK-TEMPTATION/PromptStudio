@@ -1,4 +1,3 @@
-// @ts-expect-error - socket.io types not installed
 import { Server as SocketIOServer } from 'socket.io';
 import type { AuthenticatedSocket } from '../index.js';
 import type { PresenceManager } from '../managers/PresenceManager.js';

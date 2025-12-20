@@ -334,6 +334,7 @@ export interface Prompt {
   model_id?: string;
   variables: PromptVariable[];
   modelConfig: ModelConfig;
+  isFavorite?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -546,6 +547,7 @@ export interface JSONSchema {
 }
 
 export interface ToolDefinition {
+  id: string;
   name: string;
   description: string;
   parameters: {
@@ -553,13 +555,18 @@ export interface ToolDefinition {
     properties: Record<string, any>;
     required: string[];
   };
+  mockResponse?: string;
 }
 
 export interface SmartVariable {
+  id: string;
+  session_id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  variableType: 'timestamp' | 'history' | 'env' | 'custom' | 'string' | 'number' | 'boolean' | 'array' | 'object';
   description: string;
-  defaultValue?: any;
+  default_value: string;
+  isSystem?: boolean;
+  createdAt?: string;
   validation?: {
     required: boolean;
     min?: number;

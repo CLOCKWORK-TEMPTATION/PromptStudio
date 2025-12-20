@@ -168,7 +168,7 @@ export function TokenizerVisualization() {
                 'text-lg font-semibold',
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               )}>
-                ${((visualization.total / 1000) * (selectedModelInfo?.pricing?.input || 0.01)).toFixed(4)}
+                ${((visualization.total / 1000) * 0.01).toFixed(4)}
               </div>
               <div className="text-xs mt-1">
                 For input tokens at {selectedModelInfo?.name || 'selected model'} rates
@@ -187,10 +187,10 @@ export function TokenizerVisualization() {
                 'text-lg font-semibold',
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               )}>
-                {((visualization.total / (selectedModelInfo?.contextWindow || 8192)) * 100).toFixed(1)}%
+                {((visualization.total / (selectedModelInfo?.context_window || 8192)) * 100).toFixed(1)}%
               </div>
               <div className="text-xs mt-1">
-                {visualization.total.toLocaleString()} / {(selectedModelInfo?.contextWindow || 8192).toLocaleString()} tokens
+                {visualization.total.toLocaleString()} / {(selectedModelInfo?.context_window || 8192).toLocaleString()} tokens
               </div>
             </div>
           </div>
@@ -203,7 +203,7 @@ export function TokenizerVisualization() {
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
                 style={{
-                  width: `${Math.min(100, (visualization.total / (selectedModelInfo?.contextWindow || 8192)) * 100)}%`
+                  width: `${Math.min(100, (visualization.total / (selectedModelInfo?.context_window || 8192)) * 100)}%`
                 }}
               />
             </div>
