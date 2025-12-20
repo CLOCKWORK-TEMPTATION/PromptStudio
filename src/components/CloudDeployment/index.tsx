@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Cloud, Server, Globe, Shield, Activity, Key, Webhook, Settings, Rocket, Download, Copy, Check, ChevronRight, ExternalLink } from 'lucide-react';
+import { Cloud, Server, Settings, Rocket } from 'lucide-react';
 import { usePromptStudioStore } from '@/store';
 import { CloudProvider, DeploymentConfig } from '@/types';
 import { generateDeployment, getProviderInfo } from '@/lib/cloud-deployment';

@@ -16,11 +16,11 @@ interface ExportPanelProps {
   onClose?: () => void;
 }
 
-export const ExportPanel: React.FC<ExportPanelProps> = ({
+export const ExportPanel = ({
   translations,
   sourceText,
-  onClose,
-}) => {
+  onClose: _onClose,
+}: ExportPanelProps) => {
   const [exportType, setExportType] = useState<ExportFormat['type']>('json');
   const [includeMetadata, setIncludeMetadata] = useState(true);
   const [includeAlternatives, setIncludeAlternatives] = useState(true);
@@ -98,7 +98,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
                 <input
                   type="checkbox"
                   checked={includeMetadata}
-                  onChange={(e) => setIncludeMetadata(e.target.checked)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIncludeMetadata(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-gray-700">Include metadata (date, confidence, etc.)</span>
@@ -107,7 +107,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
                 <input
                   type="checkbox"
                   checked={includeAlternatives}
-                  onChange={(e) => setIncludeAlternatives(e.target.checked)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIncludeAlternatives(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-gray-700">Include alternative translations</span>
@@ -116,7 +116,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
                 <input
                   type="checkbox"
                   checked={includeCulturalNotes}
-                  onChange={(e) => setIncludeCulturalNotes(e.target.checked)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIncludeCulturalNotes(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-gray-700">Include cultural notes</span>
