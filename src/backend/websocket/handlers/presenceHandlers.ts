@@ -4,7 +4,7 @@ import type { PresenceManager } from '../managers/PresenceManager.js';
 import { CollaborationEvent, CursorPosition } from '../../../../shared/types/collaboration.js';
 
 export function handlePresenceEvents(
-  io: SocketIOServer,
+  _io: SocketIOServer,
   socket: AuthenticatedSocket,
   presenceManager: PresenceManager
 ): void {
