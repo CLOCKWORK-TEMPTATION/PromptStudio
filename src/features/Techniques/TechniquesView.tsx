@@ -66,7 +66,7 @@ export function TechniquesView() {
     t.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleTryExample = (example: { prompt: string }) => {
+  const handleTryExample = (example: { prompt: string; name: string; explanation: string }) => {
     loadPrompt({
       content: example.prompt,
       title: 'Technique Example',
