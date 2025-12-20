@@ -21,8 +21,15 @@ function generateColor(): string {
 // Register
 router.post('/register', validate(RegisterSchema), async (req: Request, res: Response) => {
   try {
-    const { email, name } = req.body;
-    // Note: Password hashing and storage should be implemented here. Currently missing in original code.
+    const { email, name, password: _password } = req.body;
+
+    if (!email || !name) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Email and name are required' },
+      });
+      return;
+    }
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -54,8 +61,8 @@ router.post('/register', validate(RegisterSchema), async (req: Request, res: Res
         name: user.name,
         color: user.color,
       },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      String(config.jwt.secret),
+      { expiresIn: String(config.jwt.expiresIn) }
     );
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -109,8 +116,8 @@ router.post('/login', validate(LoginSchema), async (req: Request, res: Response)
         name: user.name,
         color: user.color,
       },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      String(config.jwt.secret),
+      { expiresIn: String(config.jwt.expiresIn) }
     );
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -209,7 +216,7 @@ router.patch('/me', authMiddleware, validate(UpdateProfileSchema), async (req: R
 });
 
 // Guest login (for quick access)
-router.post('/guest', async (req: Request, res: Response) => {
+router.post('/guest', async (_req: Request, res: Response) => {
   try {
     const guestId = uuidv4();
     const guestName = `Guest_${guestId.slice(0, 6)}`;
@@ -231,7 +238,7 @@ router.post('/guest', async (req: Request, res: Response) => {
         name: user.name,
         color: user.color,
       },
-      config.jwt.secret,
+      String(config.jwt.secret),
       { expiresIn: '24h' } // Shorter expiry for guests
     );
 

@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-import { Variable, Plus, Trash2, FileText, History, Clock, User, Settings, ChevronDown } from 'lucide-react';
+import { Variable, Plus, Trash2, FileText, History, Clock, Settings, ChevronDown } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import type { SmartVariable } from '../../types';
 import clsx from 'clsx';
 
 const SYSTEM_VARIABLES: Omit<SmartVariable, 'id' | 'session_id' | 'created_at'>[] = [
-  { name: 'timestamp', variable_type: 'timestamp', default_value: '', description: 'Current timestamp', is_system: true },
-  { name: 'date', variable_type: 'timestamp', default_value: '', description: 'Current date (YYYY-MM-DD)', is_system: true },
-  { name: 'time', variable_type: 'timestamp', default_value: '', description: 'Current time (HH:MM:SS)', is_system: true },
-  { name: 'history:last', variable_type: 'history', default_value: '', description: 'Last used prompt', is_system: true },
-  { name: 'history:count', variable_type: 'history', default_value: '', description: 'Number of saved prompts', is_system: true },
-  { name: 'user:name', variable_type: 'env', default_value: 'Anonymous', description: 'Current user name', is_system: true },
-  { name: 'model:name', variable_type: 'env', default_value: '', description: 'Selected model name', is_system: true },
-  { name: 'model:tokens', variable_type: 'env', default_value: '', description: 'Max tokens for model', is_system: true },
+  { name: 'timestamp', variableType: 'timestamp', default_value: '', description: 'Current timestamp', isSystem: true },
+  { name: 'date', variableType: 'timestamp', default_value: '', description: 'Current date (YYYY-MM-DD)', isSystem: true },
+  { name: 'time', variableType: 'timestamp', default_value: '', description: 'Current time (HH:MM:SS)', isSystem: true },
+  { name: 'history:last', variableType: 'history', default_value: '', description: 'Last used prompt', isSystem: true },
+  { name: 'history:count', variableType: 'history', default_value: '', description: 'Number of saved prompts', isSystem: true },
+  { name: 'user:name', variableType: 'env', default_value: 'Anonymous', description: 'Current user name', isSystem: true },
+  { name: 'model:name', variableType: 'env', default_value: '', description: 'Selected model name', isSystem: true },
+  { name: 'model:tokens', variableType: 'env', default_value: '', description: 'Max tokens for model', isSystem: true },
 ];
 
 export function SmartVariables() {
@@ -27,7 +27,7 @@ export function SmartVariables() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const allVariables = [
-    ...SYSTEM_VARIABLES.map((v) => ({ ...v, id: v.name, session_id: '', created_at: '' })),
+    ...SYSTEM_VARIABLES.map((v) => ({ ...v, id: v.name, session_id: '', createdAt: '' })),
     ...smartVariables,
   ];
 
@@ -42,11 +42,11 @@ export function SmartVariables() {
       id: crypto.randomUUID(),
       session_id: '',
       name: newVarName.replace(/\s+/g, '_').toLowerCase(),
-      variable_type: 'custom',
+      variableType: 'custom',
       default_value: newVarValue,
       description: '',
-      is_system: false,
-      created_at: new Date().toISOString(),
+      isSystem: false,
+      createdAt: new Date().toISOString(),
     };
     setSmartVariables([...smartVariables, newVar]);
     setNewVarName('');
@@ -54,7 +54,7 @@ export function SmartVariables() {
   };
 
   const handleRemoveVariable = (id: string) => {
-    setSmartVariables(smartVariables.filter((v) => v.id !== id));
+    setSmartVariables(smartVariables.filter((v: SmartVariable) => v.id !== id));
   };
 
   const insertVariable = (name: string) => {
@@ -132,7 +132,7 @@ export function SmartVariables() {
               type="text"
               placeholder="Search variables..."
               value={filterQuery}
-              onChange={(e) => setFilterQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterQuery(e.target.value)}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border text-sm',
                 theme === 'dark'
@@ -143,7 +143,7 @@ export function SmartVariables() {
 
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {filteredVariables.map((variable) => {
-                const Icon = getVariableIcon(variable.variable_type);
+                const Icon = getVariableIcon(variable.variableType);
                 return (
                   <div
                     key={variable.id}
@@ -162,7 +162,7 @@ export function SmartVariables() {
                           )}>
                             @{variable.name}
                           </code>
-                          {variable.is_system && (
+                          {variable.isSystem && (
                             <span className={clsx(
                               'px-1.5 py-0.5 rounded text-xs',
                               theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
@@ -193,7 +193,7 @@ export function SmartVariables() {
                       >
                         Insert
                       </button>
-                      {!variable.is_system && (
+                      {!variable.isSystem && (
                         <button
                           onClick={() => handleRemoveVariable(variable.id)}
                           className={clsx(
@@ -227,7 +227,7 @@ export function SmartVariables() {
                   type="text"
                   placeholder="Name"
                   value={newVarName}
-                  onChange={(e) => setNewVarName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVarName(e.target.value)}
                   className={clsx(
                     'flex-1 px-3 py-2 rounded-lg border text-sm',
                     theme === 'dark'
@@ -239,7 +239,7 @@ export function SmartVariables() {
                   type="text"
                   placeholder="Default value"
                   value={newVarValue}
-                  onChange={(e) => setNewVarValue(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVarValue(e.target.value)}
                   className={clsx(
                     'flex-1 px-3 py-2 rounded-lg border text-sm',
                     theme === 'dark'
@@ -288,7 +288,7 @@ export function SmartVariables() {
           }}
         >
           {allVariables.slice(0, 8).map((variable) => {
-            const Icon = getVariableIcon(variable.variable_type);
+            const Icon = getVariableIcon(variable.variableType);
             return (
               <button
                 key={variable.id}

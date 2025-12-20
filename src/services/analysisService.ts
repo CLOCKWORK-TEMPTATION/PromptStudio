@@ -1,4 +1,65 @@
-import type { AnalysisResult, PromptComponent, AnalysisSuggestion, AnalysisWarning, TokenEstimate, TokenVisualization, Token } from '../types';
+// Local type definitions that extend the base types
+export interface LocalAnalysisResult {
+  clarity_score: number;
+  specificity_score: number;
+  structure_score: number;
+  overall_score: number;
+  components: LocalPromptComponent[];
+  suggestions: LocalAnalysisSuggestion[];
+  warnings: LocalAnalysisWarning[];
+  token_estimate: LocalTokenEstimate;
+}
+
+export interface LocalPromptComponent {
+  type: string;
+  content: string;
+  start: number;
+  end: number;
+}
+
+export interface LocalAnalysisSuggestion {
+  type: string;
+  message: string;
+  impact: 'high' | 'medium' | 'low';
+  suggestion: string;
+}
+
+export interface LocalAnalysisWarning {
+  type: string;
+  message: string;
+  severity: 'critical' | 'warning' | 'info';
+  location?: { start: number; end: number };
+}
+
+export interface LocalTokenEstimate {
+  gpt4: number;
+  gpt35: number;
+  claude: number;
+  llama: number;
+  estimated_cost: Record<string, number>;
+}
+
+export interface LocalTokenVisualization {
+  tokens: LocalToken[];
+  total: number;
+  model: string;
+}
+
+export interface LocalToken {
+  text: string;
+  id: number;
+  start: number;
+  end: number;
+}
+
+// Type aliases for backward compatibility
+type AnalysisResult = LocalAnalysisResult;
+type PromptComponent = LocalPromptComponent;
+type AnalysisSuggestion = LocalAnalysisSuggestion;
+type AnalysisWarning = LocalAnalysisWarning;
+type TokenEstimate = LocalTokenEstimate;
+type TokenVisualization = LocalTokenVisualization;
+type Token = LocalToken;
 
 // =============================================================================
 // SAFETY POLICY TYPES

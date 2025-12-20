@@ -4,7 +4,6 @@ import {
   BookOpen,
   Lightbulb,
   ArrowRight,
-  ExternalLink,
   ChevronRight,
   Zap,
   Brain,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
-import { getTechniques, getTechniqueBySlug } from '../../services/templateService';
+import { getTechniques } from '../../services/templateService';
 import type { Technique } from '../../types';
 import clsx from 'clsx';
 
@@ -62,12 +61,12 @@ export function TechniquesView() {
     }
   };
 
-  const filteredTechniques = techniques.filter((t) =>
+  const filteredTechniques = techniques.filter((t: Technique) =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleTryExample = (example: { prompt: string }) => {
+  const handleTryExample = (example: { prompt: string; name: string; explanation: string }) => {
     loadPrompt({
       content: example.prompt,
       title: 'Technique Example',
@@ -115,7 +114,7 @@ export function TechniquesView() {
               type="text"
               placeholder="Search techniques..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className={clsx(
                 'flex-1 bg-transparent border-none outline-none text-sm',
                 theme === 'dark' ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
@@ -139,7 +138,7 @@ export function TechniquesView() {
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredTechniques.map((technique) => {
+              {filteredTechniques.map((technique: Technique) => {
                 const Icon = TECHNIQUE_ICONS[technique.slug] || Lightbulb;
                 const isSelected = selectedTechnique?.id === technique.id;
 
@@ -212,7 +211,7 @@ export function TechniquesView() {
                 <span className={clsx('px-2 py-1 rounded text-sm capitalize', getDifficultyColor(selectedTechnique.difficulty))}>
                   {selectedTechnique.difficulty}
                 </span>
-                {selectedTechnique.tags.map((tag) => (
+                {selectedTechnique.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className={clsx(
@@ -248,13 +247,13 @@ export function TechniquesView() {
               />
             </div>
 
-            {selectedTechnique.best_for.length > 0 && (
+            {selectedTechnique.bestFor.length > 0 && (
               <div className="mt-6">
                 <h3 className={clsx('font-semibold mb-3', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
                   Best For
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedTechnique.best_for.map((useCase) => (
+                  {selectedTechnique.bestFor.map((useCase: string) => (
                     <span
                       key={useCase}
                       className={clsx(
@@ -275,7 +274,7 @@ export function TechniquesView() {
                   Examples
                 </h3>
                 <div className="space-y-4">
-                  {selectedTechnique.examples.map((example, index) => (
+                  {selectedTechnique.examples.map((example: { name: string; prompt: string; explanation: string }, index: number) => (
                     <div
                       key={index}
                       className={clsx(
@@ -309,14 +308,14 @@ export function TechniquesView() {
               </div>
             )}
 
-            {selectedTechnique.related_techniques.length > 0 && (
+            {selectedTechnique.relatedTechniques.length > 0 && (
               <div className="mt-6">
                 <h3 className={clsx('font-semibold mb-3', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
                   Related Techniques
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedTechnique.related_techniques.map((slug) => {
-                    const related = techniques.find((t) => t.slug === slug);
+                  {selectedTechnique.relatedTechniques.map((slug: string) => {
+                    const related = techniques.find((t: Technique) => t.slug === slug);
                     if (!related) return null;
                     return (
                       <button

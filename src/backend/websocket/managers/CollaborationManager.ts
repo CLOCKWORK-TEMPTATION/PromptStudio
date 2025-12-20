@@ -1,6 +1,6 @@
 import prisma from '../../lib/prisma.js';
 import redis from '../../lib/redis.js';
-import type { CollaborationSession, SessionMember, MemberRole } from '../../../../shared/types/collaboration.js';
+import type { CollaborationSession, MemberRole } from '../../../../shared/types/collaboration.js';
 
 interface SessionState {
   sessionId: string;
@@ -45,7 +45,8 @@ export class CollaborationManager {
           avatar: session.owner.avatar || undefined,
           color: session.owner.color,
         },
-        members: session.members.map(m => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        members: session.members.map((m: any) => ({
           id: m.id,
           userId: m.userId,
           user: {

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -9,18 +9,15 @@ import ReactFlow, {
   addEdge,
   Connection,
   MarkerType,
-  Panel,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import {
   GitBranch,
-  Plus,
   Play,
   Save,
   Trash2,
   PenTool,
   GitMerge,
-  Repeat,
   ArrowRightCircle,
   ArrowLeftCircle,
   Zap,
@@ -71,7 +68,7 @@ export function ChainsView() {
   const [chainName, setChainName] = useState('My Chain');
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
+    (params: Connection) => setEdges((eds: Edge[]) => addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
     [setEdges]
   );
 
@@ -85,13 +82,13 @@ export function ChainsView() {
         prompt: type === 'prompt' ? '' : undefined,
       },
     };
-    setNodes((nds) => [...nds, newNode]);
+    setNodes((nds: Node[]) => [...nds, newNode]);
   };
 
   const deleteSelectedNode = () => {
     if (selectedNode) {
-      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-      setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+      setNodes((nds: Node[]) => nds.filter((n: Node) => n.id !== selectedNode.id));
+      setEdges((eds: Edge[]) => eds.filter((e: Edge) => e.source !== selectedNode.id && e.target !== selectedNode.id));
       setSelectedNode(null);
     }
   };
@@ -100,12 +97,12 @@ export function ChainsView() {
     setIsRunning(true);
 
     for (const node of nodes) {
-      setNodes((nds) =>
-        nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, status: 'running' } } : n))
+      setNodes((nds: Node[]) =>
+        nds.map((n: Node) => (n.id === node.id ? { ...n, data: { ...n.data, status: 'running' } } : n))
       );
       await new Promise((resolve) => setTimeout(resolve, 500));
-      setNodes((nds) =>
-        nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, status: 'success' } } : n))
+      setNodes((nds: Node[]) =>
+        nds.map((n: Node) => (n.id === node.id ? { ...n, data: { ...n.data, status: 'success' } } : n))
       );
     }
 
@@ -123,7 +120,7 @@ export function ChainsView() {
           <input
             type="text"
             value={chainName}
-            onChange={(e) => setChainName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChainName(e.target.value)}
             className={clsx(
               'text-xl font-semibold bg-transparent border-none outline-none',
               theme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -204,9 +201,9 @@ export function ChainsView() {
               {selectedNode.type === 'prompt' && (
                 <textarea
                   value={selectedNode.data.prompt || ''}
-                  onChange={(e) => {
-                    setNodes((nds) =>
-                      nds.map((n) =>
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setNodes((nds: Node[]) =>
+                      nds.map((n: Node) =>
                         n.id === selectedNode.id
                           ? { ...n, data: { ...n.data, prompt: e.target.value } }
                           : n
@@ -247,7 +244,7 @@ export function ChainsView() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeClick={(_, node) => setSelectedNode(node)}
+            onNodeClick={(_: React.MouseEvent, node: Node) => setSelectedNode(node)}
             onPaneClick={() => setSelectedNode(null)}
             nodeTypes={nodeTypes}
             fitView

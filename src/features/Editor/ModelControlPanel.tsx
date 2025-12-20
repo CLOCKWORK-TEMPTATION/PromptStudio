@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Settings2,
   ChevronDown,
@@ -14,7 +14,7 @@ import {
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
 import { AI_MODELS, DEFAULT_MODEL_CONFIG } from '../../types';
-import type { ModelConfig, AIModel } from '../../types';
+import type { ModelConfig } from '../../types';
 import clsx from 'clsx';
 
 interface ModelControlPanelProps {
@@ -28,7 +28,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
   const [newStopSequence, setNewStopSequence] = useState('');
   const [showPresets, setShowPresets] = useState(false);
 
-  const selectedModel = AI_MODELS.find((m: AIModel) => m.id === modelId) || AI_MODELS[0];
+  const selectedModel = AI_MODELS.find((m) => m.id === modelId) || AI_MODELS[0];
 
   const presets = [
     { name: 'Creative', config: { temperature: 1.2, topP: 0.95, frequencyPenalty: 0.5, presencePenalty: 0.5 } },
@@ -96,7 +96,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             </label>
             <select
               value={modelId}
-              onChange={(e) => setModelId(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setModelId(e.target.value)}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -104,7 +104,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
                   : 'bg-white border-gray-300 text-gray-900'
               )}
             >
-              {AI_MODELS.map((model: AIModel) => (
+              {AI_MODELS.map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.name} ({model.provider})
                 </option>
@@ -114,9 +114,9 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               'mt-2 flex gap-4 text-xs',
               theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
             )}>
-              <span>Context: {selectedModel.context_window.toLocaleString()} tokens</span>
-              <span>Functions: {selectedModel.supports_functions ? 'Yes' : 'No'}</span>
-              <span>JSON Mode: {selectedModel.supports_json_mode ? 'Yes' : 'No'}</span>
+              <span>Context: {selectedModel.contextWindow.toLocaleString()} tokens</span>
+              <span>Functions: {selectedModel.supportsFunctions ? 'Yes' : 'No'}</span>
+              <span>JSON Mode: {selectedModel.supportsJsonMode ? 'Yes' : 'No'}</span>
             </div>
           </div>
 
@@ -186,7 +186,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
 
           <SliderControl
             label="Top K"
-            value={currentModelConfig.topK || 0}
+            value={currentModelConfig.topK}
             onChange={(v) => updateCurrentModelConfig({ topK: v })}
             min={1}
             max={100}
@@ -230,9 +230,9 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             <input
               type="number"
               value={currentModelConfig.maxTokens}
-              onChange={(e) => updateCurrentModelConfig({ maxTokens: parseInt(e.target.value) || 2048 })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateCurrentModelConfig({ maxTokens: parseInt(e.target.value) || 2048 })}
               min={1}
-              max={selectedModel.context_window}
+              max={selectedModel.contextWindow}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -251,7 +251,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
             </label>
             <select
               value={currentModelConfig.responseFormat}
-              onChange={(e) => updateCurrentModelConfig({ responseFormat: e.target.value as ModelConfig['responseFormat'] })}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateCurrentModelConfig({ responseFormat: e.target.value as ModelConfig['responseFormat'] })}
               className={clsx(
                 'w-full px-3 py-2 rounded-lg border transition-colors',
                 theme === 'dark'
@@ -276,7 +276,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               <input
                 type="text"
                 value={newStopSequence}
-                onChange={(e) => setNewStopSequence(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStopSequence(e.target.value)}
                 placeholder="Add stop sequence..."
                 className={clsx(
                   'flex-1 px-3 py-2 rounded-lg border transition-colors text-sm',
@@ -284,7 +284,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                 )}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddStopSequence()}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAddStopSequence()}
               />
               <button
                 onClick={handleAddStopSequence}
@@ -400,7 +400,7 @@ function SliderControl({
       <input
         type="range"
         value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(parseFloat(e.target.value))}
         min={min}
         max={max}
         step={step}

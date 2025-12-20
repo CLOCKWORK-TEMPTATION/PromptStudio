@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { semanticCacheService } from '../../services/SemanticCacheService.js';
-import { AuthRequest } from '../middleware/auth.js';
+import type { AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
 // Get cache configuration
-router.get('/config', async (req: Request, res: Response) => {
+router.get('/config', async (_req: Request, res: Response) => {
   try {
     const config = await semanticCacheService['getConfig']();
 
@@ -151,7 +151,7 @@ router.get('/entries', async (req: Request, res: Response) => {
 });
 
 // Get cache analytics
-router.get('/analytics', async (req: Request, res: Response) => {
+router.get('/analytics', async (_req: Request, res: Response) => {
   try {
     const analytics = await semanticCacheService.getAnalytics();
 
@@ -233,7 +233,7 @@ router.delete('/entries/:id', async (req: Request, res: Response) => {
 });
 
 // Cleanup expired entries
-router.post('/cleanup', async (req: Request, res: Response) => {
+router.post('/cleanup', async (_req: Request, res: Response) => {
   try {
     const deletedCount = await semanticCacheService.cleanup();
 
@@ -251,7 +251,7 @@ router.post('/cleanup', async (req: Request, res: Response) => {
 });
 
 // Clear all cache
-router.delete('/all', async (req: Request, res: Response) => {
+router.delete('/all', async (_req: Request, res: Response) => {
   try {
     const result = await semanticCacheService.invalidate({ type: 'all' });
 

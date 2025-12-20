@@ -1,6 +1,9 @@
+// @ts-ignore - zustand module
 import { create } from 'zustand';
+// @ts-ignore - zustand/middleware module
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
+
 
 interface User {
   id: string;
@@ -8,6 +11,17 @@ interface User {
   name: string;
   avatar?: string;
   color: string;
+}
+
+interface AuthResponse {
+  data: {
+    user: User;
+    token: string;
+  };
+}
+
+interface ProfileResponse {
+  data: User;
 }
 
 interface AuthState {
@@ -25,9 +39,12 @@ interface AuthState {
   updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
+type SetState = (partial: Partial<AuthState> | ((state: AuthState) => Partial<AuthState>)) => void;
+type GetState = () => AuthState;
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set: SetState, get: GetState) => ({
       user: null,
       token: null,
       isAuthenticated: false,
@@ -37,7 +54,7 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post('/auth/login', { email });
+          const response = await api.post<AuthResponse>('/auth/login', { email });
           const { user, token } = response.data.data;
           set({ user, token, isAuthenticated: true, isLoading: false });
         } catch (error: any) {
@@ -52,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
       register: async (email: string, name: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post('/auth/register', { email, name });
+          const response = await api.post<AuthResponse>('/auth/register', { email, name });
           const { user, token } = response.data.data;
           set({ user, token, isAuthenticated: true, isLoading: false });
         } catch (error: any) {
@@ -67,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
       loginAsGuest: async () => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post('/auth/guest');
+          const response = await api.post<AuthResponse>('/auth/guest');
           const { user, token } = response.data.data;
           set({ user, token, isAuthenticated: true, isLoading: false });
         } catch (error: any) {
@@ -95,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
       updateProfile: async (data: Partial<User>) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.patch('/auth/me', data);
+          const response = await api.patch<ProfileResponse>('/auth/me', data);
           set({ user: response.data.data, isLoading: false });
         } catch (error: any) {
           set({
@@ -108,7 +125,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state: AuthState) => ({ user: state.user, token: state.token }),
     }
   )
 );

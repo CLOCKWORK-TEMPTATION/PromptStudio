@@ -1,4 +1,4 @@
-import { PromptService } from './PromptService';
+import { PromptService } from './PromptService.js';
 
 /**
  * Experiment trial result
@@ -137,7 +137,8 @@ class GaussianProcessSurrogate {
 
     // Compute kernel vectors
     const K = this.observations.map(obs => this.rbfKernel(features, obs.features));
-    const KK = this.observations.map((obs1, i) =>
+    // Compute full covariance matrix (reserved for future use)
+    void this.observations.map((obs1, i) =>
       this.observations.map((obs2, j) =>
         this.rbfKernel(obs1.features, obs2.features) + (i === j ? this.noise : 0)
       )
@@ -387,7 +388,7 @@ export class BayesianPromptOptimizer {
   /**
    * Generate a population of variants
    */
-  private async generateVariantPopulation(iteration: number): Promise<PromptVariant[]> {
+  private async generateVariantPopulation(_iteration: number): Promise<PromptVariant[]> {
     const variants: PromptVariant[] = [];
     const mutationTypes: MutationType[] = [
       'add_examples',
@@ -522,7 +523,7 @@ export class BayesianPromptOptimizer {
   /**
    * Select next variant using acquisition function
    */
-  private async selectNextVariant(iteration: number): Promise<PromptVariant | null> {
+  private async selectNextVariant(_iteration: number): Promise<PromptVariant | null> {
     const candidates = await this.generateCandidates(5);
     let bestCandidate: PromptVariant | null = null;
     let bestAcquisitionValue = -Infinity;

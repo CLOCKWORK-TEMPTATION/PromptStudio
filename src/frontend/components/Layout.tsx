@@ -4,8 +4,6 @@ import {
   Users,
   Database,
   LogOut,
-  User,
-  Settings,
   Menu,
   X,
   FlaskConical,

@@ -1,16 +1,16 @@
 import React from 'react';
 import { CulturalContext } from '../types';
-import { Settings, Globe, Users, BookOpen } from 'lucide-react';
+import { Globe, Users, BookOpen } from 'lucide-react';
 
 interface CulturalContextPanelProps {
   context: CulturalContext;
   onChange: (context: Partial<CulturalContext>) => void;
 }
 
-export const CulturalContextPanel: React.FC<CulturalContextPanelProps> = ({
+export const CulturalContextPanel = ({
   context,
   onChange,
-}) => {
+}: CulturalContextPanelProps) => {
   return (
     <div className="card p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -55,7 +55,7 @@ export const CulturalContextPanel: React.FC<CulturalContextPanelProps> = ({
           </label>
           <select
             value={context.audience || 'general'}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               onChange({ audience: e.target.value as CulturalContext['audience'] })
             }
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2
@@ -75,7 +75,7 @@ export const CulturalContextPanel: React.FC<CulturalContextPanelProps> = ({
             <input
               type="checkbox"
               checked={context.preserveIdioms}
-              onChange={(e) => onChange({ preserveIdioms: e.target.checked })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ preserveIdioms: e.target.checked })}
               className="w-5 h-5 rounded border-gray-300 text-primary-600
                          focus:ring-primary-500 cursor-pointer"
             />
@@ -93,7 +93,7 @@ export const CulturalContextPanel: React.FC<CulturalContextPanelProps> = ({
             <input
               type="checkbox"
               checked={context.adaptCulturalReferences}
-              onChange={(e) => onChange({ adaptCulturalReferences: e.target.checked })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ adaptCulturalReferences: e.target.checked })}
               className="w-5 h-5 rounded border-gray-300 text-primary-600
                          focus:ring-primary-500 cursor-pointer"
             />

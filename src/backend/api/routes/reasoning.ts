@@ -280,7 +280,7 @@ router.get('/session/:sessionId', async (req: Request, res: Response) => {
 /**
  * Get overall statistics
  */
-router.get('/statistics', async (req: Request, res: Response) => {
+router.get('/statistics', async (_req: Request, res: Response) => {
   try {
     const stats = await ReasoningHistoryService.getOverallStatistics();
 

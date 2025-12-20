@@ -3,7 +3,7 @@ import { Eye, Coins, ChevronDown, Palette } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import { tokenizeText } from '../../services/analysisService';
-import { AI_MODELS } from '../../types';
+import { AI_MODELS, Token } from '../../types';
 import clsx from 'clsx';
 
 const TOKEN_COLORS = [
@@ -88,7 +88,7 @@ export function TokenizerVisualization() {
           <div className="flex items-center justify-between mb-4">
             <select
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedModel(e.target.value)}
               className={clsx(
                 'px-3 py-1.5 rounded-lg border text-sm',
                 theme === 'dark'
@@ -137,7 +137,7 @@ export function TokenizerVisualization() {
             'p-4 rounded-lg font-mono text-sm leading-relaxed max-h-64 overflow-y-auto',
             theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'
           )}>
-            {visualization.tokens.map((token, index) => (
+            {visualization.tokens.map((token: Token, index: number) => (
               <span
                 key={token.id}
                 className={clsx(
@@ -168,7 +168,7 @@ export function TokenizerVisualization() {
                 'text-lg font-semibold',
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               )}>
-                ${((visualization.total / 1000) * (selectedModelInfo?.pricing.input || 0.01)).toFixed(4)}
+                ${((visualization.total / 1000) * (selectedModelInfo?.pricing?.input || 0.01)).toFixed(4)}
               </div>
               <div className="text-xs mt-1">
                 For input tokens at {selectedModelInfo?.name || 'selected model'} rates
@@ -187,10 +187,10 @@ export function TokenizerVisualization() {
                 'text-lg font-semibold',
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               )}>
-                {((visualization.total / (selectedModelInfo?.context_window || 8192)) * 100).toFixed(1)}%
+                {((visualization.total / (selectedModelInfo?.contextWindow || 8192)) * 100).toFixed(1)}%
               </div>
               <div className="text-xs mt-1">
-                {visualization.total.toLocaleString()} / {(selectedModelInfo?.context_window || 8192).toLocaleString()} tokens
+                {visualization.total.toLocaleString()} / {(selectedModelInfo?.contextWindow || 8192).toLocaleString()} tokens
               </div>
             </div>
           </div>
@@ -203,7 +203,7 @@ export function TokenizerVisualization() {
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
                 style={{
-                  width: `${Math.min(100, (visualization.total / (selectedModelInfo?.context_window || 8192)) * 100)}%`
+                  width: `${Math.min(100, (visualization.total / (selectedModelInfo?.contextWindow || 8192)) * 100)}%`
                 }}
               />
             </div>

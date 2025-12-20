@@ -1,10 +1,10 @@
-import prisma from '../lib/prisma';
+import prisma from '../lib/prisma.js';
 import {
   LongTermMemoryService,
   MemoryType,
   ExecutionContext,
   MemorySearchResult,
-} from './LongTermMemoryService';
+} from './LongTermMemoryService.js';
 
 /**
  * مراحل خط الأنابيب القياسي
@@ -860,15 +860,15 @@ export class PromptChainService {
       return null;
     }
 
-    const successCount = executions.filter((e) => e.success).length;
+    const successCount = executions.filter((e: { success: boolean }) => e.success).length;
     const avgDuration =
-      executions.reduce((sum, e) => sum + e.totalDuration, 0) / executions.length;
+      executions.reduce((sum: number, e: { totalDuration: number }) => sum + e.totalDuration, 0) / executions.length;
     const avgCost =
-      executions.reduce((sum, e) => sum + (e.totalCost || 0), 0) / executions.length;
+      executions.reduce((sum: number, e: { totalCost?: number | null }) => sum + (e.totalCost || 0), 0) / executions.length;
 
     const recentExecutions = executions.slice(0, 10);
     const recentSuccessRate =
-      recentExecutions.filter((e) => e.success).length / recentExecutions.length;
+      recentExecutions.filter((e: { success: boolean }) => e.success).length / recentExecutions.length;
 
     // تحليل استخدام الذاكرة
     const memoryStats = await this.memoryService.getStats();

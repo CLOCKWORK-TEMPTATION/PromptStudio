@@ -18,7 +18,6 @@ import {
   Lightbulb,
   RefreshCw,
   BarChart3,
-  Percent,
 } from 'lucide-react';
 
 // Types
@@ -462,7 +461,7 @@ export function PreSendAnalysis({
           {analysis.warnings.length > 0 && (
             <div className="p-3 border-b border-dark-700 bg-yellow-500/5">
               <div className="space-y-1">
-                {analysis.warnings.map((warning, idx) => (
+                {analysis.warnings.map((warning: string, idx: number) => (
                   <div key={idx} className="flex items-center gap-2 text-sm text-yellow-400">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <span>{warning}</span>
@@ -494,7 +493,7 @@ export function PreSendAnalysis({
 
               {showRecommendations && (
                 <div className="px-3 pb-3 space-y-2">
-                  {analysis.recommendations.map((rec, idx) => (
+                  {analysis.recommendations.map((rec: OptimizationRecommendation, idx: number) => (
                     <div
                       key={idx}
                       className={`p-3 rounded-lg border ${
@@ -558,7 +557,7 @@ export function PreSendAnalysis({
 
             {showDetails && (
               <div className="px-3 pb-3 space-y-2">
-                {analysis.successPrediction.factors.map((factor, idx) => (
+                {analysis.successPrediction.factors.map((factor: SuccessFactor, idx: number) => (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="w-24 text-xs text-dark-400 truncate">{factor.name}</div>
                     <div className="flex-1 h-2 bg-dark-900 rounded-full overflow-hidden">

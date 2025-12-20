@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { Code, Copy, Check, Download, Settings, Zap, RefreshCw, FileCode } from 'lucide-react';
 import { usePromptStudioStore } from '@/store';
 import { generateSDK } from '@/lib/sdk-generator';
-import { SDKGenerationOptions, GeneratedSDK } from '@/types';
+import { SDKGenerationOptions, GeneratedSDK as GeneratedSDKType } from '@/types';
 import { CodePreview } from './CodePreview';
 import { SDKOptionsPanel } from './SDKOptionsPanel';
 
@@ -16,7 +16,7 @@ export function SDKGenerator() {
   const [copied, setCopied] = useState(false);
 
   const currentOptions = sdkOptions[activeLanguage];
-  const currentSDK = generatedSDKs.find((s) => s.language === activeLanguage);
+  const currentSDK = generatedSDKs.find((s: GeneratedSDKType) => s.language === activeLanguage);
 
   const handleGenerate = useCallback(() => {
     if (!currentPrompt) return;
@@ -203,7 +203,7 @@ export function SDKGenerator() {
               <div className="px-4 py-3 bg-dark-800 border-t border-dark-700">
                 <p className="text-xs text-dark-400 mb-2">Dependencies:</p>
                 <div className="flex flex-wrap gap-2">
-                  {currentSDK.dependencies.map((dep) => (
+                  {currentSDK.dependencies.map((dep: string) => (
                     <code
                       key={dep}
                       className="px-2 py-1 bg-dark-900 rounded text-xs text-primary-400"

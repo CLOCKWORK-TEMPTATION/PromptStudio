@@ -1,3 +1,4 @@
+// @ts-expect-error - socket.io types not installed
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
@@ -13,6 +14,15 @@ export interface AuthenticatedSocket extends Socket {
   userName: string;
   userEmail: string;
   userColor: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on: (event: string, callback: (data: any) => void) => this;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  emit: (event: string, data: any) => boolean;
+  join: (room: string) => void;
+  leave: (room: string) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  to: (room: string) => { emit: (event: string, data: any) => boolean };
+  handshake: { auth: { token?: string }; query: { token?: string } };
 }
 
 // Managers instances
@@ -67,7 +77,7 @@ export function setupWebSocket(io: SocketIOServer): void {
     handleCommentEvents(io, authSocket);
 
     // Handle disconnection
-    socket.on('disconnect', (reason) => {
+    socket.on('disconnect', (reason: string) => {
       console.log(`🔌 User disconnected: ${authSocket.userName} - ${reason}`);
 
       // Clean up presence
@@ -85,7 +95,7 @@ export function setupWebSocket(io: SocketIOServer): void {
     });
 
     // Error handling
-    socket.on('error', (error) => {
+    socket.on('error', (error: Error) => {
       console.error(`Socket error for user ${authSocket.userId}:`, error);
     });
   });

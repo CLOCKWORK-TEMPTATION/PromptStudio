@@ -1,4 +1,4 @@
-import { PromptService } from './PromptService';
+// PromptService import removed - not used in this file
 import OpenAI from 'openai';
 import { config } from '../config/index.js';
 
@@ -208,7 +208,7 @@ export class LLMServiceAdapter {
   /**
    * Find the best reasoning path through the tree
    */
-  private static findBestPath(root: ThoughtNode, criteria: string[]): ReasoningPath {
+  private static findBestPath(root: ThoughtNode, _criteria: string[]): ReasoningPath {
     let bestPath: ThoughtNode[] = [];
     let bestScore = 0;
 
@@ -648,7 +648,7 @@ export class LLMServiceAdapter {
    */
   private static validatePlan(
     plan: ToolPlan[],
-    availableTools: ToolDefinition[]
+    _availableTools: ToolDefinition[]
   ): { valid: boolean; warnings: string[] } {
     const warnings: string[] = [];
 
@@ -817,7 +817,7 @@ export class LLMServiceAdapter {
    */
   static async selfRefinePrompt(
     originalPrompt: string,
-    executionResult: string,
+    _executionResult: string,
     qualityMetrics: {
       accuracy?: number;
       completeness?: number;
