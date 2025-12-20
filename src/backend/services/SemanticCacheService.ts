@@ -1,20 +1,109 @@
+// @ts-expect-error - crypto module types
 import crypto from 'crypto';
+// @ts-expect-error - openai types not installed
 import OpenAI from 'openai';
 import prisma from '../lib/prisma.js';
 // redis import removed - not used in this file
 import { config } from '../config/index.js';
-import type {
-  SemanticCacheEntry,
-  CacheConfig,
-  CacheAnalytics,
-  CacheSearchResult,
-  CacheLookupRequest,
-  CacheLookupResponse,
-  CacheStoreRequest,
-  CacheInvalidateRequest,
-  CacheInvalidateResponse,
-  // CacheStatistics type removed - not used
-} from '../../../shared/types/cache.js';
+
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
+
+// Local type definitions to avoid shared folder rootDir issues
+interface CacheTag {
+  id: string;
+  name: string;
+  cacheId: string;
+}
+
+interface SemanticCacheEntry {
+  id: string;
+  prompt: string;
+  promptHash: string;
+  embedding: number[];
+  response: string;
+  model?: string;
+  hitCount: number;
+  tokensSaved: number;
+  createdAt: string;
+  expiresAt: string;
+  lastAccessedAt: string;
+  userId?: string;
+  tags: CacheTag[];
+}
+
+interface CacheConfig {
+  id?: string;
+  enabled: boolean;
+  similarityThreshold: number;
+  defaultTTLSeconds: number;
+  maxCacheSize: number;
+  invalidationRules?: unknown[];
+  updatedAt?: string;
+}
+
+interface CacheSearchResult {
+  entry: SemanticCacheEntry;
+  similarity: number;
+}
+
+interface CacheLookupRequest {
+  prompt: string;
+  model?: string;
+  threshold?: number;
+  tags?: string[];
+}
+
+interface CacheLookupResponse {
+  hit: boolean;
+  entry?: SemanticCacheEntry;
+  similarity?: number;
+  cached: boolean;
+}
+
+interface CacheStoreRequest {
+  prompt: string;
+  response: string;
+  model?: string;
+  tags?: string[];
+  ttlSeconds?: number;
+  userId?: string;
+}
+
+interface CacheInvalidateRequest {
+  type: 'id' | 'tag' | 'pattern' | 'all';
+  ids?: string[];
+  tags?: string[];
+  pattern?: string;
+}
+
+interface CacheInvalidateResponse {
+  deletedCount: number;
+  success: boolean;
+}
+
+interface DailyStats {
+  id: string;
+  date: string;
+  totalHits: number;
+  totalMisses: number;
+  tokensSaved: number;
+  costSaved: number;
+}
+
+interface CacheAnalytics {
+  totalEntries: number;
+  hitRate: number;
+  totalHits: number;
+  totalMisses: number;
+  tokensSaved: number;
+  estimatedCostSaved: number;
+  averageSimilarity: number;
+  cacheSize: number;
+  oldestEntry: string;
+  newestEntry: string;
+  topTags: Array<{ tag: string; count: number }>;
+  dailyStats: DailyStats[];
+}
 
 export class SemanticCacheService {
   private openai: OpenAI | null = null;

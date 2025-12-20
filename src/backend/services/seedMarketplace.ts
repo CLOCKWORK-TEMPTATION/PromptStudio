@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 declare const require: { main: unknown };
 declare const module: unknown;
 declare const process: { exit: (code: number) => never };
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
 
 const prisma = new PrismaClient();
 

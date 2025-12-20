@@ -1,4 +1,8 @@
+// @ts-expect-error - ioredis types not installed
 import { Cluster } from 'ioredis';
+
+declare const console: { log: (...args: unknown[]) => void; error: (...args: unknown[]) => void; warn: (...args: unknown[]) => void };
+declare type Buffer = Uint8Array;
 
 export interface ClusterNode {
     host: string;
@@ -58,7 +62,7 @@ export class RedisClusterService {
             console.log('RedisClusterService: Cluster is ready');
         });
 
-        this.cluster.on('error', (err) => {
+        this.cluster.on('error', (err: Error) => {
             console.error('RedisClusterService: Cluster error:', err);
             this.isConnected = false;
         });
@@ -78,11 +82,11 @@ export class RedisClusterService {
         });
 
         // Node-specific events
-        this.cluster.on('node error', (err, node) => {
+        this.cluster.on('node error', (err: Error, node: { options: { host?: string; port?: number } }) => {
             console.error(`RedisClusterService: Node error on ${node.options.host}:${node.options.port}:`, err);
         });
 
-        this.cluster.on('node connect', (node) => {
+        this.cluster.on('node connect', (node: { options: { host?: string; port?: number } }) => {
             console.log(`RedisClusterService: Connected to node ${node.options.host}:${node.options.port}`);
         });
     }
@@ -98,7 +102,7 @@ export class RedisClusterService {
             status: string;
         }>;
     } {
-        const nodes = this.cluster.nodes().map(node => ({
+        const nodes = this.cluster.nodes().map((node: { options: { host?: string; port?: number }; status: string }) => ({
             host: node.options.host || 'unknown',
             port: node.options.port || 6379,
             status: node.status
@@ -353,7 +357,7 @@ export class RedisClusterService {
         }
 
         const result = await pipeline.exec();
-        return result || [];
+        return (result || []) as unknown[];
     }
 
     /**

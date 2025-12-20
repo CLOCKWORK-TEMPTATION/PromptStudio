@@ -33,7 +33,7 @@ export interface SemanticCacheEntry {
   promptHash: string;
   embedding: number[];
   response: string;
-  model: string;
+  model?: string;
   hitCount: number;
   tokensSaved: number;
   createdAt: string;
@@ -65,7 +65,7 @@ export interface CacheLookupResponse {
 export interface CacheStoreRequest {
   prompt: string;
   response: string;
-  model: string;
+  model?: string;
   tags?: string[];
   ttlSeconds?: number;
   userId?: string;
@@ -83,24 +83,27 @@ export interface CacheInvalidateResponse {
   success: boolean;
 }
 
-export interface CacheAnalytics {
-  totalEntries: number;
+export interface DailyStats {
+  id: string;
+  date: string;
   totalHits: number;
   totalMisses: number;
-  hitRate: number;
   tokensSaved: number;
-  estimatedCostSaved: number;
-  averageSimilarity: number;
-  cacheSize: number;
-  oldestEntry: string;
-  newestEntry: string;
-  topTags: Array<{ tag: string; count: number }>;
-  dailyStats: Array<{
-    id: string;
-    date: string;
-    totalHits: number;
-    totalMisses: number;
-    tokensSaved: number;
-    costSaved: number;
-  }>;
+  costSaved: number;
+}
+
+export interface CacheAnalytics {
+  totalEntries?: number;
+  hitRate: number;
+  totalHits: number;
+  totalMisses: number;
+  tokensSaved: number;
+  estimatedCostSaved?: number;
+  costSavings?: number;
+  averageSimilarity?: number;
+  cacheSize?: number;
+  oldestEntry?: string;
+  newestEntry?: string;
+  topTags?: Array<{ tag: string; count: number }>;
+  dailyStats?: DailyStats[];
 }
