@@ -1,4 +1,3 @@
-// @ts-nocheck
 import crypto from 'crypto';
 import OpenAI from 'openai';
 import prisma from '../lib/prisma.js';
@@ -156,7 +155,7 @@ export class SemanticCacheService {
         similarityThreshold: updates.similarityThreshold ?? currentConfig.similarityThreshold,
         defaultTTLSeconds: updates.defaultTTLSeconds ?? currentConfig.defaultTTLSeconds,
         maxCacheSize: updates.maxCacheSize ?? currentConfig.maxCacheSize,
-        invalidationRules: updates.invalidationRules ?? currentConfig.invalidationRules,
+        invalidationRules: (updates.invalidationRules ?? currentConfig.invalidationRules) as any,
       },
     });
 
@@ -373,7 +372,7 @@ export class SemanticCacheService {
         promptHash,
         embedding,
         response,
-        model,
+        model: model || 'unknown',
         tokensSaved,
         expiresAt,
         userId,

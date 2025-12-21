@@ -12,6 +12,9 @@ import {
   ChevronUp,
 } from 'lucide-react';
 
+// Alias for icon compatibility
+const BookmarkPlus = Bookmark;
+
 interface TranslationResultProps {
   result: TResult;
   onSave: (result: TResult) => void;

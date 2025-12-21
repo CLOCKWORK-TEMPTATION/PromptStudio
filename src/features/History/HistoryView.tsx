@@ -4,16 +4,19 @@ import {
   History,
   Search,
   Star,
-  StarOff,
   Trash2,
   Clock,
   Copy,
   ArrowRight,
   Filter,
   Tag,
-  GitCompare,
+  GitMerge,
   RotateCcw,
 } from 'lucide-react';
+
+// Aliases for icon compatibility
+const StarOff = Star;
+const GitCompare = GitMerge;
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
 import { getPrompts, getFavoritePrompts, toggleFavorite, deletePrompt, getPromptVersions } from '../../services/promptService';
