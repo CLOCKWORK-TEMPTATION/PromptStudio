@@ -1,0 +1,7 @@
+# DSPy Worker Dependencies
+fastapi>=0.115.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+prometheus-client>=0.20.0
+structlog>=24.1.0
+python-dotenv>=1.0.0
