@@ -26,6 +26,9 @@ model Tenant {
   requestSignatures     RequestSignature[]
   collaborationSessions CollaborationSession[]
   marketplacePrompts    MarketplacePrompt[]
+  promptTemplates       PromptTemplate[]
+  evaluationDatasets    EvaluationDataset[]
+  optimizationRuns      OptimizationRun[]
 
   @@index([domain])
   @@index([isActive])
@@ -213,6 +216,13 @@ model User {
   auditLogs          AuditLog[]
   tenant             Tenant?                @relation(fields: [tenantId], references: [id])
   requestSignatures  RequestSignature[]
+
+  // DSPy Optimization relations
+  ownedTemplates     PromptTemplate[]       @relation("TemplateOwner")
+  createdVersions    TemplateVersion[]      @relation("VersionCreator")
+  createdDatasets    EvaluationDataset[]    @relation("DatasetCreator")
+  createdEvaluations EvaluationRun[]        @relation("EvaluationCreator")
+  createdOptimizations OptimizationRun[]    @relation("OptimizationCreator")
 
   // Performance indexes for multi-tenant queries
   @@index([tenantId, updatedAt])
@@ -777,4 +787,243 @@ model ChainMemoryState {
   @@unique([chainId, sessionId])
   @@index([chainId])
   @@index([isActive])
+}
+
+// ============================================================
+// DSPy Optimization System - Epic 0 + Epic 1
+// ============================================================
+
+// Prompt Template - Independent prompt templates for optimization
+model PromptTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String?
+  tags        String[] @default([])
+
+  // Multi-tenant support
+  tenantId String?
+  ownerId  String?
+
+  // Active version reference
+  activeVersionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+  owner    User?   @relation("TemplateOwner", fields: [ownerId], references: [id])
+  versions TemplateVersion[]
+  optimizationRuns OptimizationRun[]
+
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([category])
+  @@index([tenantId, ownerId])
+  @@index([tenantId, category])
+}
+
+// Template Version - Versioned snapshots of prompt templates
+model TemplateVersion {
+  id            String @id @default(uuid())
+  templateId    String
+  versionNumber Int
+
+  // Content snapshot as JSON
+  // Structure: { system, developer, user, context, variablesSchema, defaultValues, modelConfig }
+  contentSnapshot Json
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  createdById String?
+  isActive    Boolean  @default(false)
+
+  // Relations
+  template         PromptTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdBy        User?             @relation("VersionCreator", fields: [createdById], references: [id])
+  baseOptimizations OptimizationRun[] @relation("BaseVersion")
+  optimizationResults OptimizationResult[] @relation("OptimizedVersion")
+
+  @@unique([templateId, versionNumber])
+  @@index([templateId])
+  @@index([createdById])
+  @@index([isActive])
+}
+
+// Evaluation Dataset - Datasets for baseline and optimization evaluation
+model EvaluationDataset {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  taskType    String? // e.g., "classification", "generation", "qa"
+
+  // Dataset format
+  format String @default("labeled") // labeled | unlabeled
+
+  // Multi-tenant support
+  tenantId    String?
+  createdById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant    Tenant?          @relation(fields: [tenantId], references: [id])
+  createdBy User?            @relation("DatasetCreator", fields: [createdById], references: [id])
+  examples  DatasetExample[]
+  optimizationRuns OptimizationRun[]
+  evaluationRuns   EvaluationRun[]
+
+  @@index([tenantId])
+  @@index([createdById])
+  @@index([format])
+  @@index([taskType])
+}
+
+// Dataset Example - Individual examples within a dataset
+model DatasetExample {
+  id        String @id @default(uuid())
+  datasetId String
+
+  // Input variables as JSON (matches {{var}} in prompts)
+  inputVariables Json
+
+  // Expected output (nullable for unlabeled data)
+  expectedOutput String?
+
+  // Additional metadata
+  metadata Json? @default("{}")
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  dataset EvaluationDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId])
+}
+
+// Evaluation Run - Baseline evaluation results
+model EvaluationRun {
+  id              String @id @default(uuid())
+  templateId      String?
+  templateVersionId String?
+  datasetId       String
+
+  // Evaluation configuration
+  metricType String // exact_match | contains | json_valid | custom
+
+  // Execution status
+  status       String   @default("pending") // pending | running | completed | failed
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorMessage String?
+
+  // Results
+  aggregateScore Float?
+  totalExamples  Int     @default(0)
+  passedExamples Int     @default(0)
+  failedExamples Int     @default(0)
+
+  // Detailed results as JSON
+  perExampleResults Json? @default("[]")
+  failureCases      Json? @default("[]")
+
+  // Execution metadata
+  maxSamples  Int?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  dataset   EvaluationDataset @relation(fields: [datasetId], references: [id])
+  createdBy User?             @relation("EvaluationCreator", fields: [createdById], references: [id])
+
+  @@index([datasetId])
+  @@index([status])
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+// Optimization Run - DSPy optimization execution
+model OptimizationRun {
+  id             String @id @default(uuid())
+  templateId     String
+  baseVersionId  String
+  datasetId      String
+
+  // Optimizer configuration
+  optimizerType String // bootstrap_fewshot | copro
+  metricType    String // exact_match | contains | json_valid | judge_rubric
+
+  // Budget constraints as JSON
+  // Structure: { maxCalls?, maxTokens?, maxUSD? }
+  budget Json @default("{}")
+
+  // Execution status
+  status       String   @default("queued") // queued | running | succeeded | failed | canceled
+  progress     Int      @default(0) // 0-100
+  stage        String?  // Current stage description
+  errorMessage String?
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  // Multi-tenant support
+  tenantId    String?
+  createdById String?
+
+  // Relations
+  template    PromptTemplate    @relation(fields: [templateId], references: [id])
+  baseVersion TemplateVersion   @relation("BaseVersion", fields: [baseVersionId], references: [id])
+  dataset     EvaluationDataset @relation(fields: [datasetId], references: [id])
+  tenant      Tenant?           @relation(fields: [tenantId], references: [id])
+  createdBy   User?             @relation("OptimizationCreator", fields: [createdById], references: [id])
+  result      OptimizationResult?
+
+  @@index([templateId])
+  @@index([datasetId])
+  @@index([status])
+  @@index([createdById])
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+// Optimization Result - Results from DSPy optimization
+model OptimizationResult {
+  id    String @id @default(uuid())
+  runId String @unique
+
+  // Optimized prompt snapshot as JSON
+  // Structure: { system, developer, demos? }
+  optimizedSnapshot Json
+
+  // DSPy artifact (can be large)
+  dspyArtifactJson Json?
+
+  // Score comparison
+  baselineScore   Float?
+  optimizedScore  Float?
+  scoreDelta      Float?
+
+  // Cost tracking as JSON
+  // Structure: { calls, tokens, usdEstimate }
+  cost Json? @default("{}")
+
+  // Diagnostics as JSON
+  // Structure: { topFailureCases: [...] }
+  diagnostics Json? @default("{}")
+
+  // Link to new version if applied
+  appliedVersionId String?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  run            OptimizationRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  appliedVersion TemplateVersion? @relation("OptimizedVersion", fields: [appliedVersionId], references: [id])
+
+  @@index([runId])
+  @@index([appliedVersionId])
 }

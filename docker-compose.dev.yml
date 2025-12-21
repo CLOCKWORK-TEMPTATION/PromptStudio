@@ -50,10 +50,13 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       FRONTEND_URL: http://localhost:3000
       PORT: 3001
+      DSPY_SERVICE_URL: http://dspy-service:8000
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      dspy-service:
         condition: service_healthy
     volumes:
       - ./src/backend:/app/src/backend
@@ -85,6 +88,26 @@ services:
       - ./public:/app/public
       - ./node_modules:/app/node_modules
     command: npm run dev
+
+  # DSPy Optimization Service (Python)
+  dspy-service:
+    build:
+      context: ./services/dspy_service
+      dockerfile: Dockerfile
+    container_name: promptstudio-dspy
+    ports:
+      - "8000:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DSPY_SERVICE_PORT: 8000
+    volumes:
+      - ./services/dspy_service/app:/app/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
   postgres_data:
