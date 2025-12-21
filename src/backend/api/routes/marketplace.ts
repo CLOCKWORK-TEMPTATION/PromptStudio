@@ -215,6 +215,40 @@ router.get('/prompts/:id/versions/compare', async (req: Request, res: Response) 
 });
 
 /**
+ * Apply new prompt version and activate it
+ * POST /api/marketplace/prompts/:id/versions/apply
+ */
+router.post('/prompts/:id/versions/apply', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const data = z.object({
+      content: z.string().min(1),
+      systemPrompt: z.string().optional(),
+      processPrompt: z.string().optional(),
+      taskPrompt: z.string().optional(),
+      outputPrompt: z.string().optional(),
+      qualityScore: z.number().optional(),
+      refinementReason: z.string().optional(),
+    }).parse(req.body);
+
+    const actorId = (req as any).userId;
+
+    const version = await MarketplaceService.applyVersion(id, actorId, data);
+
+    res.status(201).json(version);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.errors,
+      });
+    }
+    console.error('Apply version error:', error);
+    res.status(500).json({ error: 'Failed to apply version' });
+  }
+});
+
+/**
  * استعادة نسخة قديمة
  * POST /api/marketplace/prompts/:id/versions/:version/restore
  */
@@ -233,6 +267,45 @@ router.post('/prompts/:id/versions/:version/restore', async (req: Request, res: 
   } catch (error) {
     console.error('Restore version error:', error);
     res.status(500).json({ error: 'Failed to restore version' });
+  }
+});
+
+/**
+ * Roll back to a previous version without deleting versions
+ * POST /api/marketplace/prompts/:id/versions/:version/rollback
+ */
+router.post('/prompts/:id/versions/:version/rollback', async (req: Request, res: Response) => {
+  try {
+    const { id, version } = req.params;
+    const actorId = (req as any).userId;
+
+    const rolledBack = await MarketplaceService.rollbackVersion(
+      id,
+      parseInt(version),
+      actorId
+    );
+
+    res.json(rolledBack);
+  } catch (error) {
+    console.error('Rollback version error:', error);
+    res.status(500).json({ error: 'Failed to rollback version' });
+  }
+});
+
+/**
+ * Get prompt audit events
+ * GET /api/marketplace/prompts/:id/audit
+ */
+router.get('/prompts/:id/audit', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const events = await MarketplaceService.getAuditEvents(id);
+
+    res.json(events);
+  } catch (error) {
+    console.error('Get audit events error:', error);
+    res.status(500).json({ error: 'Failed to get audit events' });
   }
 });
 

@@ -31,6 +31,32 @@ export interface VersionData {
   createdAt: Date;
 }
 
+export interface PromptAuditEventData {
+  id: string;
+  promptId: string;
+  promptVersionId?: string;
+  tenantId?: string;
+  actorId?: string;
+  actor?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  eventType: string;
+  details: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface ApplyPromptVersionData {
+  content: string;
+  systemPrompt?: string;
+  processPrompt?: string;
+  taskPrompt?: string;
+  outputPrompt?: string;
+  qualityScore?: number;
+  refinementReason?: string;
+}
+
 /**
  * إحصائيات Prompt
  */
@@ -566,6 +592,185 @@ export class MarketplaceService {
     });
 
     return updated;
+  }
+
+  /**
+   * Apply a new version and activate it immediately
+   */
+  static async applyVersion(
+    promptId: string,
+    actorId: string | undefined,
+    data: ApplyPromptVersionData
+  ): Promise<VersionData> {
+    return await prisma.$transaction(async tx => {
+      const prompt = await tx.marketplacePrompt.findUnique({
+        where: { id: promptId },
+      });
+
+      if (!prompt) {
+        throw new Error('Prompt not found');
+      }
+
+      const latestVersion = await tx.promptVersion.findFirst({
+        where: { promptId },
+        orderBy: { version: 'desc' },
+      });
+
+      const previousVersion = latestVersion?.version ?? null;
+      const newVersionNumber = (latestVersion?.version || 0) + 1;
+
+      const newVersion = await tx.promptVersion.create({
+        data: {
+          promptId,
+          version: newVersionNumber,
+          content: data.content,
+          systemPrompt: data.systemPrompt,
+          processPrompt: data.processPrompt,
+          taskPrompt: data.taskPrompt,
+          outputPrompt: data.outputPrompt,
+          qualityScore: data.qualityScore,
+          refinementReason: data.refinementReason,
+        },
+      });
+
+      await tx.marketplacePrompt.update({
+        where: { id: promptId },
+        data: {
+          content: data.content,
+          systemPrompt: data.systemPrompt,
+          processPrompt: data.processPrompt,
+          taskPrompt: data.taskPrompt,
+          outputPrompt: data.outputPrompt,
+          updatedAt: new Date(),
+        },
+      });
+
+      await this.createPromptAuditEvent(tx, {
+        promptId,
+        promptVersionId: newVersion.id,
+        tenantId: prompt.tenantId || undefined,
+        actorId,
+        eventType: 'PROMPT_APPLIED',
+        details: {
+          previousVersion,
+          newVersion: newVersion.version,
+        },
+      });
+
+      return this.formatVersion(newVersion);
+    });
+  }
+
+  /**
+   * Roll back to a previous version without deleting versions
+   */
+  static async rollbackVersion(
+    promptId: string,
+    targetVersion: number,
+    actorId: string | undefined
+  ): Promise<VersionData> {
+    return await prisma.$transaction(async tx => {
+      const [prompt, latestVersion, version] = await Promise.all([
+        tx.marketplacePrompt.findUnique({ where: { id: promptId } }),
+        tx.promptVersion.findFirst({
+          where: { promptId },
+          orderBy: { version: 'desc' },
+        }),
+        tx.promptVersion.findFirst({
+          where: { promptId, version: targetVersion },
+        }),
+      ]);
+
+      if (!prompt) {
+        throw new Error('Prompt not found');
+      }
+
+      if (!version) {
+        throw new Error('Version not found');
+      }
+
+      const previousVersion = latestVersion?.version ?? null;
+
+      await tx.marketplacePrompt.update({
+        where: { id: promptId },
+        data: {
+          content: version.content,
+          systemPrompt: version.systemPrompt,
+          processPrompt: version.processPrompt,
+          taskPrompt: version.taskPrompt,
+          outputPrompt: version.outputPrompt,
+          updatedAt: new Date(),
+        },
+      });
+
+      await this.createPromptAuditEvent(tx, {
+        promptId,
+        promptVersionId: version.id,
+        tenantId: prompt.tenantId || undefined,
+        actorId,
+        eventType: 'PROMPT_ROLLBACK',
+        details: {
+          previousVersion,
+          targetVersion: version.version,
+        },
+      });
+
+      return this.formatVersion(version);
+    });
+  }
+
+  /**
+   * Get audit events for prompt changes
+   */
+  static async getAuditEvents(promptId: string): Promise<PromptAuditEventData[]> {
+    const events = await prisma.promptAuditEvent.findMany({
+      where: { promptId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        actor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return events.map(event => ({
+      id: event.id,
+      promptId: event.promptId,
+      promptVersionId: event.promptVersionId || undefined,
+      tenantId: event.tenantId || undefined,
+      actorId: event.actorId || undefined,
+      actor: event.actor || null,
+      eventType: event.eventType,
+      details: event.details as Record<string, unknown>,
+      createdAt: event.createdAt,
+    }));
+  }
+
+  private static async createPromptAuditEvent(
+    tx: typeof prisma,
+    data: {
+      promptId: string;
+      promptVersionId?: string;
+      tenantId?: string;
+      actorId?: string;
+      eventType: string;
+      details: Record<string, unknown>;
+    }
+  ): Promise<void> {
+    await tx.promptAuditEvent.create({
+      data: {
+        promptId: data.promptId,
+        promptVersionId: data.promptVersionId,
+        tenantId: data.tenantId,
+        actorId: data.actorId,
+        eventType: data.eventType,
+        details: data.details,
+      },
+    });
   }
 
   // ==================== Fork Management ====================

@@ -351,6 +351,24 @@ export interface PromptVersion {
   createdAt: Date;
 }
 
+export interface PromptAuditEventActor {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface PromptAuditEvent {
+  id: string;
+  promptId: string;
+  promptVersionId?: string;
+  tenantId?: string;
+  actorId?: string;
+  actor?: PromptAuditEventActor | null;
+  eventType: string;
+  details: Record<string, unknown>;
+  createdAt: Date;
+}
+
 export interface ModelConfig {
   model: string;
   temperature: number;
