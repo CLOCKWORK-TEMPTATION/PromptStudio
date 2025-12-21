@@ -11,6 +11,7 @@ import { getOptimizationWorker } from '../../services/OptimizationWorkerService.
 import { optimizationLogger } from '../../services/StructuredLogger.js';
 import { budgetService } from '../../services/BudgetEnforcementService.js';
 import { parseContentSnapshot } from '../../../shared/utils/promptRenderer.js';
+import { logAuditEvent } from './audit.js';
 import type {
   OptimizationBudget,
 } from '../../../shared/types/dspy.js';
@@ -21,23 +22,27 @@ const router = Router();
 // Validation Schemas
 // ============================================================
 
+const budgetSchema = z.object({
+  maxCalls: z.number().int().min(1).max(10000).optional(),
+  maxTokens: z.number().int().min(1).max(1000000).optional(),
+  maxUSD: z.number().min(0.01).max(1000).optional(),
+}).strict();
+
 const createOptimizationSchema = z.object({
   templateId: z.string().uuid(),
   baseVersionId: z.string().uuid(),
   datasetId: z.string().uuid(),
   optimizerType: z.enum(['bootstrap_fewshot', 'copro']),
   metricType: z.enum(['exact_match', 'contains', 'json_valid', 'judge_rubric']),
-  budget: z.object({
-    maxCalls: z.number().positive().optional(),
-    maxTokens: z.number().positive().optional(),
-    maxUSD: z.number().positive().optional(),
-  }).optional().default({}),
+  budget: budgetSchema.optional().default({}),
   workspaceId: z.string().uuid().optional(),
-});
+}).strict();
 
 const applyOptimizationSchema = z.object({
   activate: z.boolean().optional().default(true),
-});
+}).strict();
+
+const METRICS_REQUIRING_LABELS = new Set(['exact_match', 'contains']);
 
 // ============================================================
 // POST /api/optimize - Create optimization run
@@ -103,6 +108,29 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Dataset has no examples' });
     }
 
+    if (METRICS_REQUIRING_LABELS.has(metricType) && dataset.format === 'unlabeled') {
+      return res.status(400).json({
+        error: 'Metric requires labeled dataset',
+        details: { metricType, datasetFormat: dataset.format },
+      });
+    }
+
+    if (METRICS_REQUIRING_LABELS.has(metricType)) {
+      const missingExpectedOutput = await prisma.datasetExample.count({
+        where: {
+          datasetId,
+          OR: [{ expectedOutput: null }, { expectedOutput: '' }],
+        },
+      });
+
+      if (missingExpectedOutput > 0) {
+        return res.status(400).json({
+          error: 'Dataset examples missing expected output for labeled metric',
+          details: { missingExpectedOutput },
+        });
+      }
+    }
+
     // Set default budget if not provided
     const finalBudget: OptimizationBudget = {
       maxCalls: budget.maxCalls || 100,
@@ -136,7 +164,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     // Enqueue job to worker (worker will pick it up automatically)
     const worker = getOptimizationWorker();
-    await worker.enqueueJob({
+    const jobId = await worker.enqueueJob({
       runId: run.id,
       templateId,
       baseVersionId,
@@ -148,8 +176,24 @@ router.post('/', async (req: Request, res: Response) => {
       workspaceId,
     });
 
+    await logAuditEvent(
+      'optimization.started',
+      'OptimizationRun',
+      run.id,
+      {
+        jobId,
+        templateId,
+        datasetId,
+        optimizerType,
+        metricType,
+        workspaceId,
+      },
+      req
+    );
+
     res.status(201).json({
       id: run.id,
+      jobId,
       status: run.status,
       progress: run.progress,
       stage: run.stage,

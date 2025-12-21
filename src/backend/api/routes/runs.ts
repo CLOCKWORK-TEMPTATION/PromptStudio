@@ -241,71 +241,6 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // ============================================================
-// GET /api/runs/:type/:id - Get run details
-// ============================================================
-
-router.get('/:type/:id', async (req: Request, res: Response) => {
-  try {
-    const { type, id } = req.params;
-
-    if (type === 'optimization') {
-      const run = await prisma.optimizationRun.findUnique({
-        where: { id },
-        include: {
-          template: true,
-          baseVersion: true,
-          dataset: { include: { _count: { select: { examples: true } } } },
-          result: true,
-          createdBy: { select: { id: true, name: true, email: true } },
-        },
-      });
-
-      if (!run) {
-        return res.status(404).json({ error: 'Optimization run not found' });
-      }
-
-      res.json({
-        ...run,
-        type: 'optimization',
-        durationMs: run.finishedAt && run.startedAt
-          ? new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()
-          : undefined,
-      });
-    } else if (type === 'evaluation') {
-      const run = await prisma.advancedEvaluationRun.findUnique({
-        where: { id },
-        include: {
-          judgeRubric: true,
-          results: {
-            take: 10,
-            orderBy: { createdAt: 'asc' },
-          },
-          _count: { select: { results: true } },
-        },
-      });
-
-      if (!run) {
-        return res.status(404).json({ error: 'Evaluation run not found' });
-      }
-
-      res.json({
-        ...run,
-        type: 'evaluation',
-        totalResults: run._count.results,
-        durationMs: run.finishedAt && run.startedAt
-          ? new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()
-          : undefined,
-      });
-    } else {
-      return res.status(400).json({ error: 'Invalid run type. Use "optimization" or "evaluation".' });
-    }
-  } catch (error) {
-    console.error('Error getting run details:', error);
-    res.status(500).json({ error: 'Failed to get run details' });
-  }
-});
-
-// ============================================================
 // GET /api/runs/stats - Get run statistics
 // ============================================================
 
@@ -399,6 +334,157 @@ router.get('/stats/summary', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error getting run stats:', error);
     res.status(500).json({ error: 'Failed to get run statistics' });
+  }
+});
+
+// ============================================================
+// GET /api/runs/:id - Get run status with results and artifacts
+// ============================================================
+
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { limit = '20', offset = '0' } = req.query;
+    const parsedLimit = parseInt(limit as string, 10);
+    const parsedOffset = parseInt(offset as string, 10);
+
+    const optimizationRun = await prisma.optimizationRun.findUnique({
+      where: { id },
+      include: {
+        template: { select: { id: true, name: true } },
+        dataset: { select: { id: true, name: true, format: true } },
+        result: true,
+        createdBy: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (optimizationRun) {
+      const durationMs = optimizationRun.finishedAt && optimizationRun.startedAt
+        ? new Date(optimizationRun.finishedAt).getTime() - new Date(optimizationRun.startedAt).getTime()
+        : undefined;
+
+      const artifacts = optimizationRun.result ? {
+        dspyArtifact: optimizationRun.result.dspyArtifactJson,
+        patch: optimizationRun.result.patchJson,
+        diagnostics: optimizationRun.result.diagnostics,
+        topFailureCases: optimizationRun.result.topFailureCases,
+      } : undefined;
+
+      return res.json({
+        ...optimizationRun,
+        type: 'optimization',
+        durationMs,
+        artifacts,
+      });
+    }
+
+    const evaluationRun = await prisma.advancedEvaluationRun.findUnique({
+      where: { id },
+      include: {
+        judgeRubric: true,
+      },
+    });
+
+    if (evaluationRun) {
+      const [results, totalResults] = await Promise.all([
+        prisma.advancedEvalResult.findMany({
+          where: { runId: id },
+          take: parsedLimit,
+          skip: parsedOffset,
+          orderBy: { createdAt: 'asc' },
+        }),
+        prisma.advancedEvalResult.count({ where: { runId: id } }),
+      ]);
+
+      const durationMs = evaluationRun.finishedAt && evaluationRun.startedAt
+        ? new Date(evaluationRun.finishedAt).getTime() - new Date(evaluationRun.startedAt).getTime()
+        : undefined;
+
+      return res.json({
+        ...evaluationRun,
+        type: 'evaluation',
+        durationMs,
+        results,
+        totalResults,
+        limit: parsedLimit,
+        offset: parsedOffset,
+        artifacts: {
+          topFailures: evaluationRun.topFailures,
+          judgeRubric: evaluationRun.judgeRubric,
+          resultSamples: results,
+        },
+      });
+    }
+
+    return res.status(404).json({ error: 'Run not found' });
+  } catch (error) {
+    console.error('Error getting run status:', error);
+    res.status(500).json({ error: 'Failed to get run status' });
+  }
+});
+
+// ============================================================
+// GET /api/runs/:type/:id - Get run details
+// ============================================================
+
+router.get('/:type/:id', async (req: Request, res: Response) => {
+  try {
+    const { type, id } = req.params;
+
+    if (type === 'optimization') {
+      const run = await prisma.optimizationRun.findUnique({
+        where: { id },
+        include: {
+          template: true,
+          baseVersion: true,
+          dataset: { include: { _count: { select: { examples: true } } } },
+          result: true,
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      });
+
+      if (!run) {
+        return res.status(404).json({ error: 'Optimization run not found' });
+      }
+
+      res.json({
+        ...run,
+        type: 'optimization',
+        durationMs: run.finishedAt && run.startedAt
+          ? new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()
+          : undefined,
+      });
+    } else if (type === 'evaluation') {
+      const run = await prisma.advancedEvaluationRun.findUnique({
+        where: { id },
+        include: {
+          judgeRubric: true,
+          results: {
+            take: 10,
+            orderBy: { createdAt: 'asc' },
+          },
+          _count: { select: { results: true } },
+        },
+      });
+
+      if (!run) {
+        return res.status(404).json({ error: 'Evaluation run not found' });
+      }
+
+      res.json({
+        ...run,
+        type: 'evaluation',
+        totalResults: run._count.results,
+        durationMs: run.finishedAt && run.startedAt
+          ? new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()
+          : undefined,
+      });
+    } else {
+      return res.status(400).json({ error: 'Invalid run type. Use "optimization" or "evaluation".' });
+    }
+  } catch (error) {
+    console.error('Error getting run details:', error);
+    res.status(500).json({ error: 'Failed to get run details' });
   }
 });
 

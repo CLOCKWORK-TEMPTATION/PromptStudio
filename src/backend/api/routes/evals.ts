@@ -11,6 +11,7 @@ import {
   renderPromptParts,
   parseContentSnapshot,
 } from '../../../shared/utils/promptRenderer';
+import { logAuditEvent } from './audit.js';
 import type {
   MetricType,
   ExampleResult,
@@ -29,7 +30,9 @@ const baselineEvalSchema = z.object({
   datasetId: z.string().uuid(),
   metricType: z.enum(['exact_match', 'contains', 'json_valid']),
   maxSamples: z.number().positive().optional(),
-});
+}).strict();
+
+const METRICS_REQUIRING_LABELS = new Set(['exact_match', 'contains']);
 
 // ============================================================
 // Metric Functions
@@ -104,6 +107,37 @@ router.post('/baseline', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Template version not found' });
     }
 
+    const dataset = await prisma.evaluationDataset.findUnique({
+      where: { id: datasetId },
+    });
+
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found' });
+    }
+
+    if (METRICS_REQUIRING_LABELS.has(metricType) && dataset.format === 'unlabeled') {
+      return res.status(400).json({
+        error: 'Metric requires labeled dataset',
+        details: { metricType, datasetFormat: dataset.format },
+      });
+    }
+
+    if (METRICS_REQUIRING_LABELS.has(metricType)) {
+      const missingExpectedOutput = await prisma.datasetExample.count({
+        where: {
+          datasetId,
+          OR: [{ expectedOutput: null }, { expectedOutput: '' }],
+        },
+      });
+
+      if (missingExpectedOutput > 0) {
+        return res.status(400).json({
+          error: 'Dataset examples missing expected output for labeled metric',
+          details: { missingExpectedOutput },
+        });
+      }
+    }
+
     // Load dataset examples
     const examples = await prisma.datasetExample.findMany({
       where: { datasetId },
@@ -128,6 +162,19 @@ router.post('/baseline', async (req: Request, res: Response) => {
         maxSamples,
       },
     });
+
+    await logAuditEvent(
+      'evaluation.started',
+      'EvaluationRun',
+      evalRun.id,
+      {
+        jobId: evalRun.id,
+        datasetId,
+        metricType,
+        templateVersionId,
+      },
+      req
+    );
 
     // Parse content snapshot
     const contentSnapshot = parseContentSnapshot(version.contentSnapshot);

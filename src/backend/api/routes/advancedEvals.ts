@@ -17,6 +17,7 @@ import {
   renderPromptParts,
   parseContentSnapshot,
 } from '../../../shared/utils/promptRenderer.js';
+import { logAuditEvent } from './audit.js';
 
 const router = Router();
 
@@ -24,18 +25,20 @@ const router = Router();
 // Validation Schemas
 // ============================================================
 
+const budgetSchema = z.object({
+  maxCalls: z.number().int().min(1).max(10000).optional(),
+  maxTokens: z.number().int().min(1).max(1000000).optional(),
+  maxUSD: z.number().min(0.01).max(1000).optional(),
+}).strict();
+
 const createEvalRunSchema = z.object({
   versionId: z.string().uuid(),
   datasetId: z.string().uuid(),
   metricType: z.enum(['exact_match', 'contains', 'json_valid', 'judge_rubric', 'pairwise_judge']),
   judgeRubricId: z.string().uuid().optional(),
   maxSamples: z.number().positive().optional(),
-  budget: z.object({
-    maxCalls: z.number().positive().optional(),
-    maxTokens: z.number().positive().optional(),
-    maxUSD: z.number().positive().optional(),
-  }).optional(),
-});
+  budget: budgetSchema.optional(),
+}).strict();
 
 const createCompareSchema = z.object({
   versionAId: z.string().uuid(),
@@ -44,7 +47,9 @@ const createCompareSchema = z.object({
   metricType: z.enum(['judge_rubric', 'pairwise_judge']).default('pairwise_judge'),
   judgeRubricId: z.string().uuid().optional(),
   maxSamples: z.number().positive().optional(),
-});
+}).strict();
+
+const METRICS_REQUIRING_LABELS = new Set(['exact_match', 'contains']);
 
 // ============================================================
 // POST /api/evals/run - Create evaluation run
@@ -94,6 +99,29 @@ router.post('/run', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Dataset has no examples' });
     }
 
+    if (METRICS_REQUIRING_LABELS.has(metricType) && dataset.format === 'unlabeled') {
+      return res.status(400).json({
+        error: 'Metric requires labeled dataset',
+        details: { metricType, datasetFormat: dataset.format },
+      });
+    }
+
+    if (METRICS_REQUIRING_LABELS.has(metricType)) {
+      const missingExpectedOutput = await prisma.datasetExample.count({
+        where: {
+          datasetId,
+          OR: [{ expectedOutput: null }, { expectedOutput: '' }],
+        },
+      });
+
+      if (missingExpectedOutput > 0) {
+        return res.status(400).json({
+          error: 'Dataset examples missing expected output for labeled metric',
+          details: { missingExpectedOutput },
+        });
+      }
+    }
+
     // Verify rubric if judge metric
     if ((metricType === 'judge_rubric' || metricType === 'pairwise_judge') && judgeRubricId) {
       const rubric = await prisma.judgeRubric.findUnique({
@@ -126,8 +154,22 @@ router.post('/run', async (req: Request, res: Response) => {
       console.error('Failed to trigger evaluation job:', err);
     });
 
+    await logAuditEvent(
+      'evaluation.started',
+      'AdvancedEvaluationRun',
+      run.id,
+      {
+        jobId: run.id,
+        datasetId,
+        metricType,
+        mode: 'baseline',
+      },
+      req
+    );
+
     res.status(201).json({
       id: run.id,
+      jobId: run.id,
       status: run.status,
       progress: run.progress,
       stage: run.stage,
@@ -301,8 +343,24 @@ router.post('/compare', async (req: Request, res: Response) => {
       console.error('Failed to trigger comparison job:', err);
     });
 
+    await logAuditEvent(
+      'evaluation.started',
+      'AdvancedEvaluationRun',
+      run.id,
+      {
+        jobId: run.id,
+        datasetId,
+        metricType,
+        mode: 'compare',
+        versionAId,
+        versionBId,
+      },
+      req
+    );
+
     res.status(201).json({
       id: run.id,
+      jobId: run.id,
       status: run.status,
       mode: 'compare',
       createdAt: run.createdAt,
