@@ -1,7 +1,9 @@
 // @ts-nocheck
 import { supabase } from '../lib/supabase';
-import type { Prompt, PromptVersion, ModelConfig } from '../types';
+import type { Prompt, PromptVersion, ModelConfig, PromptAuditEvent } from '../types';
 import { DEFAULT_MODEL_CONFIG } from '../types';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export async function getPrompts(sessionId: string): Promise<Prompt[]> {
   const { data, error } = await supabase
@@ -227,4 +229,55 @@ export async function getFavoritePrompts(sessionId: string): Promise<Prompt[]> {
 
   if (error) throw error;
   return (data as Prompt[] | null) || [];
+}
+
+export async function getPromptAuditEvents(promptId: string): Promise<PromptAuditEvent[]> {
+  const response = await fetch(`${API_BASE}/api/marketplace/prompts/${promptId}/audit`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch audit events');
+  }
+
+  return response.json() as Promise<PromptAuditEvent[]>;
+}
+
+export async function applyPromptVersion(
+  promptId: string,
+  payload: {
+    content: string;
+    systemPrompt?: string;
+    processPrompt?: string;
+    taskPrompt?: string;
+    outputPrompt?: string;
+    qualityScore?: number;
+    refinementReason?: string;
+  }
+): Promise<PromptVersion> {
+  const response = await fetch(`${API_BASE}/api/marketplace/prompts/${promptId}/versions/apply`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to apply prompt version');
+  }
+
+  return response.json() as Promise<PromptVersion>;
+}
+
+export async function rollbackPromptVersion(
+  promptId: string,
+  versionNumber: number
+): Promise<PromptVersion> {
+  const response = await fetch(
+    `${API_BASE}/api/marketplace/prompts/${promptId}/versions/${versionNumber}/rollback`,
+    { method: 'POST' }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to rollback prompt version');
+  }
+
+  return response.json() as Promise<PromptVersion>;
 }

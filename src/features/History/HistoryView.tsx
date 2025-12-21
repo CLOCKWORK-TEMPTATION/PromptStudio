@@ -19,8 +19,16 @@ const StarOff = Star;
 const GitCompare = GitMerge;
 import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
-import { getPrompts, getFavoritePrompts, toggleFavorite, deletePrompt, getPromptVersions } from '../../services/promptService';
-import type { Prompt, PromptVersion } from '../../types';
+import {
+  getPrompts,
+  getFavoritePrompts,
+  toggleFavorite,
+  deletePrompt,
+  getPromptVersions,
+  getPromptAuditEvents,
+  rollbackPromptVersion,
+} from '../../services/promptService';
+import type { Prompt, PromptVersion, PromptAuditEvent } from '../../types';
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -32,6 +40,8 @@ export function HistoryView() {
   const [filterType, setFilterType] = useState<'all' | 'favorites' | 'recent'>('all');
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [versions, setVersions] = useState<PromptVersion[]>([]);
+  const [auditEvents, setAuditEvents] = useState<PromptAuditEvent[]>([]);
+  const [isAuditLoading, setIsAuditLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showVersions, setShowVersions] = useState(false);
 
@@ -40,6 +50,14 @@ export function HistoryView() {
       loadPrompts();
     }
   }, [sessionId, filterType]);
+
+  useEffect(() => {
+    if (selectedPrompt?.id) {
+      loadAuditEvents(selectedPrompt.id);
+    } else {
+      setAuditEvents([]);
+    }
+  }, [selectedPrompt?.id]);
 
   const loadPrompts = async () => {
     if (!sessionId) return;
@@ -63,6 +81,19 @@ export function HistoryView() {
       setShowVersions(true);
     } catch (error) {
       console.error('Failed to load versions:', error);
+    }
+  };
+
+  const loadAuditEvents = async (promptId: string) => {
+    setIsAuditLoading(true);
+    try {
+      const events = await getPromptAuditEvents(promptId);
+      setAuditEvents(events);
+    } catch (error) {
+      console.error('Failed to load audit events:', error);
+      setAuditEvents([]);
+    } finally {
+      setIsAuditLoading(false);
     }
   };
 
@@ -93,6 +124,17 @@ export function HistoryView() {
       model_id: prompt.model_id,
     });
     setActiveView('editor');
+  };
+
+  const handleRollback = async (promptId: string, versionNumber?: number) => {
+    if (!versionNumber) return;
+    if (!confirm(`Rollback to version ${versionNumber}?`)) return;
+    try {
+      await rollbackPromptVersion(promptId, versionNumber);
+      await Promise.all([loadVersions(promptId), loadAuditEvents(promptId)]);
+    } catch (error) {
+      console.error('Failed to rollback version:', error);
+    }
   };
 
   const filteredPrompts = prompts.filter((p: Prompt) =>
@@ -360,19 +402,81 @@ export function HistoryView() {
                         </p>
                       )}
                       <button
+                        onClick={() => handleRollback(selectedPrompt.id, version.versionNumber ?? version.version)}
                         className={clsx(
                           'text-sm flex items-center gap-1',
                           theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'
                         )}
                       >
                         <RotateCcw className="w-3 h-3" />
-                        Restore
+                        Rollback
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            <div className="mt-6">
+              <h3 className={clsx('font-semibold mb-3', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
+                Audit Log
+              </h3>
+              {isAuditLoading ? (
+                <div className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
+                  Loading audit events...
+                </div>
+              ) : auditEvents.length === 0 ? (
+                <div className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
+                  No audit events recorded.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {auditEvents.map((event: PromptAuditEvent) => {
+                    const actorName = event.actor?.name || event.actor?.email || 'System';
+                    const details = event.details || {};
+                    const previousVersion = details.previousVersion as number | undefined;
+                    const targetVersion = details.targetVersion as number | undefined;
+                    const newVersion = details.newVersion as number | undefined;
+
+                    return (
+                      <div
+                        key={event.id}
+                        className={clsx(
+                          'p-3 rounded-lg border text-sm',
+                          theme === 'dark' ? 'bg-gray-900 border-gray-800 text-gray-300' : 'bg-white border-gray-200 text-gray-700'
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={clsx('font-medium', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
+                            {event.eventType.replace(/_/g, ' ')}
+                          </span>
+                          <span className={clsx('text-xs', theme === 'dark' ? 'text-gray-500' : 'text-gray-500')}>
+                            {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs">
+                          <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}>
+                            Actor:
+                          </span>{' '}
+                          {actorName}
+                        </div>
+                        <div className="mt-1 text-xs">
+                          {previousVersion !== undefined && (
+                            <span className="mr-2">Previous: v{previousVersion}</span>
+                          )}
+                          {newVersion !== undefined && (
+                            <span className="mr-2">New: v{newVersion}</span>
+                          )}
+                          {targetVersion !== undefined && (
+                            <span className="mr-2">Target: v{targetVersion}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className={clsx(
