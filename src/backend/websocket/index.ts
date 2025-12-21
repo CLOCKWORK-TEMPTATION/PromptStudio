@@ -7,6 +7,7 @@ import { CRDTManager } from './managers/CRDTManager.js';
 import { handleCollaborationEvents } from './handlers/collaborationHandlers.js';
 import { handlePresenceEvents } from './handlers/presenceHandlers.js';
 import { handleCommentEvents } from './handlers/commentHandlers.js';
+import { handleRunEvents } from './handlers/runHandlers.js';
 
 export interface AuthenticatedSocket extends Socket {
   userId: string;
@@ -64,6 +65,7 @@ export function setupWebSocket(io: SocketIOServer): void {
     handleCollaborationEvents(io, authSocket, collaborationManager, crdtManager);
     handlePresenceEvents(io, authSocket, presenceManager);
     handleCommentEvents(io, authSocket);
+    handleRunEvents(io, authSocket);
 
     // Handle disconnection
     socket.on('disconnect', (reason: string) => {

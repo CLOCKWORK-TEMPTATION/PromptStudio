@@ -10,7 +10,10 @@
       "Bash(git commit:*)",
       "Bash(file:*)",
       "Bash(cat:*)",
-      "Bash(next.config.js)"
+      "Bash(next.config.js)",
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(node_modules/.bin/tsc:*)",
+      "Bash(npm run db:generate:*)"
     ]
   }
 }
