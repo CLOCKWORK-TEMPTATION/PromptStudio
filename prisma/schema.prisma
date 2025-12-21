@@ -1027,3 +1027,214 @@ model OptimizationResult {
   @@index([runId])
   @@index([appliedVersionId])
 }
+
+// ============================================================
+// EPIC 2 - Evaluation & Metrics Framework
+// ============================================================
+
+// Judge Rubric - LLM-as-a-Judge evaluation criteria
+model JudgeRubric {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  // Rubric definition as JSON
+  // Structure: { criteria: [...], weights: {...}, instructions: string }
+  rubricJson Json
+
+  // Model configuration for the judge
+  // Structure: { model: string, temperature: number, maxTokens: number }
+  modelConfig Json @default("{\"model\": \"gpt-4\", \"temperature\": 0.1, \"maxTokens\": 1024}")
+
+  // Multi-tenant support
+  workspaceId String?
+  createdById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  evaluationRuns AdvancedEvaluationRun[]
+
+  @@index([workspaceId])
+  @@index([createdById])
+}
+
+// Advanced Evaluation Run - Enhanced evaluation with judge support
+model AdvancedEvaluationRun {
+  id              String @id @default(uuid())
+  templateId      String?
+  versionId       String?
+  datasetId       String
+
+  // Evaluation mode
+  mode String @default("baseline") // baseline | compare
+
+  // For comparison mode
+  versionAId String?
+  versionBId String?
+
+  // Metric configuration
+  metricType    String  // exact_match | contains | json_valid | judge_rubric | pairwise_judge
+  judgeRubricId String?
+
+  // Execution status
+  status       String   @default("queued") // queued | running | succeeded | failed | canceled
+  progress     Int      @default(0) // 0-100
+  stage        String?
+
+  // Budget constraints
+  // Structure: { maxCalls?, maxTokens?, maxUSD? }
+  budget Json @default("{}")
+
+  // Cost tracking
+  // Structure: { calls, tokens, usdEstimate }
+  cost Json? @default("{}")
+
+  // Results
+  score        Float?
+  scoreA       Float? // For compare mode
+  scoreB       Float? // For compare mode
+  winsA        Int?   // For pairwise compare
+  winsB        Int?   // For pairwise compare
+  ties         Int?   // For pairwise compare
+
+  // Failure summary
+  topFailures Json? @default("[]")
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  // Multi-tenant support
+  workspaceId String?
+  createdById String?
+
+  errorMessage String?
+
+  // Relations
+  judgeRubric JudgeRubric?          @relation(fields: [judgeRubricId], references: [id])
+  results     AdvancedEvalResult[]
+
+  @@index([datasetId])
+  @@index([status])
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([metricType])
+}
+
+// Advanced Evaluation Result - Per-example results
+model AdvancedEvalResult {
+  id     String @id @default(uuid())
+  runId  String
+  exampleId String
+
+  // Output from LLM
+  outputText String
+
+  // Evaluation result
+  passed Boolean @default(false)
+  score  Float?
+
+  // For pairwise comparison
+  outputTextA    String?
+  outputTextB    String?
+  winner         String? // "A" | "B" | "tie"
+  winnerReason   String?
+
+  // Failure analysis
+  failureReason String?
+
+  // Judge details (for judge_rubric or pairwise)
+  // Structure: { reasoning, scores: {...}, rawResponse }
+  judgeDetails Json?
+
+  // Latency tracking
+  latencyMs Int?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  run AdvancedEvaluationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([exampleId])
+  @@index([passed])
+}
+
+// ============================================================
+// EPIC 3 - Governance, Budgets, Rate Limits
+// ============================================================
+
+// Workspace Policy - Budget and rate limit policies
+model WorkspacePolicy {
+  id          String @id @default(uuid())
+  workspaceId String @unique
+
+  // Concurrency limits
+  maxActiveOptimizationRuns Int @default(1)
+  maxActiveEvaluationRuns   Int @default(2)
+
+  // Per-run budget limits
+  maxCallsPerRun  Int   @default(100)
+  maxTokensPerRun Int   @default(100000)
+  maxUSDPerRun    Float @default(10.0)
+
+  // Daily workspace budget
+  dailyBudgetUSD   Float @default(50.0)
+  dailyBudgetUsed  Float @default(0.0)
+  dailyBudgetReset DateTime @default(now())
+
+  // Rate limiting
+  requestsPerMinute Int @default(60)
+  requestsPerHour   Int @default(1000)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+}
+
+// Audit Event - Detailed audit trail for governance
+model AuditEvent {
+  id          String @id @default(uuid())
+  actorId     String?
+  workspaceId String?
+
+  // Event classification
+  eventType  String // OPTIMIZE_RUN_CREATED | OPTIMIZE_APPLIED | EVAL_RUN_CREATED | VERSION_ACTIVATED | RUBRIC_CREATED | RUBRIC_UPDATED | BUDGET_EXCEEDED | RATE_LIMITED
+  entityType String // optimization_run | evaluation_run | template_version | rubric | policy
+  entityId   String?
+
+  // Event payload
+  payloadJson Json @default("{}")
+
+  // Request context
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([workspaceId])
+  @@index([eventType])
+  @@index([entityType])
+  @@index([createdAt])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, eventType])
+}
+
+// Rate Limit Tracker - For rate limiting enforcement
+model RateLimitEntry {
+  id          String @id @default(uuid())
+  identifier  String // userId or IP address
+  endpoint    String
+  windowStart DateTime
+  requestCount Int @default(1)
+
+  @@unique([identifier, endpoint, windowStart])
+  @@index([identifier])
+  @@index([windowStart])
+}

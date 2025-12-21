@@ -21,7 +21,14 @@ import templatesRoutes from './api/routes/templates.js';
 import datasetsRoutes from './api/routes/datasets.js';
 import evalsRoutes from './api/routes/evals.js';
 import optimizeRoutes from './api/routes/optimize.js';
+import advancedEvalsRoutes from './api/routes/advancedEvals.js';
+import rubricsRoutes from './api/routes/rubrics.js';
+import runsRoutes from './api/routes/runs.js';
+import budgetRoutes from './api/routes/budget.js';
+import auditRoutes from './api/routes/audit.js';
+import observabilityRoutes from './api/routes/observability.js';
 import { errorHandler } from './api/middleware/errorHandler.js';
+import { rateLimiter } from './api/middleware/rateLimiter.js';
 import { authMiddleware } from './api/middleware/auth.js';
 import { healthCheckService, requestTrackingMiddleware } from './services/HealthCheckService.js';
 
@@ -78,7 +85,13 @@ app.use('/api/agents', agentsRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/datasets', datasetsRoutes);
 app.use('/api/evals', evalsRoutes);
-app.use('/api/optimize', optimizeRoutes);
+app.use('/api/optimize', rateLimiter, optimizeRoutes);
+app.use('/api/advanced-evals', rateLimiter, advancedEvalsRoutes);
+app.use('/api/rubrics', rubricsRoutes);
+app.use('/api/runs', runsRoutes);
+app.use('/api/budget', rateLimiter, budgetRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/observability', observabilityRoutes);
 
 // Error handler
 app.use(errorHandler);
