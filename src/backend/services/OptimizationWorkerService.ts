@@ -9,7 +9,18 @@ import { QueueService } from './QueueService.js';
 import { DspyServiceClient } from './DspyServiceClient.js';
 import { BudgetEnforcementService } from './BudgetEnforcementService.js';
 import { workerLogger, optimizationLogger } from './StructuredLogger.js';
-import { parseContentSnapshot } from '../../shared/utils/promptRenderer.js';
+import {
+  createContentSnapshot,
+  parseContentSnapshot,
+  renderPromptParts,
+} from '../../shared/utils/promptRenderer.js';
+import {
+  getMetric,
+  setLLMJudgeClient,
+  type JudgeModelConfig,
+  type JudgeRubricConfig,
+} from '../lib/metrics/index.js';
+import { DEFAULT_JUDGE_MODEL_CONFIG, DEFAULT_JUDGE_RUBRIC } from '../lib/metrics/defaultRubric.js';
 import type { Server as SocketIOServer } from 'socket.io';
 
 // ============================================================
@@ -65,6 +76,13 @@ const STAGES = {
   SAVING: { stage: 'Saving results', progress: 90 },
   COMPLETED: { stage: 'Completed', progress: 100 },
 };
+
+class BudgetExceededError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BudgetExceededError';
+  }
+}
 
 // ============================================================
 // Optimization Worker Service
@@ -358,13 +376,24 @@ export class OptimizationWorkerService {
         include: {
           baseVersion: true,
           dataset: {
-            include: { examples: true },
+            include: { examples: true, judgeRubric: true },
           },
         },
       });
 
       if (!run) {
         throw new Error('Run not found');
+      }
+
+      const selectedMetricType = run.dataset.format === 'unlabeled'
+        ? 'judge_rubric'
+        : this.resolveComparisonMetric(run.metricType);
+
+      if (selectedMetricType !== run.metricType) {
+        await prisma.optimizationRun.update({
+          where: { id: runId },
+          data: { metricType: selectedMetricType },
+        });
       }
 
       // 3. Update progress
@@ -405,7 +434,7 @@ export class OptimizationWorkerService {
         optimizer: {
           type: run.optimizerType as 'bootstrap_fewshot' | 'copro',
         },
-        metricType: run.metricType as 'exact_match' | 'contains' | 'json_valid',
+        metricType: selectedMetricType as 'exact_match' | 'contains' | 'json_valid' | 'judge_rubric',
         budget: run.budget as { maxCalls?: number; maxTokens?: number; maxUSD?: number },
       });
 
@@ -414,9 +443,23 @@ export class OptimizationWorkerService {
         throw new Error('Job aborted');
       }
 
-      // 5. Save result
+      // 5. Evaluate A/B results
+      await this.updateRunProgress(runId, STAGES.EVALUATING);
+      logger.info('Evaluating A/B comparison', STAGES.EVALUATING);
+
+      const abComparison = await this.runAbComparison({
+        dataset: run.dataset,
+        baseSnapshot: contentSnapshot,
+        optimizedSnapshot: compileResult.optimizedPromptSnapshot,
+        metricType: selectedMetricType,
+        budget: run.budget as { maxCalls?: number; maxTokens?: number; maxUSD?: number },
+      });
+
+      // 6. Save result
       await this.updateRunProgress(runId, STAGES.SAVING);
       logger.info('Saving results', STAGES.SAVING);
+
+      const baseDiagnostics = (compileResult.diagnostics ?? {}) as Record<string, unknown>;
 
       await prisma.optimizationResult.create({
         data: {
@@ -429,7 +472,10 @@ export class OptimizationWorkerService {
           optimizedScore: compileResult.optimizedScore,
           scoreDelta: compileResult.delta,
           cost: compileResult.cost as unknown as Prisma.InputJsonValue,
-          diagnostics: compileResult.diagnostics as unknown as Prisma.InputJsonValue,
+          diagnostics: {
+            ...baseDiagnostics,
+            abComparison,
+          } as Prisma.InputJsonValue,
         },
       });
 
@@ -455,6 +501,7 @@ export class OptimizationWorkerService {
           optimizedScore: compileResult.optimizedScore,
           delta: compileResult.delta,
           cost: compileResult.cost,
+          abComparison,
         },
       });
 
@@ -484,6 +531,22 @@ export class OptimizationWorkerService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       logger.errorWithStack('Job failed', error as Error, { duration });
+
+      if (error instanceof BudgetExceededError) {
+        await this.budgetService.hardStopRun('optimization', runId, errorMessage);
+        this.emitRunUpdate(runId, {
+          status: 'failed',
+          progress: 0,
+          stage: 'Budget exceeded',
+          errorMessage,
+        });
+
+        if (!messageId.startsWith('db_')) {
+          await this.queueService.fail('optimization', messageId, errorMessage);
+        }
+
+        return;
+      }
 
       // Mark as failed
       await prisma.optimizationRun.update({
@@ -577,6 +640,279 @@ export class OptimizationWorkerService {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private resolveComparisonMetric(metricType: string): 'exact_match' | 'contains' | 'json_valid' {
+    if (metricType === 'exact_match' || metricType === 'contains' || metricType === 'json_valid') {
+      return metricType;
+    }
+    return 'exact_match';
+  }
+
+  private buildOptimizedSnapshot(
+    baseSnapshot: ReturnType<typeof parseContentSnapshot>,
+    optimizedSnapshot: { system: string; developer?: string }
+  ): ReturnType<typeof createContentSnapshot> {
+    return createContentSnapshot(
+      {
+        system: optimizedSnapshot.system,
+        developer: optimizedSnapshot.developer ?? baseSnapshot.developer,
+        user: baseSnapshot.user,
+        context: baseSnapshot.context,
+      },
+      {
+        variablesSchema: baseSnapshot.variablesSchema,
+        defaultValues: baseSnapshot.defaultValues,
+        modelConfig: baseSnapshot.modelConfig,
+      }
+    );
+  }
+
+  private async runAbComparison({
+    dataset,
+    baseSnapshot,
+    optimizedSnapshot,
+    metricType,
+    budget,
+  }: {
+    dataset: {
+      format: string;
+      examples: Array<{
+        id: string;
+        inputVariables: Prisma.InputJsonValue;
+        expectedOutput: string | null;
+        metadata: Prisma.InputJsonValue | null;
+      }>;
+      judgeRubric?: { rubricJson: Prisma.InputJsonValue; modelConfig: Prisma.InputJsonValue } | null;
+    };
+    baseSnapshot: ReturnType<typeof parseContentSnapshot>;
+    optimizedSnapshot: { system: string; developer?: string };
+    metricType: string;
+    budget: { maxCalls?: number; maxTokens?: number; maxUSD?: number };
+  }): Promise<{
+    metricType: 'exact_match' | 'contains' | 'json_valid' | 'judge_rubric';
+    sampleCount: number;
+    winsBaseline: number;
+    winsOptimized: number;
+    ties: number;
+    examples?: Array<{
+      exampleId: string;
+      winner: 'baseline' | 'optimized' | 'tie';
+      scoreBaseline?: number;
+      scoreOptimized?: number;
+      reason?: string;
+    }>;
+  } | null> {
+    if (dataset.examples.length === 0) {
+      return null;
+    }
+
+    const optimizedContent = this.buildOptimizedSnapshot(baseSnapshot, optimizedSnapshot);
+    const rubric = dataset.judgeRubric?.rubricJson as JudgeRubricConfig | undefined;
+    const modelConfig = dataset.judgeRubric?.modelConfig as JudgeModelConfig | undefined;
+    const judgeBudget = {
+      maxCalls: budget.maxCalls ?? 100,
+      maxTokens: budget.maxTokens ?? 100000,
+      maxUSD: budget.maxUSD ?? 10,
+    };
+
+    let judgeCalls = 0;
+    let judgeTokens = 0;
+
+    const { OpenAI } = await import('openai');
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    setLLMJudgeClient({
+      async call(prompt: string, config?: JudgeModelConfig): Promise<string> {
+        if (judgeCalls >= judgeBudget.maxCalls) {
+          throw new BudgetExceededError(`Judge calls exceeded ${judgeBudget.maxCalls}`);
+        }
+        if (judgeTokens >= judgeBudget.maxTokens) {
+          throw new BudgetExceededError(`Judge tokens exceeded ${judgeBudget.maxTokens}`);
+        }
+        if ((judgeTokens / 1000) * 0.03 >= judgeBudget.maxUSD) {
+          throw new BudgetExceededError(`Judge cost exceeded $${judgeBudget.maxUSD}`);
+        }
+
+        const judgeConfig = config ?? DEFAULT_JUDGE_MODEL_CONFIG;
+        const response = await openai.chat.completions.create({
+          model: judgeConfig.model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: judgeConfig.temperature,
+          max_tokens: judgeConfig.maxTokens,
+          response_format: { type: 'json_object' },
+        });
+
+        judgeCalls += 1;
+        judgeTokens += response.usage?.total_tokens ?? 0;
+
+        if (judgeCalls >= judgeBudget.maxCalls) {
+          throw new BudgetExceededError(`Judge calls exceeded ${judgeBudget.maxCalls}`);
+        }
+        if (judgeTokens >= judgeBudget.maxTokens) {
+          throw new BudgetExceededError(`Judge tokens exceeded ${judgeBudget.maxTokens}`);
+        }
+        if ((judgeTokens / 1000) * 0.03 >= judgeBudget.maxUSD) {
+          throw new BudgetExceededError(`Judge cost exceeded $${judgeBudget.maxUSD}`);
+        }
+
+        return response.choices[0]?.message?.content || '{}';
+      },
+    });
+
+    const comparisonMetricType = dataset.format === 'unlabeled'
+      ? 'judge_rubric'
+      : this.resolveComparisonMetric(metricType);
+
+    const metric = getMetric(dataset.format === 'unlabeled' ? 'pairwise_judge' : comparisonMetricType);
+    if (!metric) {
+      return null;
+    }
+
+    let winsBaseline = 0;
+    let winsOptimized = 0;
+    let ties = 0;
+    const exampleSummaries: Array<{
+      exampleId: string;
+      winner: 'baseline' | 'optimized' | 'tie';
+      scoreBaseline?: number;
+      scoreOptimized?: number;
+      reason?: string;
+    }> = [];
+
+    for (const example of dataset.examples) {
+      const inputVars = example.inputVariables as Record<string, unknown>;
+      const baseRendered = renderPromptParts(baseSnapshot, inputVars);
+      const optimizedRendered = renderPromptParts(optimizedContent, inputVars);
+
+      const [baseOutput, optimizedOutput] = await Promise.all([
+        this.generateOutput(openai, baseRendered, baseSnapshot.modelConfig),
+        this.generateOutput(openai, optimizedRendered, optimizedContent.modelConfig),
+      ]);
+
+      let winner: 'baseline' | 'optimized' | 'tie' = 'tie';
+      let scoreBaseline = 0.5;
+      let scoreOptimized = 0.5;
+      let reason: string | undefined;
+
+      if (dataset.format === 'unlabeled') {
+        const result = await metric(baseOutput, {
+          example: {
+            id: example.id,
+            inputVariables: inputVars,
+            expectedOutput: example.expectedOutput ?? undefined,
+            metadata: example.metadata as Record<string, unknown> | undefined,
+          },
+          outputA: baseOutput,
+          outputB: optimizedOutput,
+          rubric: rubric ?? DEFAULT_JUDGE_RUBRIC,
+          modelConfig: modelConfig ?? DEFAULT_JUDGE_MODEL_CONFIG,
+        });
+
+        const judgeWinner = (result.details?.winner as string | undefined) ?? 'tie';
+        reason = result.reason;
+        scoreBaseline = (result.details?.scoreA as number | undefined) ?? 0.5;
+        scoreOptimized = (result.details?.scoreB as number | undefined) ?? 0.5;
+
+        if (judgeWinner === 'A') {
+          winner = 'baseline';
+        } else if (judgeWinner === 'B') {
+          winner = 'optimized';
+        }
+      } else {
+        const baseResult = await metric(baseOutput, {
+          example: {
+            id: example.id,
+            inputVariables: inputVars,
+            expectedOutput: example.expectedOutput ?? undefined,
+            metadata: example.metadata as Record<string, unknown> | undefined,
+          },
+        });
+        const optimizedResult = await metric(optimizedOutput, {
+          example: {
+            id: example.id,
+            inputVariables: inputVars,
+            expectedOutput: example.expectedOutput ?? undefined,
+            metadata: example.metadata as Record<string, unknown> | undefined,
+          },
+        });
+
+        scoreBaseline = baseResult.score;
+        scoreOptimized = optimizedResult.score;
+        reason = optimizedResult.reason;
+
+        if (scoreBaseline > scoreOptimized) {
+          winner = 'baseline';
+        } else if (scoreOptimized > scoreBaseline) {
+          winner = 'optimized';
+        }
+      }
+
+      if (winner === 'baseline') {
+        winsBaseline += 1;
+      } else if (winner === 'optimized') {
+        winsOptimized += 1;
+      } else {
+        ties += 1;
+      }
+
+      if (exampleSummaries.length < 10) {
+        exampleSummaries.push({
+          exampleId: example.id,
+          winner,
+          scoreBaseline,
+          scoreOptimized,
+          reason,
+        });
+      }
+    }
+
+    return {
+      metricType: dataset.format === 'unlabeled' ? 'judge_rubric' : comparisonMetricType,
+      sampleCount: dataset.examples.length,
+      winsBaseline,
+      winsOptimized,
+      ties,
+      examples: exampleSummaries,
+    };
+  }
+
+  private async generateOutput(
+    openai: { chat: { completions: { create: (args: {
+      model: string;
+      messages: Array<{ role: 'system' | 'user'; content: string }>;
+      temperature?: number;
+      max_tokens?: number;
+      top_p?: number;
+      frequency_penalty?: number;
+      presence_penalty?: number;
+    }) => Promise<{ choices: Array<{ message?: { content?: string } }>; usage?: { total_tokens?: number } }> } } },
+    rendered: { system: string; user: string; context?: string },
+    modelConfig?: { model?: string; temperature?: number; maxTokens?: number; topP?: number; frequencyPenalty?: number; presencePenalty?: number }
+  ): Promise<string> {
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+
+    if (rendered.system) {
+      messages.push({ role: 'system', content: rendered.system });
+    }
+
+    let userContent = rendered.user;
+    if (rendered.context) {
+      userContent = `${rendered.context}\n\n${userContent}`;
+    }
+    messages.push({ role: 'user', content: userContent });
+
+    const response = await openai.chat.completions.create({
+      model: modelConfig?.model || 'gpt-4',
+      messages,
+      temperature: modelConfig?.temperature ?? 0.7,
+      max_tokens: modelConfig?.maxTokens ?? 1024,
+      top_p: modelConfig?.topP ?? 1,
+      frequency_penalty: modelConfig?.frequencyPenalty ?? 0,
+      presence_penalty: modelConfig?.presencePenalty ?? 0,
+    });
+
+    return response.choices[0]?.message?.content?.trim() || '';
   }
 }
 

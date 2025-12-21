@@ -898,6 +898,9 @@ model EvaluationDataset {
   // Dataset format
   format String @default("labeled") // labeled | unlabeled
 
+  // Optional judge rubric override
+  judgeRubricId String?
+
   // Multi-tenant support
   tenantId    String?
   createdById String?
@@ -906,9 +909,10 @@ model EvaluationDataset {
   updatedAt DateTime @updatedAt
 
   // Relations
-  tenant    Tenant?          @relation(fields: [tenantId], references: [id])
-  createdBy User?            @relation("DatasetCreator", fields: [createdById], references: [id])
-  examples  DatasetExample[]
+  tenant       Tenant?          @relation(fields: [tenantId], references: [id])
+  createdBy    User?            @relation("DatasetCreator", fields: [createdById], references: [id])
+  judgeRubric  JudgeRubric?     @relation(fields: [judgeRubricId], references: [id])
+  examples     DatasetExample[]
   optimizationRuns OptimizationRun[]
   evaluationRuns   EvaluationRun[]
 
@@ -916,6 +920,7 @@ model EvaluationDataset {
   @@index([createdById])
   @@index([format])
   @@index([taskType])
+  @@index([judgeRubricId])
 }
 
 // Dataset Example - Individual examples within a dataset
@@ -970,6 +975,7 @@ model EvaluationRun {
   perExampleResults Json? @default("[]")
   failureCases      Json? @default("[]")
   topFailureCases   Json? @default("[]")
+  artifacts         Json? @default("{}")
 
   // Cost tracking
   calls       Int   @default(0)
@@ -1158,6 +1164,7 @@ model JudgeRubric {
 
   // Relations
   evaluationRuns AdvancedEvaluationRun[]
+  datasets       EvaluationDataset[]
 
   @@index([workspaceId])
   @@index([createdById])
