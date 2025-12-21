@@ -17,6 +17,10 @@ import refinementRoutes from './api/routes/refinement.js';
 import predictionRoutes from './api/routes/prediction.js';
 import qualityRoutes from './api/routes/quality.js';
 import agentsRoutes from './api/routes/agents';
+import templatesRoutes from './api/routes/templates.js';
+import datasetsRoutes from './api/routes/datasets.js';
+import evalsRoutes from './api/routes/evals.js';
+import optimizeRoutes from './api/routes/optimize.js';
 import { errorHandler } from './api/middleware/errorHandler.js';
 import { authMiddleware } from './api/middleware/auth.js';
 import { healthCheckService, requestTrackingMiddleware } from './services/HealthCheckService.js';
@@ -71,6 +75,10 @@ app.use('/api/refinement', refinementRoutes);
 app.use('/api/prediction', predictionRoutes);
 app.use('/api/quality', qualityRoutes);
 app.use('/api/agents', agentsRoutes);
+app.use('/api/templates', templatesRoutes);
+app.use('/api/datasets', datasetsRoutes);
+app.use('/api/evals', evalsRoutes);
+app.use('/api/optimize', optimizeRoutes);
 
 // Error handler
 app.use(errorHandler);
