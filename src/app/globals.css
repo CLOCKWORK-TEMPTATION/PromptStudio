@@ -115,3 +115,35 @@ code {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(71, 85, 105, 0.5);
 }
+
+/* RTL Support */
+[dir='rtl'] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir='rtl'] .rtl\:rotate-180 {
+  transform: rotate(180deg);
+}
+
+[dir='rtl'] .rtl\:ml-auto {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+[dir='rtl'] .rtl\:mr-auto {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+/* Arabic Font Support */
+html[lang='ar'] {
+  font-family: 'Cairo', 'Segoe UI', 'Tahoma', sans-serif;
+}
+
+html[lang='ar'] code,
+html[lang='ar'] pre {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+  direction: ltr;
+  text-align: left;
+}

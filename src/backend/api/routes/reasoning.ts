@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { LLMServiceAdapter } from '../../services/LLMServiceAdapter.js';
+import { LLMServiceAdapter, ReasoningPath } from '../../services/LLMServiceAdapter.js';
 import { AnalysisService } from '../../services/analysisService.js';
 import { ReasoningHistoryServiceStatic as ReasoningHistoryService } from '../../services/ReasoningHistoryService.js';
 
@@ -119,7 +119,7 @@ router.post('/multi-path-reasoning', async (req: Request, res: Response) => {
       branchingFactor: branchingFactor || 2,
     });
 
-    const paths = [];
+    const paths: ReasoningPath[] = [];
 
     // Generate multiple reasoning paths
     for (let i = 0; i < pathCount; i++) {

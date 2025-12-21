@@ -9,11 +9,13 @@ import { generateDeployment, getProviderInfo } from '@/lib/cloud-deployment';
 import { ProviderCard } from './ProviderCard';
 import { DeploymentConfigPanel } from './DeploymentConfigPanel';
 import { GeneratedFilesView } from './GeneratedFilesView';
+import { useTranslation } from '@/i18n/LanguageContext';
 
 const PROVIDERS: CloudProvider[] = ['vercel', 'cloudflare', 'aws-lambda', 'gcp-functions'];
 
 export function CloudDeployment() {
   const { currentPrompt, deploymentConfigs, setDeploymentConfig } = usePromptStudioStore();
+  const { t, dir } = useTranslation();
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider>('vercel');
   const [showConfig, setShowConfig] = useState(false);
   const [generatedFiles, setGeneratedFiles] = useState<{
@@ -53,18 +55,18 @@ export function CloudDeployment() {
 
   if (!currentPrompt) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full" dir={dir}>
         <div className="text-center text-dark-400">
           <Cloud className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No prompt selected</p>
-          <p className="text-sm mt-2">Create or select a prompt to deploy</p>
+          <p className="text-lg font-medium">{t('deployment.title')}</p>
+          <p className="text-sm mt-2">{t('common.select')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-dark-900">
+    <div className="h-full flex flex-col bg-dark-900" dir={dir}>
       {/* Header */}
       <div className="border-b border-dark-700 p-4">
         <div className="flex items-center justify-between">
@@ -73,8 +75,8 @@ export function CloudDeployment() {
               <Cloud className="w-5 h-5 text-primary-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Cloud Deployment</h2>
-              <p className="text-sm text-dark-400">Deploy your prompt as a serverless API endpoint</p>
+              <h2 className="text-lg font-semibold text-white">{t('deployment.title')}</h2>
+              <p className="text-sm text-dark-400">{t('deployment.deploy')}</p>
             </div>
           </div>
         </div>
@@ -82,7 +84,7 @@ export function CloudDeployment() {
 
       {/* Provider Selection */}
       <div className="p-4 border-b border-dark-700">
-        <h3 className="text-sm font-medium text-dark-300 mb-3">Select Platform</h3>
+        <h3 className="text-sm font-medium text-dark-300 mb-3">{t('deployment.provider')}</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {PROVIDERS.map((provider) => (
             <ProviderCard
@@ -124,7 +126,7 @@ export function CloudDeployment() {
             }`}
           >
             <Settings className="w-4 h-4" />
-            Configure
+            {t('common.settings')}
           </button>
         </div>
       </div>
@@ -149,12 +151,12 @@ export function CloudDeployment() {
           {isGenerating ? (
             <>
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Generating...
+              {t('deployment.deploying')}
             </>
           ) : (
             <>
               <Rocket className="w-5 h-5" />
-              Generate Deployment Files
+              {t('deployment.generateFiles')}
             </>
           )}
         </button>
@@ -173,7 +175,7 @@ export function CloudDeployment() {
         <div className="flex-1 flex items-center justify-center text-dark-400">
           <div className="text-center">
             <Server className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Click "Generate Deployment Files" to create your deployment</p>
+            <p>{t('deployment.deploymentGuide')}</p>
           </div>
         </div>
       )}

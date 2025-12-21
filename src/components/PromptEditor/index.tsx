@@ -22,21 +22,27 @@ import {
   AlertTriangle,
   CheckCircle2,
   Lightbulb,
+  Wand2,
 } from 'lucide-react';
 import { usePromptStudioStore } from '@/store';
 import { PromptVariable } from '@/types';
+import { useTranslation } from '@/i18n/LanguageContext';
 
 const MODELS = [
+  { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'OpenAI' },
+  { id: 'gpt-5', name: 'GPT-5', provider: 'OpenAI' },
   { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', provider: 'OpenAI' },
   { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
   { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', provider: 'Anthropic' },
   { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic' },
   { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic' },
   { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic' },
+  { id: 'models/gemini-3-pro-preview', name: 'Gemini 3 Pro Preview', provider: 'Google' },
 ];
 
-const VARIABLE_TYPES: Array<{ type: PromptVariable['type']; icon: React.ReactNode; label: string }> = [
-  { type: 'string', icon: <Type className="w-4 h-4" />, label: 'String' },
+const getVariableTypes = (t: any): Array<{ type: PromptVariable['type']; icon: React.ReactNode; label: string }> => [
+  { type: 'string', icon: <Type className="w-4 h-4" />, label: t('editor.variableType') || 'String' },
   { type: 'number', icon: <Hash className="w-4 h-4" />, label: 'Number' },
   { type: 'boolean', icon: <ToggleLeft className="w-4 h-4" />, label: 'Boolean' },
   { type: 'array', icon: <List className="w-4 h-4" />, label: 'Array' },
@@ -106,11 +112,54 @@ function performQuickAnalysis(prompt: string, model: string): QuickAnalysis {
 }
 export function PromptEditor() {
   const { currentPrompt, updatePrompt } = usePromptStudioStore();
+  const { t, dir } = useTranslation();
   const [showSettings, setShowSettings] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [showPreSendAnalysis, setShowPreSendAnalysis] = useState(true);
   const [quickAnalysis, setQuickAnalysis] = useState<QuickAnalysis | null>(null);
+  const VARIABLE_TYPES = getVariableTypes(t);
+
+  // System Prompt Generation State
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [generationTask, setGenerationTask] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateSystemPrompt = async () => {
+    if (!generationTask.trim()) return;
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/prompts/generate-system-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task: generationTask,
+          provider: 'openai'
+        }),
+      });
+
+      if (!response.ok) throw new Error('Generation failed');
+
+      const data = await response.json();
+
+      // Update prompt content with generated system prompt
+      updatePrompt({
+        prompt: data.systemPrompt,
+        description: generationTask // Optionally update description too
+      });
+
+      setShowGenerateDialog(false);
+      setGenerationTask('');
+    } catch (error) {
+      console.error('Failed to generate prompt:', error);
+      // Ideally show a toast notification here
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Auto-analyze prompt on change
   useEffect(() => {
@@ -127,11 +176,11 @@ export function PromptEditor() {
 
   if (!currentPrompt) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full" dir={dir}>
         <div className="text-center text-dark-400">
           <PenTool className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No prompt selected</p>
-          <p className="text-sm mt-2">Create a new prompt to get started</p>
+          <p className="text-lg font-medium">{t('editor.title')}</p>
+          <p className="text-sm mt-2">{t('common.select')}</p>
         </div>
       </div>
     );
@@ -172,7 +221,7 @@ export function PromptEditor() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-dark-900">
+    <div className="h-full flex flex-col bg-dark-900" dir={dir}>
       {/* Header */}
       <div className="border-b border-dark-700 p-4">
         <div className="flex items-center justify-between">
@@ -186,14 +235,14 @@ export function PromptEditor() {
                 value={currentPrompt.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ name: e.target.value })}
                 className="text-lg font-semibold text-white bg-transparent border-none focus:outline-none focus:ring-0"
-                placeholder="Prompt name"
+                placeholder={t('editor.title')}
               />
               <input
                 type="text"
                 value={currentPrompt.description}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePrompt({ description: e.target.value })}
                 className="block text-sm text-dark-400 bg-transparent border-none focus:outline-none focus:ring-0 w-full"
-                placeholder="Add a description..."
+                placeholder={t('common.add')}
               />
             </div>
           </div>
@@ -201,28 +250,85 @@ export function PromptEditor() {
             <button
               onClick={() => setShowSettings(!showSettings)}
               className={`p-2 rounded-lg transition-colors ${showSettings
-                  ? 'bg-primary-500/20 text-primary-400'
-                  : 'bg-dark-800 text-dark-300 hover:bg-dark-700'
+                ? 'bg-primary-500/20 text-primary-400'
+                : 'bg-dark-800 text-dark-300 hover:bg-dark-700'
                 }`}
             >
               <Settings className="w-5 h-5" />
             </button>
             <button className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg text-dark-200 transition-colors">
               <Save className="w-4 h-4" />
-              <span className="text-sm">Save</span>
+              <span className="text-sm">{t('common.save')}</span>
+            </button>
+            <button
+              onClick={() => setShowGenerateDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-white transition-colors"
+              title="Generate System Prompt"
+            >
+              <Wand2 className="w-4 h-4" />
+              <span className="text-sm hidden md:inline">Generate</span>
             </button>
           </div>
         </div>
       </div>
 
+      {/* Generation Dialog */}
+      {showGenerateDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-dark-800 rounded-xl border border-dark-700 shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              <Wand2 className="w-5 h-5 text-primary-400" />
+              Generate System Prompt
+            </h3>
+            <p className="text-sm text-dark-300 mb-4">
+              Describe your task, goal, or paste an existing prompt. Our AI will craft a professional system prompt for you using advanced reasoning patterns.
+            </p>
+
+            <textarea
+              value={generationTask}
+              onChange={(e) => setGenerationTask(e.target.value)}
+              className="w-full h-32 px-3 py-2 bg-dark-950 border border-dark-700 rounded-lg text-sm text-white focus:border-primary-500 focus:outline-none resize-none mb-4"
+              placeholder="e.g. Create a Python script to scrape LinkedIn profiles, ensuring rate limits are respected and data is saved to CSV..."
+              autoFocus
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowGenerateDialog(false)}
+                className="px-4 py-2 text-sm text-dark-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleGenerateSystemPrompt}
+                disabled={!generationTask.trim() || isGenerating}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-colors"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4" />
+                    Generate
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Panel */}
       {showSettings && (
         <div className="p-4 border-b border-dark-700 bg-dark-800/50 animate-fade-in">
-          <h3 className="text-sm font-medium text-dark-200 mb-4">Model Settings</h3>
+          <h3 className="text-sm font-medium text-dark-200 mb-4">{t('editor.modelConfig')}</h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Model Selection */}
             <div>
-              <label className="block text-xs text-dark-400 mb-1.5">Model</label>
+              <label className="block text-xs text-dark-400 mb-1.5">{t('editor.model')}</label>
               <select
                 value={currentPrompt.model}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updatePrompt({ model: e.target.value })}
@@ -239,7 +345,7 @@ export function PromptEditor() {
             {/* Temperature */}
             <div>
               <label className="block text-xs text-dark-400 mb-1.5">
-                Temperature: {currentPrompt.temperature}
+                {t('editor.temperature')}: {currentPrompt.temperature}
               </label>
               <input
                 type="range"
@@ -254,7 +360,7 @@ export function PromptEditor() {
 
             {/* Max Tokens */}
             <div>
-              <label className="block text-xs text-dark-400 mb-1.5">Max Tokens</label>
+              <label className="block text-xs text-dark-400 mb-1.5">{t('editor.maxTokens')}</label>
               <input
                 type="number"
                 value={currentPrompt.maxTokens}
@@ -267,7 +373,7 @@ export function PromptEditor() {
 
             {/* Top P */}
             <div>
-              <label className="block text-xs text-dark-400 mb-1.5">Top P: {currentPrompt.topP}</label>
+              <label className="block text-xs text-dark-400 mb-1.5">{t('editor.topP')}: {currentPrompt.topP}</label>
               <input
                 type="range"
                 min="0"
@@ -287,9 +393,9 @@ export function PromptEditor() {
         {/* Prompt Editor */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-dark-700">
-            <h3 className="text-sm font-medium text-dark-300 mb-1">Prompt Template</h3>
+            <h3 className="text-sm font-medium text-dark-300 mb-1">{t('editor.title')}</h3>
             <p className="text-xs text-dark-500">
-              Use {'{{variableName}}'} syntax for dynamic values
+              {t('editor.placeholder')}
             </p>
           </div>
           <div className="flex-1 p-4 overflow-hidden">
@@ -297,14 +403,7 @@ export function PromptEditor() {
               value={currentPrompt.prompt}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updatePrompt({ prompt: e.target.value })}
               className="w-full h-full p-4 bg-dark-950 border border-dark-700 rounded-lg text-sm text-dark-100 font-mono resize-none focus:border-primary-500 focus:outline-none"
-              placeholder="Enter your prompt template here...
-
-Example:
-You are a helpful assistant that specializes in {{topic}}.
-
-The user wants to know: {{question}}
-
-Please provide a detailed and informative response."
+              placeholder={t('editor.placeholder')}
             />
           </div>
 
@@ -314,13 +413,13 @@ Please provide a detailed and informative response."
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Gauge className="w-4 h-4 text-primary-400" />
-                  <h3 className="text-sm font-medium text-dark-300">تحليل ما قبل الإرسال</h3>
+                  <h3 className="text-sm font-medium text-dark-300">{t('analysis.preSendAnalysis')}</h3>
                 </div>
                 <button
                   onClick={() => setShowPreSendAnalysis(false)}
                   className="text-dark-500 hover:text-dark-300 text-xs"
                 >
-                  إخفاء
+                  {t('common.hide')}
                 </button>
               </div>
 
@@ -333,7 +432,7 @@ Please provide a detailed and informative response."
                   <div className="text-sm font-bold text-white">
                     {quickAnalysis.tokens.toLocaleString()}
                   </div>
-                  <div className="text-xs text-dark-500">توكن</div>
+                  <div className="text-xs text-dark-500">{t('editor.tokens')}</div>
                 </div>
 
                 <div className="text-center p-2 bg-dark-900 rounded-lg">
@@ -343,7 +442,7 @@ Please provide a detailed and informative response."
                   <div className="text-sm font-bold text-white">
                     ${quickAnalysis.cost.toFixed(4)}
                   </div>
-                  <div className="text-xs text-dark-500">تكلفة</div>
+                  <div className="text-xs text-dark-500">{t('chains.cost')}</div>
                 </div>
 
                 <div className="text-center p-2 bg-dark-900 rounded-lg">
@@ -353,7 +452,7 @@ Please provide a detailed and informative response."
                   <div className="text-sm font-bold text-white">
                     {quickAnalysis.contextUsagePercent.toFixed(1)}%
                   </div>
-                  <div className="text-xs text-dark-500">سياق</div>
+                  <div className="text-xs text-dark-500">{t('rag.contextLength')}</div>
                 </div>
 
                 <div className="text-center p-2 bg-dark-900 rounded-lg">
@@ -361,11 +460,11 @@ Please provide a detailed and informative response."
                     <Target className="w-3 h-3" />
                   </div>
                   <div className={`text-sm font-bold ${quickAnalysis.successProbability >= 0.7 ? 'text-green-400' :
-                      quickAnalysis.successProbability >= 0.5 ? 'text-yellow-400' : 'text-red-400'
+                    quickAnalysis.successProbability >= 0.5 ? 'text-yellow-400' : 'text-red-400'
                     }`}>
                     {(quickAnalysis.successProbability * 100).toFixed(0)}%
                   </div>
-                  <div className="text-xs text-dark-500">نجاح</div>
+                  <div className="text-xs text-dark-500">{t('analysis.successProbability')}</div>
                 </div>
               </div>
 
@@ -374,12 +473,12 @@ Please provide a detailed and informative response."
                 {quickAnalysis.readyToSend ? (
                   <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">
                     <CheckCircle2 className="w-3 h-3" />
-                    جاهز للإرسال
+                    {t('common.submit')}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded">
                     <AlertTriangle className="w-3 h-3" />
-                    يحتاج تحسين
+                    {t('editor.optimize')}
                   </span>
                 )}
               </div>
@@ -403,13 +502,13 @@ Please provide a detailed and informative response."
               className="w-full p-2 text-xs text-dark-500 hover:text-dark-300 border-t border-dark-700 flex items-center justify-center gap-1"
             >
               <Gauge className="w-3 h-3" />
-              عرض تحليل ما قبل الإرسال
+              {t('analysis.preSendAnalysis')}
             </button>
           )}
           {/* Test Section */}
           <div className="p-4 border-t border-dark-700">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-dark-300">Test Response</h3>
+              <h3 className="text-sm font-medium text-dark-300">{t('editor.test')}</h3>
               <button
                 onClick={handleTest}
                 disabled={isTesting}
@@ -418,12 +517,12 @@ Please provide a detailed and informative response."
                 {isTesting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Testing...
+                    {t('editor.testing')}
                   </>
                 ) : (
                   <>
                     <Play className="w-4 h-4" />
-                    Run Test
+                    {t('editor.run')}
                   </>
                 )}
               </button>
@@ -439,7 +538,7 @@ Please provide a detailed and informative response."
         {/* Variables Panel */}
         <div className="w-80 border-l border-dark-700 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-dark-700 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-dark-300">Variables</h3>
+            <h3 className="text-sm font-medium text-dark-300">{t('editor.variables')}</h3>
             <button
               onClick={handleAddVariable}
               className="p-1.5 hover:bg-dark-700 rounded-lg text-dark-400 hover:text-primary-400 transition-colors"
@@ -452,9 +551,9 @@ Please provide a detailed and informative response."
             {currentPrompt.variables.length === 0 ? (
               <div className="text-center py-8">
                 <Braces className="w-10 h-10 mx-auto mb-3 text-dark-600" />
-                <p className="text-sm text-dark-400">No variables defined</p>
+                <p className="text-sm text-dark-400">{t('editor.variables')}</p>
                 <p className="text-xs text-dark-500 mt-1">
-                  Click + to add a variable
+                  {t('editor.addVariable')}
                 </p>
               </div>
             ) : (
@@ -471,7 +570,7 @@ Please provide a detailed and informative response."
                         handleUpdateVariable(index, { name: e.target.value })
                       }
                       className="text-sm font-medium text-white bg-transparent border-none focus:outline-none"
-                      placeholder="variable_name"
+                      placeholder={t('editor.variableName')}
                     />
                     <button
                       onClick={() => handleDeleteVariable(index)}
@@ -505,7 +604,7 @@ Please provide a detailed and informative response."
                         handleUpdateVariable(index, { description: e.target.value })
                       }
                       className="w-full px-2 py-1.5 bg-dark-900 border border-dark-600 rounded text-xs text-dark-300 focus:border-primary-500 focus:outline-none"
-                      placeholder="Description..."
+                      placeholder={t('editor.variableValue')}
                     />
 
                     <label className="flex items-center gap-2 text-xs text-dark-400">
@@ -517,7 +616,7 @@ Please provide a detailed and informative response."
                         }
                         className="rounded border-dark-600 bg-dark-900 text-primary-500 focus:ring-primary-500"
                       />
-                      Required
+                      {t('editor.required')}
                     </label>
                   </div>
                 </div>
@@ -530,11 +629,7 @@ Please provide a detailed and informative response."
             <div className="flex items-start gap-2 text-xs text-dark-400">
               <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <p>
-                Variables are automatically extracted from your prompt template using the{' '}
-                <code className="px-1 bg-dark-700 rounded text-primary-400">
-                  {'{{name}}'}
-                </code>{' '}
-                syntax.
+                {t('editor.variables')}
               </p>
             </div>
           </div>

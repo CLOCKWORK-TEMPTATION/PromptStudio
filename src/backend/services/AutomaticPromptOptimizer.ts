@@ -178,14 +178,14 @@ export class AutomaticPromptOptimizer {
   // Tournament selection
   private selectParent(population: PromptGene[]): PromptGene {
     const tournamentSize = Math.min(3, population.length);
-    const tournament = [];
+    const tournament: PromptGene[] = [];
 
     for (let i = 0; i < tournamentSize; i++) {
       const randomIndex = Math.floor(Math.random() * population.length);
       tournament.push(population[randomIndex]);
     }
 
-    return tournament.reduce((best, current) => 
+    return tournament.reduce((best, current) =>
       current.fitness > best.fitness ? current : best
     );
   }

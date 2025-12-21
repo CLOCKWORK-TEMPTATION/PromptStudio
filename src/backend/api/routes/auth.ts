@@ -54,7 +54,9 @@ router.post('/register', validate(RegisterSchema), async (req: Request, res: Res
     });
 
     // Generate token
-    const signOptions: SignOptions = { expiresIn: config.jwt.expiresIn };
+    const signOptions: SignOptions = {
+      expiresIn: config.jwt.expiresIn as any
+    };
     const token = jwt.sign(
       {
         userId: user.id,
@@ -110,7 +112,9 @@ router.post('/login', validate(LoginSchema), async (req: Request, res: Response)
     }
 
     // Generate token
-    const signOptions: SignOptions = { expiresIn: config.jwt.expiresIn };
+    const signOptions: SignOptions = {
+      expiresIn: config.jwt.expiresIn as any
+    };
     const token = jwt.sign(
       {
         userId: user.id,

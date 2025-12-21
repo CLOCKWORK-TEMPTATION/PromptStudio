@@ -19,22 +19,25 @@ import { usePromptStudioStore } from '../store';
 import { SDKGenerator } from '../components/SDKGenerator';
 import { CloudDeployment } from '../components/CloudDeployment';
 import { PromptEditor } from '../components/PromptEditor';
+import { useTranslation } from '@/i18n/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 type Tab = 'editor' | 'sdk' | 'deploy';
 
 export default function Home() {
+  const { t, dir } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('editor');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { currentPrompt } = usePromptStudioStore();
 
   const tabs = [
-    { id: 'editor' as Tab, label: 'Prompt Editor', icon: PenTool },
-    { id: 'sdk' as Tab, label: 'SDK Generator', icon: Code },
-    { id: 'deploy' as Tab, label: 'Cloud Deploy', icon: Cloud },
+    { id: 'editor' as Tab, label: t('nav.editor'), icon: PenTool },
+    { id: 'sdk' as Tab, label: t('nav.sdk'), icon: Code },
+    { id: 'deploy' as Tab, label: t('nav.deploy'), icon: Cloud },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-dark-950">
+    <div className="min-h-screen flex flex-col bg-dark-950" dir={dir}>
       {/* Header */}
       <header className="h-14 border-b border-dark-800 flex items-center justify-between px-4 bg-dark-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex items-center gap-3">
@@ -75,6 +78,7 @@ export default function Home() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <LanguageSwitcher theme="dark" />
           <button className="p-2 hover:bg-dark-800 rounded-lg text-dark-400 hover:text-white transition-colors">
             <Settings className="w-5 h-5" />
           </button>
@@ -91,7 +95,7 @@ export default function Home() {
         >
           <div className="p-4 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-dark-300">Prompts</h2>
+              <h2 className="text-sm font-semibold text-dark-300">{t('common.search')}</h2>
               <button className="p-1.5 hover:bg-dark-700 rounded-lg text-dark-400 hover:text-primary-400 transition-colors">
                 <Plus className="w-4 h-4" />
               </button>
@@ -123,7 +127,7 @@ export default function Home() {
                   <Zap className="w-4 h-4 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-dark-400 text-xs">API Calls</p>
+                  <p className="text-dark-400 text-xs">{t('common.apiCalls')}</p>
                   <p className="text-white font-medium">1,234</p>
                 </div>
               </div>
@@ -132,7 +136,7 @@ export default function Home() {
                   <Terminal className="w-4 h-4 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-dark-400 text-xs">SDKs Generated</p>
+                  <p className="text-dark-400 text-xs">{t('sdk.generated')}</p>
                   <p className="text-white font-medium">12</p>
                 </div>
               </div>
@@ -141,7 +145,7 @@ export default function Home() {
                   <Globe className="w-4 h-4 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-dark-400 text-xs">Deployments</p>
+                  <p className="text-dark-400 text-xs">{t('deployment.deployments')}</p>
                   <p className="text-white font-medium">4</p>
                 </div>
               </div>

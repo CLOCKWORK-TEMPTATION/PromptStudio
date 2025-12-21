@@ -1,4 +1,4 @@
-import { createEmbedding, cosineSimilarity } from './embedding-util';
+import { EmbeddingUtil } from '../backend/services/embedding-util.js';
 
 export interface VectorCacheEntry {
   prompt: string;
@@ -10,11 +10,11 @@ export interface VectorCacheEntry {
 const vectorCache: VectorCacheEntry[] = [];
 
 export async function getCachedResponse(prompt: string, threshold = 0.85): Promise<string | undefined> {
-  const embedding = await createEmbedding(prompt);
+  const embedding = await EmbeddingUtil.generateEmbedding(prompt);
   let bestScore = 0;
   let bestResponse: string | undefined = undefined;
   for (const entry of vectorCache) {
-    const score = cosineSimilarity(embedding, entry.embedding);
+    const score = EmbeddingUtil.cosineSimilarity(embedding, entry.embedding);
     if (score > bestScore && score >= threshold) {
       bestScore = score;
       bestResponse = entry.response;
@@ -24,6 +24,6 @@ export async function getCachedResponse(prompt: string, threshold = 0.85): Promi
 }
 
 export async function cacheResponse(prompt: string, response: string): Promise<void> {
-  const embedding = await createEmbedding(prompt);
+  const embedding = await EmbeddingUtil.generateEmbedding(prompt);
   vectorCache.push({ prompt, embedding, response, createdAt: new Date() });
 }

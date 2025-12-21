@@ -52,6 +52,24 @@ router.post('/generate-meta', async (req: Request, res: Response) => {
   }
 });
 
+// Generate comprehensive system prompt from task
+router.post('/generate-system-prompt', async (req: Request, res: Response) => {
+  try {
+    const { task, provider } = req.body;
+
+    if (!task) {
+      return res.status(400).json({ error: 'Task description or prompt is required' });
+    }
+
+    const systemPrompt = await LLMServiceAdapter.generateSystemPrompt(task, provider);
+
+    res.json({ systemPrompt });
+  } catch (error) {
+    console.error('Failed to generate system prompt:', error);
+    res.status(500).json({ error: 'Failed to generate system prompt' });
+  }
+});
+
 // Generate session-fixed meta-prompt
 router.post('/generate-session-meta', async (req: Request, res: Response) => {
   try {

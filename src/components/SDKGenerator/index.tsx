@@ -7,9 +7,11 @@ import { generateSDK } from '@/lib/sdk-generator';
 import { SDKGenerationOptions, GeneratedSDK as GeneratedSDKType } from '@/types';
 import { CodePreview } from './CodePreview';
 import { SDKOptionsPanel } from './SDKOptionsPanel';
+import { useTranslation } from '@/i18n/LanguageContext';
 
 export function SDKGenerator() {
   const { currentPrompt, sdkOptions, setSdkOptions, generatedSDKs, addGeneratedSDK } = usePromptStudioStore();
+  const { t, dir } = useTranslation();
   const [activeLanguage, setActiveLanguage] = useState<'python' | 'typescript'>('python');
   const [showOptions, setShowOptions] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -71,18 +73,18 @@ export function SDKGenerator() {
 
   if (!currentPrompt) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full" dir={dir}>
         <div className="text-center text-dark-400">
           <FileCode className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No prompt selected</p>
-          <p className="text-sm mt-2">Create or select a prompt to generate SDK code</p>
+          <p className="text-lg font-medium">{t('sdk.title')}</p>
+          <p className="text-sm mt-2">{t('common.select')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-dark-900">
+    <div className="h-full flex flex-col bg-dark-900" dir={dir}>
       {/* Header */}
       <div className="border-b border-dark-700 p-4">
         <div className="flex items-center justify-between">
@@ -91,8 +93,8 @@ export function SDKGenerator() {
               <Code className="w-5 h-5 text-primary-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">SDK Generator</h2>
-              <p className="text-sm text-dark-400">Generate ready-to-use client code for your prompt</p>
+              <h2 className="text-lg font-semibold text-white">{t('sdk.title')}</h2>
+              <p className="text-sm text-dark-400">{t('sdk.generateSDK')}</p>
             </div>
           </div>
           <button
@@ -119,7 +121,7 @@ export function SDKGenerator() {
                   : 'bg-dark-800 text-dark-300 hover:bg-dark-700'
               }`}
             >
-              {lang === 'python' ? '🐍 Python' : '📘 TypeScript'}
+              {lang === 'python' ? `🐍 ${t('sdk.python')}` : `📘 ${t('sdk.typescript')}`}
             </button>
           ))}
         </div>
@@ -146,12 +148,12 @@ export function SDKGenerator() {
             {isGenerating ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin" />
-                Generating...
+                {t('common.loading')}
               </>
             ) : (
               <>
                 <Zap className="w-5 h-5" />
-                Generate SDK Code
+                {t('sdk.generateSDK')}
               </>
             )}
           </button>
@@ -174,12 +176,12 @@ export function SDKGenerator() {
                   {copied ? (
                     <>
                       <Check className="w-4 h-4 text-green-400" />
-                      <span className="text-green-400">Copied!</span>
+                      <span className="text-green-400">{t('success.copied')}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      <span>Copy</span>
+                      <span>{t('sdk.copy')}</span>
                     </>
                   )}
                 </button>
@@ -188,7 +190,7 @@ export function SDKGenerator() {
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-dark-700 hover:bg-dark-600 rounded text-sm text-dark-200 transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Download</span>
+                  <span>{t('sdk.download')}</span>
                 </button>
               </div>
             </div>
@@ -201,7 +203,7 @@ export function SDKGenerator() {
             {/* Dependencies */}
             {currentSDK.dependencies.length > 0 && (
               <div className="px-4 py-3 bg-dark-800 border-t border-dark-700">
-                <p className="text-xs text-dark-400 mb-2">Dependencies:</p>
+                <p className="text-xs text-dark-400 mb-2">{t('common.options')}:</p>
                 <div className="flex flex-wrap gap-2">
                   {currentSDK.dependencies.map((dep: string) => (
                     <code
@@ -219,7 +221,7 @@ export function SDKGenerator() {
           <div className="flex-1 flex items-center justify-center text-dark-400">
             <div className="text-center">
               <Code className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Click "Generate SDK Code" to create your wrapper</p>
+              <p>{t('sdk.preview')}</p>
             </div>
           </div>
         )}

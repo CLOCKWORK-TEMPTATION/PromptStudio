@@ -109,7 +109,7 @@ export class RAGService {
       metadata?: Record<string, any>;
     }>
   ) {
-    const createdDocs = [];
+    const createdDocs: any[] = [];
 
     for (const doc of documents) {
       // Chunk the document

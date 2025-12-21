@@ -1,6 +1,18 @@
 // PromptService import removed - not used in this file
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config/index.js';
+import { SYSTEM_GENERATION_META_PROMPT } from '../config/prompts.js';
+
+type AIProvider = 'openai' | 'anthropic' | 'google';
+
+interface LLMConfig {
+  provider: AIProvider;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+}
 
 export interface ThoughtNode {
   id: string;
@@ -121,32 +133,69 @@ export class LLMServiceAdapter {
   }
 
   /**
-   * Generate a thought continuation using LLM
+   * Generate a thought continuation using LLM with multi-provider support
    */
-  private static async generateThought(context: string, variant: number): Promise<string> {
-    if (!config.openai.apiKey) {
-      throw new Error('OPENAI_API_KEY is not configured');
+  private static async generateThought(context: string, variant: number, provider: AIProvider = 'openai'): Promise<string> {
+    const temperature = 0.7 + (variant * 0.1);
+    const systemPrompt = 'You are an expert reasoning assistant. Generate a thoughtful continuation or reasoning step based on the given context. Be specific and analytical.';
+    const userPrompt = `Context: ${context}\n\nGenerate reasoning step variant ${variant + 1}. Explore a different angle or approach.`;
+
+    try {
+      switch (provider) {
+        case 'openai':
+          return await this.generateWithOpenAI(systemPrompt, userPrompt, temperature);
+        case 'anthropic':
+          return await this.generateWithClaude(systemPrompt, userPrompt, temperature);
+        case 'google':
+          return await this.generateWithGemini(systemPrompt, userPrompt, temperature);
+        default:
+          return await this.generateWithOpenAI(systemPrompt, userPrompt, temperature);
+      }
+    } catch (error) {
+      console.error(`Error with ${provider}:`, error);
+      return `Thought continuation ${variant}`;
     }
+  }
 
+  private static async generateWithOpenAI(systemPrompt: string, userPrompt: string, temperature: number): Promise<string> {
+    if (!config.openai.apiKey) throw new Error('OPENAI_API_KEY not configured');
     const openai = new OpenAI({ apiKey: config.openai.apiKey });
-
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
-        {
-          role: 'system',
-          content: 'You are an expert reasoning assistant. Generate a thoughtful continuation or reasoning step based on the given context. Be specific and analytical.',
-        },
-        {
-          role: 'user',
-          content: `Context: ${context}\n\nGenerate reasoning step variant ${variant + 1}. Explore a different angle or approach.`,
-        },
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
       ],
-      temperature: 0.7 + (variant * 0.1),
+      temperature,
       max_tokens: 300,
     });
+    return response.choices[0]?.message?.content?.trim() || '';
+  }
 
-    return response.choices[0]?.message?.content?.trim() || `Thought continuation ${variant}`;
+  private static async generateWithClaude(systemPrompt: string, userPrompt: string, temperature: number): Promise<string> {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
+    const anthropic = new Anthropic({ apiKey });
+    const response = await anthropic.messages.create({
+      model: 'claude-3-sonnet-20240229',
+      max_tokens: 300,
+      temperature,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+    return response.content[0].type === 'text' ? response.content[0].text : '';
+  }
+
+  private static async generateWithGemini(systemPrompt: string, userPrompt: string, temperature: number): Promise<string> {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) throw new Error('GOOGLE_API_KEY not configured');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+      generationConfig: { temperature, maxOutputTokens: 300 },
+    });
+    return result.response.text();
   }
 
   /**
@@ -577,8 +626,8 @@ export class LLMServiceAdapter {
 
       // Query/text extraction
       if (paramDef.type === 'string' &&
-          (paramName.toLowerCase().includes('query') ||
-           paramName.toLowerCase().includes('text'))) {
+        (paramName.toLowerCase().includes('query') ||
+          paramName.toLowerCase().includes('text'))) {
         // Use the main content as query
         params[paramName] = prompt.substring(0, 200);
       }
@@ -810,6 +859,68 @@ export class LLMServiceAdapter {
     });
 
     return result.plan;
+  }
+
+  /**
+   * Generate a detailed system prompt based on a task description
+   * using the specialized meta-prompt.
+   */
+  static async generateSystemPrompt(
+    taskOrPrompt: string,
+    provider: AIProvider = 'openai'
+  ): Promise<string> {
+    const metaPrompt = SYSTEM_GENERATION_META_PROMPT;
+    const userPrompt = `Task, Goal, or Current Prompt:\n${taskOrPrompt}`;
+
+    try {
+      switch (provider) {
+        case 'openai': {
+          if (!config.openai.apiKey) throw new Error('OPENAI_API_KEY not configured');
+          const openai = new OpenAI({ apiKey: config.openai.apiKey });
+          const response = await openai.chat.completions.create({
+            model: 'gpt-4o', // Use GPT-4o for best reasoning/generation capability
+            messages: [
+              { role: 'system', content: metaPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.7,
+            max_tokens: 4000, // Large output window for detailed prompt
+          });
+          return response.choices[0]?.message?.content?.trim() || '';
+        }
+        case 'anthropic': {
+          const apiKey = process.env.ANTHROPIC_API_KEY;
+          if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
+          const anthropic = new Anthropic({ apiKey });
+          const response = await anthropic.messages.create({
+            model: 'claude-3-opus-20240229', // Use Opus for high quality generation
+            max_tokens: 4000,
+            temperature: 0.7,
+            system: metaPrompt,
+            messages: [{ role: 'user', content: userPrompt }],
+          });
+          return response.content[0].type === 'text' ? response.content[0].text : '';
+        }
+        case 'google': {
+          const apiKey = process.env.GOOGLE_API_KEY;
+          if (!apiKey) throw new Error('GOOGLE_API_KEY not configured');
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+          const result = await model.generateContent({
+            contents: [
+              { role: 'user', parts: [{ text: `${metaPrompt}\n\n${userPrompt}` }] } // Gemini system prompt handling via prepend usually works best for long context
+            ],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 4000 },
+          });
+          return result.response.text();
+        }
+        default:
+          throw new Error(`Provider ${provider} not supported for system prompt generation`);
+      }
+    } catch (error) {
+      console.error(`Error generating system prompt with ${provider}:`, error);
+      throw error;
+    }
   }
 
   /**

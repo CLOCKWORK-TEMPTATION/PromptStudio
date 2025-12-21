@@ -16,6 +16,8 @@ import { useAppStore } from '../../stores/appStore';
 import { useEditorStore } from '../../stores/editorStore';
 import { AI_MODELS, DEFAULT_MODEL_CONFIG } from '../../types';
 import type { ModelConfig } from '../../types';
+import { ProviderSelector } from '../../components/ProviderSelector';
+import { useTranslation } from '../../i18n';
 import clsx from 'clsx';
 
 interface ModelControlPanelProps {
@@ -23,6 +25,7 @@ interface ModelControlPanelProps {
 }
 
 export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) {
+  const { t } = useTranslation();
   const { theme, currentModelConfig, updateCurrentModelConfig } = useAppStore();
   const { modelId, setModelId } = useEditorStore();
   const [isExpanded, setIsExpanded] = useState(expanded);
@@ -30,12 +33,20 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
   const [showPresets, setShowPresets] = useState(false);
 
   const selectedModel = AI_MODELS.find((m) => m.id === modelId) || AI_MODELS[0];
+  const currentProvider = selectedModel.provider.toLowerCase() as 'openai' | 'anthropic' | 'google';
+
+  const handleProviderChange = (provider: 'openai' | 'anthropic' | 'google') => {
+    const providerModels = AI_MODELS.filter(m => m.provider.toLowerCase() === provider);
+    if (providerModels.length > 0) {
+      setModelId(providerModels[0].id);
+    }
+  };
 
   const presets = [
-    { name: 'Creative', config: { temperature: 1.2, topP: 0.95, frequencyPenalty: 0.5, presencePenalty: 0.5 } },
-    { name: 'Balanced', config: { temperature: 0.7, topP: 1.0, frequencyPenalty: 0, presencePenalty: 0 } },
-    { name: 'Precise', config: { temperature: 0.2, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 } },
-    { name: 'Deterministic', config: { temperature: 0, topP: 1.0, frequencyPenalty: 0, presencePenalty: 0 } },
+    { name: t('presets.creative'), config: { temperature: 1.2, topP: 0.95, frequencyPenalty: 0.5, presencePenalty: 0.5 } },
+    { name: t('presets.balanced'), config: { temperature: 0.7, topP: 1.0, frequencyPenalty: 0, presencePenalty: 0 } },
+    { name: t('presets.precise'), config: { temperature: 0.2, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 } },
+    { name: t('presets.deterministic'), config: { temperature: 0, topP: 1.0, frequencyPenalty: 0, presencePenalty: 0 } },
   ];
 
   const handleAddStopSequence = () => {
@@ -73,7 +84,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
         <div className="flex items-center gap-2">
           <Settings2 className={clsx('w-5 h-5', theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600')} />
           <span className={clsx('font-medium', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-            Model Configuration
+            {t('editor.modelConfig')}
           </span>
         </div>
         {isExpanded ? (
@@ -90,10 +101,24 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
         )}>
           <div>
             <label className={clsx(
+              'block text-sm font-medium mb-3',
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+            )}>
+              {t('editor.provider')}
+            </label>
+            <ProviderSelector
+              selectedProvider={currentProvider}
+              onProviderChange={handleProviderChange}
+              theme={theme}
+            />
+          </div>
+
+          <div>
+            <label className={clsx(
               'block text-sm font-medium mb-2',
               theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
             )}>
-              Model
+              {t('editor.model')}
             </label>
             <select
               value={modelId}
@@ -105,19 +130,35 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
                   : 'bg-white border-gray-300 text-gray-900'
               )}
             >
-              {AI_MODELS.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name} ({model.provider})
-                </option>
-              ))}
+              <optgroup label="OpenAI">
+                {AI_MODELS.filter(m => m.provider === 'OpenAI').map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name} {model.pricing && `($${model.pricing.input}/$${model.pricing.output} per 1K)`}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Anthropic (Claude)">
+                {AI_MODELS.filter(m => m.provider === 'Anthropic').map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name} {model.pricing && `($${model.pricing.input}/$${model.pricing.output} per 1K)`}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Google">
+                {AI_MODELS.filter(m => m.provider === 'Google').map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name} {model.pricing && `($${model.pricing.input}/$${model.pricing.output} per 1K)`}
+                  </option>
+                ))}
+              </optgroup>
             </select>
             <div className={clsx(
               'mt-2 flex gap-4 text-xs',
               theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
             )}>
+              <span>Provider: <strong>{selectedModel.provider}</strong></span>
               <span>Context: {selectedModel.context_window.toLocaleString()} tokens</span>
-              <span>Functions: {selectedModel.supports_functions ? 'Yes' : 'No'}</span>
-              <span>JSON Mode: {selectedModel.supports_json_mode ? 'Yes' : 'No'}</span>
+              <span>Functions: {selectedModel.supports_functions ? '✓' : '✗'}</span>
             </div>
           </div>
 
@@ -162,62 +203,62 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
           </div>
 
           <SliderControl
-            label="Temperature"
+            label={t('editor.temperature')}
             value={currentModelConfig.temperature}
             onChange={(v) => updateCurrentModelConfig({ temperature: v })}
             min={0}
             max={2}
             step={0.1}
             icon={Thermometer}
-            tooltip="Controls randomness. Lower = more focused, Higher = more creative"
+            tooltip={t('tooltips.temperature')}
             theme={theme}
           />
 
           <SliderControl
-            label="Top P"
+            label={t('editor.topP')}
             value={currentModelConfig.topP}
             onChange={(v) => updateCurrentModelConfig({ topP: v })}
             min={0}
             max={1}
             step={0.05}
             icon={Gauge}
-            tooltip="Nucleus sampling. Lower = fewer token choices"
+            tooltip={t('tooltips.topP')}
             theme={theme}
           />
 
           <SliderControl
-            label="Top K"
+            label={t('editor.topK')}
             value={currentModelConfig.topK ?? 40}
             onChange={(v) => updateCurrentModelConfig({ topK: v })}
             min={1}
             max={100}
             step={1}
             icon={Hash}
-            tooltip="Limits vocabulary. Only top K tokens considered"
+            tooltip={t('tooltips.topK')}
             theme={theme}
           />
 
           <SliderControl
-            label="Frequency Penalty"
+            label={t('editor.frequencyPenalty')}
             value={currentModelConfig.frequencyPenalty}
             onChange={(v) => updateCurrentModelConfig({ frequencyPenalty: v })}
             min={-2}
             max={2}
             step={0.1}
             icon={MinusCircle}
-            tooltip="Reduces repetition based on frequency"
+            tooltip={t('tooltips.frequencyPenalty')}
             theme={theme}
           />
 
           <SliderControl
-            label="Presence Penalty"
+            label={t('editor.presencePenalty')}
             value={currentModelConfig.presencePenalty}
             onChange={(v) => updateCurrentModelConfig({ presencePenalty: v })}
             min={-2}
             max={2}
             step={0.1}
             icon={MinusCircle}
-            tooltip="Reduces repetition based on presence"
+            tooltip={t('tooltips.presencePenalty')}
             theme={theme}
           />
 
@@ -226,7 +267,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               'block text-sm font-medium mb-2',
               theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
             )}>
-              Max Tokens
+              {t('editor.maxTokens')}
             </label>
             <input
               type="number"
@@ -248,7 +289,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               'block text-sm font-medium mb-2',
               theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
             )}>
-              Response Format
+              {t('editor.responseFormat')}
             </label>
             <select
               value={currentModelConfig.responseFormat}
@@ -271,7 +312,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
               'block text-sm font-medium mb-2',
               theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
             )}>
-              Stop Sequences
+              {t('editor.stopSequences')}
             </label>
             <div className="flex gap-2 mb-2">
               <input
@@ -332,7 +373,7 @@ export function ModelControlPanel({ expanded = false }: ModelControlPanelProps) 
                 : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
             )}
           >
-            Reset to Defaults
+            {t('common.reset')}
           </button>
         </div>
       )}

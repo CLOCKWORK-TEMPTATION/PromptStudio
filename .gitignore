@@ -70,3 +70,7 @@ yarn-error.log*
 
 # Production
 /dist
+
+# Python
+venv/
+.venv/
