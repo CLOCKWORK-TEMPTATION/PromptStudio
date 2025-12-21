@@ -27,6 +27,11 @@ import runsRoutes from './api/routes/runs.js';
 import budgetRoutes from './api/routes/budget.js';
 import auditRoutes from './api/routes/audit.js';
 import observabilityRoutes from './api/routes/observability.js';
+import techniquesRoutes from './api/routes/techniques.js';
+import critiqueRoutes from './api/routes/critique.js';
+import sharingRoutes from './api/routes/sharing.js';
+import importExportRoutes from './api/routes/importExport.js';
+import commentsRoutes from './api/routes/comments.js';
 import { errorHandler } from './api/middleware/errorHandler.js';
 import { rateLimiter } from './api/middleware/rateLimiter.js';
 import { authMiddleware } from './api/middleware/auth.js';
@@ -92,6 +97,11 @@ app.use('/api/runs', runsRoutes);
 app.use('/api/budget', rateLimiter, budgetRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/observability', observabilityRoutes);
+app.use('/api/techniques', techniquesRoutes);
+app.use('/api/critique', rateLimiter, critiqueRoutes);
+app.use('/api/share', sharingRoutes);
+app.use('/api', importExportRoutes);
+app.use('/api/comments', commentsRoutes);
 
 // Error handler
 app.use(errorHandler);
