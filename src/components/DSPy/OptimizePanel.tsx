@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Sparkles,
-  Play,
   Loader2,
   CheckCircle,
   XCircle,
@@ -37,6 +36,14 @@ interface OptimizationRun {
   finishedAt?: string;
 }
 
+interface FailureCase {
+  exampleId: string;
+  input: Record<string, unknown>;
+  expectedOutput?: string;
+  actualOutput: string;
+  reason: string;
+}
+
 interface OptimizationResult {
   id: string;
   runId: string;
@@ -45,13 +52,25 @@ interface OptimizationResult {
     developer?: string;
     demos?: Array<{ input: string; output: string }>;
   };
-  baselineScore: number;
-  optimizedScore: number;
-  scoreDelta: number;
-  cost: {
+  baselineScore?: number;
+  optimizedScore?: number;
+  scoreDelta?: number;
+  cost?: {
     calls: number;
     tokens: number;
     usdEstimate: number;
+  };
+  diagnostics?: {
+    topFailureCases?: FailureCase[];
+  };
+  topFailureCases?: FailureCase[];
+  appliedVersion?: {
+    id: string;
+    versionNumber: number;
+  };
+  baseVersion?: {
+    id: string;
+    versionNumber: number;
   };
 }
 
@@ -88,6 +107,12 @@ export function OptimizePanel({
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'apply' | 'rollback' | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [isRollingBack, setIsRollingBack] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Start optimization
   const startOptimization = async () => {
@@ -121,6 +146,7 @@ export function OptimizePanel({
       const run = await response.json();
       setCurrentRun(run);
       setIsPolling(true);
+      setActionMessage(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start');
     }
@@ -140,6 +166,7 @@ export function OptimizePanel({
       // Check if completed
       if (status.status === 'succeeded' || status.status === 'failed') {
         setIsPolling(false);
+        setHasTimedOut(false);
 
         if (status.status === 'succeeded') {
           // Load result
@@ -164,11 +191,30 @@ export function OptimizePanel({
     return () => clearInterval(interval);
   }, [isPolling, pollStatus]);
 
+  useEffect(() => {
+    if (!currentRun || currentRun.status !== 'running' || !currentRun.startedAt) {
+      setHasTimedOut(false);
+      return;
+    }
+
+    const startedAtMs = new Date(currentRun.startedAt).getTime();
+    const timeoutMs = 30 * 60 * 1000;
+    setHasTimedOut(Date.now() - startedAtMs > timeoutMs);
+  }, [currentRun]);
+
+  useEffect(() => {
+    if (confirmAction) {
+      confirmButtonRef.current?.focus();
+    }
+  }, [confirmAction]);
+
   // Apply result (create new version)
   const handleApplyResult = async () => {
     if (!currentRun?.id) return;
 
     try {
+      setIsApplying(true);
+      setActionMessage(null);
       const response = await fetch(`/api/optimize/${currentRun.id}/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -178,9 +224,47 @@ export function OptimizePanel({
       if (!response.ok) throw new Error('Failed to apply optimization');
 
       const data = await response.json();
+      setResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              appliedVersion: {
+                id: data.newVersionId,
+                versionNumber: data.versionNumber,
+              },
+            }
+          : prev
+      );
       onApplyResult?.(data.newVersionId);
+      setActionMessage(`Applied optimized version v${data.versionNumber}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to apply');
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handleRollback = async () => {
+    if (!templateId) return;
+
+    const rollbackVersionId = result?.baseVersion?.id || versionId;
+
+    try {
+      setIsRollingBack(true);
+      setActionMessage(null);
+      const response = await fetch(`/api/templates/${templateId}/versions/${rollbackVersionId}/activate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) throw new Error('Failed to rollback');
+
+      const data = await response.json();
+      setActionMessage(`Rolled back to version v${data.versionNumber}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rollback');
+    } finally {
+      setIsRollingBack(false);
     }
   };
 
@@ -190,10 +274,17 @@ export function OptimizePanel({
     setResult(null);
     setError(null);
     setIsPolling(false);
+    setHasTimedOut(false);
   };
 
   // Check if can start
   const canStart = templateId && versionId && datasetId && !disabled && !isPolling;
+
+  const scoreBaseline = result?.baselineScore ?? null;
+  const scoreOptimized = result?.optimizedScore ?? null;
+  const scoreDelta = result?.scoreDelta ?? null;
+  const topFailureCases = result?.diagnostics?.topFailureCases ?? result?.topFailureCases ?? [];
+  const showTimeout = hasTimedOut && currentRun?.status === 'running';
 
   return (
     <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
@@ -205,7 +296,9 @@ export function OptimizePanel({
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded"
+          className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+          aria-pressed={showSettings}
+          aria-label="Toggle optimization settings"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -213,9 +306,18 @@ export function OptimizePanel({
 
       {/* Error */}
       {error && (
-        <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-300 text-sm flex items-center gap-2">
+        <div
+          className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-200 text-sm flex items-center gap-2"
+          role="alert"
+        >
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
+        </div>
+      )}
+
+      {actionMessage && (
+        <div className="mb-4 p-3 bg-green-900/30 border border-green-700 rounded text-green-200 text-sm">
+          {actionMessage}
         </div>
       )}
 
@@ -229,7 +331,7 @@ export function OptimizePanel({
               onChange={(e) =>
                 setConfig({ ...config, optimizerType: e.target.value as 'bootstrap_fewshot' | 'copro' })
               }
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
             >
               <option value="bootstrap_fewshot">Quick (BootstrapFewShot)</option>
               <option value="copro">Instruction (COPRO)</option>
@@ -248,7 +350,7 @@ export function OptimizePanel({
               onChange={(e) =>
                 setConfig({ ...config, metricType: e.target.value as 'exact_match' | 'contains' | 'json_valid' })
               }
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
             >
               <option value="exact_match">Exact Match</option>
               <option value="contains">Contains</option>
@@ -268,7 +370,7 @@ export function OptimizePanel({
                     budget: { ...config.budget, maxCalls: parseInt(e.target.value) || 50 },
                   })
                 }
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                 min={10}
                 max={200}
               />
@@ -284,7 +386,7 @@ export function OptimizePanel({
                     budget: { ...config.budget, maxTokens: parseInt(e.target.value) || 50000 },
                   })
                 }
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                 min={10000}
                 max={200000}
                 step={10000}
@@ -301,7 +403,7 @@ export function OptimizePanel({
                     budget: { ...config.budget, maxUSD: parseFloat(e.target.value) || 5 },
                   })
                 }
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                 min={1}
                 max={50}
                 step={1}
@@ -320,7 +422,8 @@ export function OptimizePanel({
             canStart
               ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-black hover:from-yellow-400 hover:to-orange-400'
               : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400`}
+          aria-disabled={!canStart}
         >
           <Zap className="w-5 h-5" />
           Start Optimization
@@ -340,15 +443,24 @@ export function OptimizePanel({
                 {currentRun.status === 'failed' && (
                   <XCircle className="w-5 h-5 text-red-400" />
                 )}
+                {showTimeout && (
+                  <AlertCircle className="w-5 h-5 text-yellow-400" />
+                )}
                 {currentRun.status === 'queued' && (
                   <Loader2 className="w-5 h-5 text-gray-400 animate-pulse" />
                 )}
-                <span className="text-white font-medium capitalize">{currentRun.status}</span>
+                {currentRun.status === 'canceled' && (
+                  <AlertCircle className="w-5 h-5 text-gray-400" />
+                )}
+                <span className="text-white font-medium capitalize" role="status" aria-live="polite">
+                  {showTimeout ? 'timeout' : currentRun.status}
+                </span>
               </div>
               {currentRun.status !== 'running' && currentRun.status !== 'queued' && (
                 <button
                   onClick={reset}
-                  className="p-1 text-gray-400 hover:text-white"
+                  className="p-1 text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 rounded"
+                  aria-label="Reset optimization run"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -374,6 +486,11 @@ export function OptimizePanel({
             {currentRun.status === 'failed' && currentRun.errorMessage && (
               <div className="text-sm text-red-400 mt-2">{currentRun.errorMessage}</div>
             )}
+            {showTimeout && (
+              <div className="text-sm text-yellow-300 mt-2">
+                Run exceeded 30 minutes. Consider resetting or restarting the optimization.
+              </div>
+            )}
           </div>
 
           {/* Result Display */}
@@ -381,14 +498,14 @@ export function OptimizePanel({
             <div className="p-4 bg-gray-800 rounded border border-green-700 space-y-4">
               <h4 className="text-white font-medium flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-green-400" />
-                Optimization Complete
+                Optimization Comparison
               </h4>
 
               {/* Score Comparison */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-3 bg-gray-700 rounded">
                   <div className="text-2xl font-bold text-gray-300">
-                    {(result.baselineScore * 100).toFixed(1)}%
+                    {scoreBaseline !== null ? `${(scoreBaseline * 100).toFixed(1)}%` : '—'}
                   </div>
                   <div className="text-xs text-gray-500">Baseline</div>
                 </div>
@@ -397,7 +514,7 @@ export function OptimizePanel({
                 </div>
                 <div className="text-center p-3 bg-green-900/30 rounded border border-green-700">
                   <div className="text-2xl font-bold text-green-400">
-                    {(result.optimizedScore * 100).toFixed(1)}%
+                    {scoreOptimized !== null ? `${(scoreOptimized * 100).toFixed(1)}%` : '—'}
                   </div>
                   <div className="text-xs text-gray-500">Optimized</div>
                 </div>
@@ -405,26 +522,68 @@ export function OptimizePanel({
 
               {/* Delta */}
               <div className="text-center">
-                <span
-                  className={`text-lg font-bold ${
-                    result.scoreDelta > 0 ? 'text-green-400' : 'text-red-400'
-                  }`}
-                >
-                  {result.scoreDelta > 0 ? '+' : ''}
-                  {(result.scoreDelta * 100).toFixed(1)}%
-                </span>
-                <span className="text-gray-400 text-sm ml-2">improvement</span>
+                {scoreDelta === null ? (
+                  <span className="text-gray-400 text-sm">Delta not available</span>
+                ) : (
+                  <>
+                    <span
+                      className={`text-lg font-bold ${
+                        scoreDelta > 0 ? 'text-green-400' : 'text-red-400'
+                      }`}
+                    >
+                      {scoreDelta > 0 ? '+' : ''}
+                      {(scoreDelta * 100).toFixed(1)}%
+                    </span>
+                    <span className="text-gray-400 text-sm ml-2">improvement</span>
+                  </>
+                )}
               </div>
 
               {/* Cost */}
-              <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
+              <div className="flex items-center justify-center gap-4 text-sm text-gray-300">
                 <span className="flex items-center gap-1">
                   <DollarSign className="w-4 h-4" />
-                  ${result.cost.usdEstimate.toFixed(2)}
+                  {result.cost ? `$${result.cost.usdEstimate.toFixed(2)}` : 'Cost unavailable'}
                 </span>
-                <span>{result.cost.calls} calls</span>
-                <span>{(result.cost.tokens / 1000).toFixed(1)}k tokens</span>
+                <span>{result.cost ? `${result.cost.calls} calls` : 'Calls —'}</span>
+                <span>{result.cost ? `${(result.cost.tokens / 1000).toFixed(1)}k tokens` : 'Tokens —'}</span>
               </div>
+
+              {/* Top Failure Cases */}
+              {topFailureCases.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-white">
+                    Top Failure Cases ({topFailureCases.length})
+                  </div>
+                  <div className="space-y-2">
+                    {topFailureCases.slice(0, 5).map((failure, idx) => (
+                      <details key={failure.exampleId} className="bg-gray-700/60 rounded border border-gray-600">
+                        <summary className="cursor-pointer px-3 py-2 text-sm text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400">
+                          #{idx + 1} · {failure.reason}
+                        </summary>
+                        <div className="px-3 pb-3 text-xs text-gray-300 space-y-2">
+                          <div>
+                            <div className="text-gray-400">Input</div>
+                            <pre className="whitespace-pre-wrap break-words">
+                              {JSON.stringify(failure.input, null, 2)}
+                            </pre>
+                          </div>
+                          {failure.expectedOutput && (
+                            <div>
+                              <div className="text-gray-400">Expected</div>
+                              <pre className="whitespace-pre-wrap break-words">{failure.expectedOutput}</pre>
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-gray-400">Actual</div>
+                            <pre className="whitespace-pre-wrap break-words">{failure.actualOutput}</pre>
+                          </div>
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Optimized Prompt Preview */}
               {result.optimizedSnapshot.system && (
@@ -455,13 +614,26 @@ export function OptimizePanel({
               )}
 
               {/* Apply Button */}
-              <button
-                onClick={handleApplyResult}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Apply & Create New Version
-              </button>
+              <div className="grid gap-2 md:grid-cols-2">
+                <button
+                  onClick={() => setConfirmAction('apply')}
+                  disabled={isApplying || !currentRun?.id}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  aria-disabled={isApplying || !currentRun?.id}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  {isApplying ? 'Applying...' : 'Apply & Create New Version'}
+                </button>
+                <button
+                  onClick={() => setConfirmAction('rollback')}
+                  disabled={isRollingBack || !templateId}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 disabled:bg-gray-600 disabled:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                  aria-disabled={isRollingBack || !templateId}
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {isRollingBack ? 'Rolling back...' : 'Rollback to Baseline'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -484,6 +656,43 @@ export function OptimizePanel({
             <span className={datasetId ? 'text-green-400' : 'text-gray-500'}>
               {datasetId ? 'Dataset selected' : 'Select a dataset'}
             </span>
+          </div>
+        </div>
+      )}
+
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="optimization-confirm-title">
+          <div className="w-full max-w-md rounded-lg border border-gray-700 bg-gray-900 p-4 shadow-lg">
+            <h5 id="optimization-confirm-title" className="text-white font-semibold mb-2">
+              {confirmAction === 'apply' ? 'Confirm Apply' : 'Confirm Rollback'}
+            </h5>
+            <p className="text-sm text-gray-300 mb-4">
+              {confirmAction === 'apply'
+                ? 'Apply the optimized prompt and create a new active version?'
+                : 'Rollback to the baseline version and reactivate it?'}
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="px-3 py-2 rounded bg-gray-700 text-white hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              >
+                Cancel
+              </button>
+              <button
+                ref={confirmButtonRef}
+                onClick={async () => {
+                  if (confirmAction === 'apply') {
+                    await handleApplyResult();
+                  } else {
+                    await handleRollback();
+                  }
+                  setConfirmAction(null);
+                }}
+                className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+              >
+                {confirmAction === 'apply' ? 'Apply' : 'Rollback'}
+              </button>
+            </div>
           </div>
         </div>
       )}
