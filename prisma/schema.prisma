@@ -1238,3 +1238,203 @@ model RateLimitEntry {
   @@index([identifier])
   @@index([windowStart])
 }
+
+// ============================================================
+// EPIC 4 - Prompt Quality Engine
+// ============================================================
+
+// Technique - Prompt engineering techniques library
+model Technique {
+  id               String   @id @default(uuid())
+  name             String
+  descriptionShort String
+  descriptionFull  String?
+
+  // Categorization
+  category String // output_structuring | role_instruction | few_shot_demos | evaluation_robustness
+  tags     String[] @default([])
+
+  // Usage guidance
+  whenToUse           String?
+  antiPatternExample  String?
+  goodExample         String?
+
+  // Auto-apply patch (JSON patch format)
+  // Structure: { operations: [{ path, value, insert_position? }] }
+  applyPatchJson Json?
+
+  // Multi-tenant support
+  workspaceId String?
+  createdById String?
+
+  // Status
+  isBuiltIn Boolean @default(false)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, workspaceId])
+  @@index([category])
+  @@index([workspaceId])
+  @@index([isBuiltIn])
+  @@index([isActive])
+}
+
+// Critique Run - LLM-based prompt critique execution
+model CritiqueRun {
+  id              String @id @default(uuid())
+  templateId      String
+  versionId       String?
+  datasetId       String?
+
+  // Critique mode
+  mode String @default("full") // quick | full | deep
+
+  // Execution status
+  status       String   @default("queued") // queued | running | completed | failed | canceled
+  progress     Int      @default(0) // 0-100
+  stage        String?
+  errorMessage String?
+
+  // Budget constraints
+  // Structure: { maxCalls?, maxTokens?, maxUSD? }
+  budget Json @default("{}")
+
+  // Cost tracking
+  // Structure: { calls, tokens, usdEstimate }
+  cost Json? @default("{}")
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  // Multi-tenant support
+  workspaceId String?
+  createdById String?
+
+  // Relations
+  result CritiqueResult?
+
+  @@index([templateId])
+  @@index([status])
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+// Critique Result - Detailed critique findings
+model CritiqueResult {
+  id    String @id @default(uuid())
+  runId String @unique
+
+  // Overall summary
+  summary      String
+  overallScore Float? // 0-100
+
+  // Detailed issues found
+  // Structure: [{ id, severity, category, description, location?, suggestion? }]
+  issuesJson Json @default("[]")
+
+  // Improvement suggestions
+  // Structure: [{ id, techniqueId?, title, description, priority, effort }]
+  suggestionsJson Json @default("[]")
+
+  // Proposed improved prompt (full snapshot)
+  // Structure: { system, developer, user, context }
+  proposedPromptSnapshot Json?
+
+  // Analysis metadata
+  // Structure: { executionTimeMs, tokensUsed, llmModel }
+  analysisMetadata Json? @default("{}")
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  run CritiqueRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+}
+
+// ============================================================
+// EPIC 5 - Collaboration & Distribution
+// ============================================================
+
+// Share Link - Shareable links for templates/versions
+model ShareLink {
+  id           String   @id @default(uuid())
+
+  // Target entity
+  entityType   String   // template | version | dataset | rubric
+  entityId     String
+
+  // Token for access
+  token        String   @unique @default(uuid())
+
+  // Permissions
+  permission   String   @default("view") // view | comment | duplicate
+
+  // Expiration
+  expiresAt    DateTime?
+  maxViews     Int?
+  viewCount    Int      @default(0)
+
+  // Password protection (hashed)
+  passwordHash String?
+
+  // Status
+  isActive     Boolean  @default(true)
+  revokedAt    DateTime?
+  revokedById  String?
+
+  // Multi-tenant support
+  workspaceId  String?
+  createdById  String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([token])
+  @@index([entityType, entityId])
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+// Version Comment - Comments on template versions
+model VersionComment {
+  id              String   @id @default(uuid())
+  versionId       String
+
+  // Comment content
+  content         String
+
+  // Position in prompt (optional)
+  // Structure: { section: "system"|"developer"|"user", start: number, end: number }
+  positionJson    Json?
+
+  // Thread support
+  parentId        String?
+  parent          VersionComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies         VersionComment[] @relation("CommentReplies")
+
+  // Status
+  resolved        Boolean  @default(false)
+  resolvedAt      DateTime?
+  resolvedById    String?
+
+  // Multi-tenant support
+  workspaceId     String?
+  createdById     String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([versionId])
+  @@index([parentId])
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([resolved])
+}
