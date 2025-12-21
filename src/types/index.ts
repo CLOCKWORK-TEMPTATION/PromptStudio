@@ -445,14 +445,14 @@ export interface MarketplacePrompt {
   tags: string[];
   authorId: string;
   authorName?: string;
-  downloads?: number;
-  rating?: number;
+  isFeatured?: boolean;
+  isStaffPick?: boolean;
   avgRating?: number;
   reviewCount?: number;
   viewCount?: number;
   cloneCount?: number;
-  isFeatured?: boolean;
-  isStaffPick?: boolean;
+  downloads?: number;
+  rating?: number;
   variables?: MarketplacePromptVariable[];
   modelRecommendation?: string;
   createdAt: Date;
@@ -587,8 +587,8 @@ export interface SmartVariable {
   type?: 'string' | 'number' | 'boolean' | 'array' | 'object';
   variableType?: 'timestamp' | 'history' | 'env' | 'custom' | 'string' | 'number' | 'boolean' | 'array' | 'object';
   description: string;
-  defaultValue?: any;
   default_value?: string;
+  defaultValue?: any;
   isSystem?: boolean;
   validation?: {
     required: boolean;
