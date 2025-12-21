@@ -13,33 +13,31 @@ const router = Router();
 // Validation Schemas
 // ============================================================
 
-const createDatasetSchema = z.object({
+const datasetConfigSchema = z.object({
   name: z.string().min(1).max(255),
-  description: z.string().optional(),
-  taskType: z.string().optional(),
+  description: z.string().max(2000).optional(),
+  taskType: z.string().max(255).optional(),
   format: z.enum(['labeled', 'unlabeled']).default('labeled'),
-});
+}).strict();
 
-const updateDatasetSchema = z.object({
+const datasetUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
-  description: z.string().optional(),
-  taskType: z.string().optional(),
+  description: z.string().max(2000).optional(),
+  taskType: z.string().max(255).optional(),
   format: z.enum(['labeled', 'unlabeled']).optional(),
-});
+}).strict();
 
-const importExamplesSchema = z.object({
-  examples: z.array(z.object({
-    inputVariables: z.record(z.unknown()),
-    expectedOutput: z.string().optional(),
-    metadata: z.record(z.unknown()).optional(),
-  })),
-});
+const labeledExampleSchema = z.object({
+  inputVariables: z.record(z.unknown()),
+  expectedOutput: z.string().min(1),
+  metadata: z.record(z.unknown()).optional(),
+}).strict();
 
-const createExampleSchema = z.object({
+const unlabeledExampleSchema = z.object({
   inputVariables: z.record(z.unknown()),
   expectedOutput: z.string().optional(),
   metadata: z.record(z.unknown()).optional(),
-});
+}).strict();
 
 // ============================================================
 // GET /api/datasets - List all datasets
@@ -104,7 +102,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const validation = createDatasetSchema.safeParse(req.body);
+    const validation = datasetConfigSchema.safeParse(req.body);
 
     if (!validation.success) {
       return res.status(400).json({
@@ -148,6 +146,10 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Dataset not found' });
     }
 
+    if (dataset.format === 'labeled' && !expectedOutputColumn) {
+      return res.status(400).json({ error: 'Expected output column is required for labeled datasets' });
+    }
+
     res.json({
       ...dataset,
       exampleCount: dataset._count.examples,
@@ -165,7 +167,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const validation = updateDatasetSchema.safeParse(req.body);
+    const validation = datasetUpdateSchema.safeParse(req.body);
 
     if (!validation.success) {
       return res.status(400).json({
@@ -212,15 +214,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.post('/:id/examples/import', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const validation = importExamplesSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: validation.error.errors,
-      });
-    }
-
     // Verify dataset exists
     const dataset = await prisma.evaluationDataset.findUnique({
       where: { id },
@@ -228,6 +221,20 @@ router.post('/:id/examples/import', async (req: Request, res: Response) => {
 
     if (!dataset) {
       return res.status(404).json({ error: 'Dataset not found' });
+    }
+
+    const exampleSchema = dataset.format === 'labeled' ? labeledExampleSchema : unlabeledExampleSchema;
+    const importExamplesSchema = z.object({
+      examples: z.array(exampleSchema),
+    }).strict();
+
+    const validation = importExamplesSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: validation.error.errors,
+      });
     }
 
     // Create all examples
@@ -291,7 +298,16 @@ router.get('/:id/examples', async (req: Request, res: Response) => {
 router.post('/:id/examples', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const validation = createExampleSchema.safeParse(req.body);
+    const dataset = await prisma.evaluationDataset.findUnique({
+      where: { id },
+    });
+
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found' });
+    }
+
+    const exampleSchema = dataset.format === 'labeled' ? labeledExampleSchema : unlabeledExampleSchema;
+    const validation = exampleSchema.safeParse(req.body);
 
     if (!validation.success) {
       return res.status(400).json({
