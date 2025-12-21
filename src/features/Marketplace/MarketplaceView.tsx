@@ -34,9 +34,11 @@ const SAMPLE_PROMPTS: MarketplacePrompt[] = [
     authorName: 'DevExpert',
     isFeatured: true,
     isStaffPick: false,
+    rating: 4.8,
     avgRating: 4.8,
     reviewCount: 156,
     viewCount: 2340,
+    downloads: 892,
     cloneCount: 892,
     variables: [{ name: 'code', type: 'string', description: 'The code to review' }],
     modelRecommendation: 'GPT-4',
@@ -54,9 +56,11 @@ const SAMPLE_PROMPTS: MarketplacePrompt[] = [
     authorName: 'StoryMaster',
     isFeatured: false,
     isStaffPick: true,
+    rating: 4.5,
     avgRating: 4.5,
     reviewCount: 89,
     viewCount: 1567,
+    downloads: 445,
     cloneCount: 445,
     variables: [
       { name: 'genre', type: 'string', description: 'Story genre' },
@@ -84,6 +88,7 @@ export function MarketplaceView() {
 
   const loadMarketplacePrompts = async () => {
     try {
+      if (!supabase) return;
       const { data } = await supabase
         .from('marketplace_prompts')
         .select('*')
@@ -91,7 +96,7 @@ export function MarketplaceView() {
         .order('clone_count', { ascending: false });
 
       if (data && data.length > 0) {
-        setPrompts(data as MarketplacePrompt[]);
+        setPrompts(data as unknown as MarketplacePrompt[]);
       }
     } catch {
       // Error handled silently
@@ -111,13 +116,13 @@ export function MarketplaceView() {
     .sort((a: MarketplacePrompt, b: MarketplacePrompt) => {
       switch (sortBy) {
         case 'popular':
-          return b.cloneCount - a.cloneCount;
+          return (b.cloneCount ?? b.downloads) - (a.cloneCount ?? a.downloads);
         case 'recent':
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case 'rating':
-          return b.avgRating - a.avgRating;
+          return (b.avgRating ?? b.rating) - (a.avgRating ?? a.rating);
         case 'trending':
-          return b.viewCount - a.viewCount;
+          return (b.viewCount ?? 0) - (a.viewCount ?? 0);
         default:
           return 0;
       }
@@ -328,9 +333,9 @@ export function MarketplaceView() {
                 </p>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-1">{renderStars(prompt.avgRating)}</div>
+                  <div className="flex items-center gap-1">{renderStars(prompt.avgRating ?? prompt.rating)}</div>
                   <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
-                    ({prompt.reviewCount})
+                    ({prompt.reviewCount ?? 0})
                   </span>
                 </div>
 
@@ -367,20 +372,20 @@ export function MarketplaceView() {
                   <div className="flex items-center gap-2">
                     <User className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                     <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                      {prompt.authorName}
+                      {prompt.authorName ?? 'Anonymous'}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                       <Eye className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                       <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
-                        {prompt.viewCount.toLocaleString()}
+                        {(prompt.viewCount ?? 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Download className={clsx('w-4 h-4', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                       <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')}>
-                        {prompt.cloneCount.toLocaleString()}
+                        {(prompt.cloneCount ?? prompt.downloads).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -437,12 +442,12 @@ export function MarketplaceView() {
                   <div className="flex items-center gap-2">
                     <User className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                     <span className={clsx('font-medium', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
-                      {selectedPrompt.authorName}
+                      {selectedPrompt.authorName ?? 'Anonymous'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">{renderStars(selectedPrompt.avgRating)}</div>
+                  <div className="flex items-center gap-1">{renderStars(selectedPrompt.avgRating ?? selectedPrompt.rating)}</div>
                   <span className={clsx('text-sm', theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {selectedPrompt.avgRating.toFixed(1)} ({selectedPrompt.reviewCount} reviews)
+                    {(selectedPrompt.avgRating ?? selectedPrompt.rating).toFixed(1)} ({selectedPrompt.reviewCount ?? 0} reviews)
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -465,13 +470,13 @@ export function MarketplaceView() {
                 <div className="flex items-center gap-2">
                   <Eye className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                   <span className={clsx(theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {selectedPrompt.viewCount.toLocaleString()} views
+                    {(selectedPrompt.viewCount ?? 0).toLocaleString()} views
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Download className={clsx('w-5 h-5', theme === 'dark' ? 'text-gray-500' : 'text-gray-400')} />
                   <span className={clsx(theme === 'dark' ? 'text-gray-400' : 'text-gray-600')}>
-                    {selectedPrompt.cloneCount.toLocaleString()} clones
+                    {(selectedPrompt.cloneCount ?? selectedPrompt.downloads).toLocaleString()} clones
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -517,7 +522,7 @@ export function MarketplaceView() {
                 </div>
               </div>
 
-              {selectedPrompt.variables.length > 0 && (
+              {selectedPrompt.variables && selectedPrompt.variables.length > 0 && (
                 <div>
                   <h3 className={clsx('font-medium mb-3', theme === 'dark' ? 'text-white' : 'text-gray-900')}>
                     Variables

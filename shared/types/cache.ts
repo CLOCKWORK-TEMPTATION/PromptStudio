@@ -98,6 +98,8 @@ export interface DailyCacheStat {
   date: string;
   totalHits: number;
   totalMisses: number;
+  tokensSaved: number;
+  costSaved: number;
 }
 
 export interface CacheAnalytics {
