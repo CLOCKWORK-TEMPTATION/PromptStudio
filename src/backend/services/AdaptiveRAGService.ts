@@ -100,13 +100,13 @@ export class AdaptiveRAGService {
     });
 
     const allowedSources = trustedSources
-      .filter(source => {
+      .filter((source: { domain?: string | null; name: string }) => {
         if (allowedDomains.length > 0 && source.domain) {
           return allowedDomains.includes(source.domain);
         }
         return true;
       })
-      .map(source => source.domain || source.name)
+      .map((source: { domain?: string | null; name: string }) => source.domain || source.name)
       .filter(Boolean);
 
     return {

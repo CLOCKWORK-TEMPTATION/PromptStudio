@@ -152,7 +152,9 @@ export class CRDTManager {
 
     try {
       const fullState = Y.encodeStateAsUpdate(state.doc);
-      await redis.set(`crdt:${sessionId}`, Buffer.from(fullState), 'EX', 86400); // 24 hours
+      // Convert Uint8Array to Buffer for redis storage
+      const buffer = Buffer.from(fullState as Uint8Array) as unknown as string;
+      await redis.set(`crdt:${sessionId}`, buffer, 'EX', 86400); // 24 hours
 
       // Clear pending updates after successful persist
       state.pendingUpdates = [];

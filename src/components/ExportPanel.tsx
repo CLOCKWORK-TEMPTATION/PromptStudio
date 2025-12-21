@@ -10,6 +10,9 @@ import {
   Globe,
 } from 'lucide-react';
 
+// Alias for consistent naming
+const FileSpreadsheet = Table;
+
 interface ExportPanelProps {
   translations: (TranslationResult | SavedTranslation)[];
   sourceText?: string;

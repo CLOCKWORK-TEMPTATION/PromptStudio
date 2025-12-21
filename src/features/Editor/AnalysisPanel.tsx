@@ -9,6 +9,9 @@ import {
   XCircle,
   ChevronRight,
 } from 'lucide-react';
+
+// Alias for icon compatibility
+const BarChart3 = BarChart;
 import { useEditorStore } from '../../stores/editorStore';
 import { useAppStore } from '../../stores/appStore';
 import clsx from 'clsx';

@@ -514,6 +514,9 @@ class ReasoningHistoryServiceClass {
     }
 }
 
+// Type export for use in other files
+export type ReasoningHistoryServiceType = ReasoningHistoryServiceClass;
+
 // Singleton instance for use across the application
 export const ReasoningHistoryService = new ReasoningHistoryServiceClass();
 

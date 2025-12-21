@@ -156,8 +156,10 @@ export class LangGraphStateController extends EventEmitter {
             }
 
             // Find available transitions from current state
-            const availableTransitions = graph.transitions.filter(t => t.from === context.currentState);
-            
+            const availableTransitions: Transition[] = graph.transitions.filter(
+                (t: Transition) => t.from === context.currentState
+            );
+
             if (availableTransitions.length === 0) {
                 // No transitions available - execution complete
                 logger.info(`[LangGraphStateController] Execution ${executionId} completed at state ${context.currentState}`);
@@ -167,8 +169,8 @@ export class LangGraphStateController extends EventEmitter {
 
             // Evaluate transition conditions
             let selectedTransition: Transition | null = null;
-            
-            for (const transition of availableTransitions) {
+
+            for (const transition of availableTransitions as Transition[]) {
                 if (!transition.condition || transition.condition(context)) {
                     selectedTransition = transition;
                     break;

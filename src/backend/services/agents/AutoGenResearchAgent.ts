@@ -8,7 +8,7 @@
 
 import { LLMServiceAdapter } from '../LLMServiceAdapter.js';
 import { SemanticCacheService } from '../SemanticCacheService.js';
-import { ReasoningHistoryService } from '../ReasoningHistoryService.js';
+import type { ReasoningHistoryServiceType } from '../ReasoningHistoryService.js';
 import { MCPClient } from '../../lib/mcp-client.js';
 import { logger } from '../../lib/logger.js';
 import { z } from 'zod';
@@ -46,7 +46,7 @@ type ResearchStepResult = z.infer<typeof ResearchStepResultSchema>;
 export class AutoGenResearchAgent {
     private llmService: LLMServiceAdapter;
     private cacheService: SemanticCacheService;
-    private reasoningHistory: ReasoningHistoryService;
+    private reasoningHistory: ReasoningHistoryServiceType;
     private mcpClient: MCPClient;
     private maxSteps: number;
     private maxTokensPerStep: number;
@@ -54,7 +54,7 @@ export class AutoGenResearchAgent {
     constructor(
         llmService: LLMServiceAdapter,
         cacheService: SemanticCacheService,
-        reasoningHistory: ReasoningHistoryService,
+        reasoningHistory: ReasoningHistoryServiceType,
         mcpClient: MCPClient,
         config: {
             maxSteps?: number;
@@ -162,7 +162,8 @@ export class AutoGenResearchAgent {
                 logger.info(`[AutoGenResearchAgent] Completed step ${step.stepId} in ${durationMs}ms`);
 
             } catch (error) {
-                logger.error(`[AutoGenResearchAgent] Step ${step.stepId} failed: ${error.message}`);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.error(`[AutoGenResearchAgent] Step ${step.stepId} failed: ${errorMessage}`);
                 stepResults.push({
                     stepId: step.stepId,
                     status: 'failed',
@@ -173,7 +174,7 @@ export class AutoGenResearchAgent {
                         confidenceScore: 0,
                         sources: []
                     },
-                    error: error.message
+                    error: errorMessage
                 });
                 break;
             }
