@@ -18,6 +18,7 @@ import {
   parseContentSnapshot,
 } from '../../../shared/utils/promptRenderer.js';
 import { logAuditEvent } from './audit.js';
+import { budgetService } from '../../services/BudgetEnforcementService.js';
 
 const router = Router();
 
@@ -50,6 +51,13 @@ const createCompareSchema = z.object({
 }).strict();
 
 const METRICS_REQUIRING_LABELS = new Set(['exact_match', 'contains']);
+
+class BudgetExceededError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BudgetExceededError';
+  }
+}
 
 // ============================================================
 // POST /api/evals/run - Create evaluation run
@@ -442,6 +450,30 @@ async function triggerEvaluationJob(runId: string, maxSamples?: number): Promise
       throw new Error('Run or version not found');
     }
 
+    const policyBudget = run.workspaceId
+      ? await budgetService.getRunBudget(run.workspaceId)
+      : null;
+    const runBudget = run.budget as { maxCalls?: number; maxTokens?: number; maxUSD?: number } | null;
+    const budgetLimits = {
+      maxCalls: runBudget?.maxCalls ?? policyBudget?.maxCalls ?? 100,
+      maxTokens: runBudget?.maxTokens ?? policyBudget?.maxTokens ?? 100000,
+      maxUSD: runBudget?.maxUSD ?? policyBudget?.maxUSD ?? 10,
+    };
+    let judgeCalls = 0;
+    let judgeTokens = 0;
+
+    const checkJudgeBudget = () => {
+      if (judgeCalls >= budgetLimits.maxCalls) {
+        throw new BudgetExceededError(`Judge calls exceeded ${budgetLimits.maxCalls}`);
+      }
+      if (judgeTokens >= budgetLimits.maxTokens) {
+        throw new BudgetExceededError(`Judge tokens exceeded ${budgetLimits.maxTokens}`);
+      }
+      if ((judgeTokens / 1000) * 0.03 >= budgetLimits.maxUSD) {
+        throw new BudgetExceededError(`Judge cost exceeded $${budgetLimits.maxUSD}`);
+      }
+    };
+
     // Load version
     const version = await prisma.templateVersion.findUnique({
       where: { id: run.versionId },
@@ -479,6 +511,7 @@ async function triggerEvaluationJob(runId: string, maxSamples?: number): Promise
 
       setLLMJudgeClient({
         async call(prompt: string, config?: JudgeModelConfig): Promise<string> {
+          checkJudgeBudget();
           const modelConfig = config || {
             model: 'gpt-4',
             temperature: 0.1,
@@ -492,6 +525,10 @@ async function triggerEvaluationJob(runId: string, maxSamples?: number): Promise
             max_tokens: modelConfig.maxTokens,
             response_format: { type: 'json_object' },
           });
+
+          judgeCalls += 1;
+          judgeTokens += response.usage?.total_tokens || 0;
+          checkJudgeBudget();
 
           return response.choices[0]?.message?.content || '{}';
         },
@@ -567,6 +604,9 @@ async function triggerEvaluationJob(runId: string, maxSamples?: number): Promise
         totalScore += metricResult.score;
 
       } catch (error) {
+        if (error instanceof BudgetExceededError) {
+          throw error;
+        }
         metricResult = {
           passed: false,
           score: 0,
@@ -613,6 +653,11 @@ async function triggerEvaluationJob(runId: string, maxSamples?: number): Promise
   } catch (error) {
     console.error('Evaluation job failed:', error);
 
+    if (error instanceof BudgetExceededError) {
+      await budgetService.hardStopRun('evaluation', runId, error.message);
+      return;
+    }
+
     await prisma.advancedEvaluationRun.update({
       where: { id: runId },
       data: {
@@ -645,6 +690,30 @@ async function triggerComparisonJob(runId: string, maxSamples?: number): Promise
       throw new Error('Run or versions not found');
     }
 
+    const policyBudget = run.workspaceId
+      ? await budgetService.getRunBudget(run.workspaceId)
+      : null;
+    const runBudget = run.budget as { maxCalls?: number; maxTokens?: number; maxUSD?: number } | null;
+    const budgetLimits = {
+      maxCalls: runBudget?.maxCalls ?? policyBudget?.maxCalls ?? 100,
+      maxTokens: runBudget?.maxTokens ?? policyBudget?.maxTokens ?? 100000,
+      maxUSD: runBudget?.maxUSD ?? policyBudget?.maxUSD ?? 10,
+    };
+    let judgeCalls = 0;
+    let judgeTokens = 0;
+
+    const checkJudgeBudget = () => {
+      if (judgeCalls >= budgetLimits.maxCalls) {
+        throw new BudgetExceededError(`Judge calls exceeded ${budgetLimits.maxCalls}`);
+      }
+      if (judgeTokens >= budgetLimits.maxTokens) {
+        throw new BudgetExceededError(`Judge tokens exceeded ${budgetLimits.maxTokens}`);
+      }
+      if ((judgeTokens / 1000) * 0.03 >= budgetLimits.maxUSD) {
+        throw new BudgetExceededError(`Judge cost exceeded $${budgetLimits.maxUSD}`);
+      }
+    };
+
     const [versionA, versionB] = await Promise.all([
       prisma.templateVersion.findUnique({ where: { id: run.versionAId } }),
       prisma.templateVersion.findUnique({ where: { id: run.versionBId } }),
@@ -668,6 +737,7 @@ async function triggerComparisonJob(runId: string, maxSamples?: number): Promise
 
     setLLMJudgeClient({
       async call(prompt: string, config?: JudgeModelConfig): Promise<string> {
+        checkJudgeBudget();
         const response = await openai.chat.completions.create({
           model: config?.model || 'gpt-4',
           messages: [{ role: 'user', content: prompt }],
@@ -675,6 +745,9 @@ async function triggerComparisonJob(runId: string, maxSamples?: number): Promise
           max_tokens: config?.maxTokens ?? 1024,
           response_format: { type: 'json_object' },
         });
+        judgeCalls += 1;
+        judgeTokens += response.usage?.total_tokens || 0;
+        checkJudgeBudget();
         return response.choices[0]?.message?.content || '{}';
       },
     });
@@ -773,6 +846,11 @@ async function triggerComparisonJob(runId: string, maxSamples?: number): Promise
     });
   } catch (error) {
     console.error('Comparison job failed:', error);
+
+    if (error instanceof BudgetExceededError) {
+      await budgetService.hardStopRun('evaluation', runId, error.message);
+      return;
+    }
 
     await prisma.advancedEvaluationRun.update({
       where: { id: runId },

@@ -113,6 +113,7 @@ export interface EvaluationDataset {
   description?: string;
   taskType?: string;
   format: DatasetFormat;
+  judgeRubricId?: string;
   tenantId?: string;
   createdById?: string;
   createdAt: Date;
@@ -147,7 +148,7 @@ export interface CSVImportRow {
 // Evaluation Types
 // ============================================================
 
-export type MetricType = 'exact_match' | 'contains' | 'json_valid' | 'custom';
+export type MetricType = 'exact_match' | 'contains' | 'json_valid' | 'judge_rubric' | 'custom';
 
 export interface EvaluationRun {
   id: string;
@@ -170,6 +171,7 @@ export interface EvaluationRun {
   perExampleResults?: ExampleResult[];
   failureCases?: FailureCase[];
   topFailureCases?: FailureCase[];
+  artifacts?: Record<string, unknown>;
   calls: number;
   tokens: number;
   usdEstimate: number;
@@ -200,7 +202,7 @@ export interface FailureCase {
 export interface BaselineEvaluationRequest {
   templateVersionId: string;
   datasetId: string;
-  metricType: MetricType;
+  metricType?: MetricType;
   maxSamples?: number;
 }
 
@@ -273,6 +275,20 @@ export interface OptimizationCost {
 
 export interface OptimizationDiagnostics {
   topFailureCases: FailureCase[];
+  abComparison?: {
+    metricType: OptimizationMetricType;
+    sampleCount: number;
+    winsBaseline: number;
+    winsOptimized: number;
+    ties: number;
+    examples?: Array<{
+      exampleId: string;
+      winner: 'baseline' | 'optimized' | 'tie';
+      scoreBaseline?: number;
+      scoreOptimized?: number;
+      reason?: string;
+    }>;
+  };
 }
 
 export interface OptimizationResult {

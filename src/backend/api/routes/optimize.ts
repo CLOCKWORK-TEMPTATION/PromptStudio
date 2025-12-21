@@ -108,14 +108,16 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Dataset has no examples' });
     }
 
-    if (METRICS_REQUIRING_LABELS.has(metricType) && dataset.format === 'unlabeled') {
+    if (dataset.format === 'labeled' && metricType === 'judge_rubric') {
       return res.status(400).json({
-        error: 'Metric requires labeled dataset',
+        error: 'Judge rubric requires an unlabeled dataset',
         details: { metricType, datasetFormat: dataset.format },
       });
     }
 
-    if (METRICS_REQUIRING_LABELS.has(metricType)) {
+    const selectedMetricType = dataset.format === 'unlabeled' ? 'judge_rubric' : metricType;
+
+    if (METRICS_REQUIRING_LABELS.has(selectedMetricType)) {
       const missingExpectedOutput = await prisma.datasetExample.count({
         where: {
           datasetId,
@@ -145,7 +147,7 @@ router.post('/', async (req: Request, res: Response) => {
         baseVersionId,
         datasetId,
         optimizerType,
-        metricType,
+        metricType: selectedMetricType,
         budget: finalBudget as unknown as Prisma.InputJsonValue,
         status: 'queued',
         progress: 0,
@@ -159,7 +161,7 @@ router.post('/', async (req: Request, res: Response) => {
       workspaceId,
       templateId,
       optimizerType,
-      metricType,
+      metricType: selectedMetricType,
     });
 
     // Enqueue job to worker (worker will pick it up automatically)
@@ -170,7 +172,7 @@ router.post('/', async (req: Request, res: Response) => {
       baseVersionId,
       datasetId,
       optimizerType,
-      metricType,
+      metricType: selectedMetricType,
       budget: finalBudget,
       tenantId: workspaceId,
       workspaceId,
@@ -185,7 +187,7 @@ router.post('/', async (req: Request, res: Response) => {
         templateId,
         datasetId,
         optimizerType,
-        metricType,
+        metricType: selectedMetricType,
         workspaceId,
       },
       req

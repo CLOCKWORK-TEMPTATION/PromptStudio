@@ -18,6 +18,7 @@ const datasetConfigSchema = z.object({
   description: z.string().max(2000).optional(),
   taskType: z.string().max(255).optional(),
   format: z.enum(['labeled', 'unlabeled']).default('labeled'),
+  judgeRubricId: z.string().uuid().optional(),
 }).strict();
 
 const datasetUpdateSchema = z.object({
@@ -25,6 +26,7 @@ const datasetUpdateSchema = z.object({
   description: z.string().max(2000).optional(),
   taskType: z.string().max(255).optional(),
   format: z.enum(['labeled', 'unlabeled']).optional(),
+  judgeRubricId: z.string().uuid().nullable().optional(),
 }).strict();
 
 const labeledExampleSchema = z.object({
@@ -111,6 +113,15 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
+    if (validation.data.judgeRubricId) {
+      const rubric = await prisma.judgeRubric.findUnique({
+        where: { id: validation.data.judgeRubricId },
+      });
+      if (!rubric) {
+        return res.status(400).json({ error: 'Judge rubric not found' });
+      }
+    }
+
     const dataset = await prisma.evaluationDataset.create({
       data: validation.data,
     });
@@ -174,6 +185,15 @@ router.patch('/:id', async (req: Request, res: Response) => {
         error: 'Validation error',
         details: validation.error.errors,
       });
+    }
+
+    if (validation.data.judgeRubricId) {
+      const rubric = await prisma.judgeRubric.findUnique({
+        where: { id: validation.data.judgeRubricId },
+      });
+      if (!rubric) {
+        return res.status(400).json({ error: 'Judge rubric not found' });
+      }
     }
 
     const dataset = await prisma.evaluationDataset.update({
