@@ -27,6 +27,7 @@ import runsRoutes from './api/routes/runs.js';
 import budgetRoutes from './api/routes/budget.js';
 import auditRoutes from './api/routes/audit.js';
 import observabilityRoutes from './api/routes/observability.js';
+import metricsRoutes from './api/routes/metrics.js';
 import techniquesRoutes from './api/routes/techniques.js';
 import critiqueRoutes from './api/routes/critique.js';
 import sharingRoutes from './api/routes/sharing.js';
@@ -36,6 +37,7 @@ import { errorHandler } from './api/middleware/errorHandler.js';
 import { rateLimiter } from './api/middleware/rateLimiter.js';
 import { authMiddleware } from './api/middleware/auth.js';
 import { healthCheckService, requestTrackingMiddleware } from './services/HealthCheckService.js';
+import { getOptimizationWorker } from './services/OptimizationWorkerService.js';
 
 dotenv.config();
 
@@ -97,6 +99,7 @@ app.use('/api/runs', runsRoutes);
 app.use('/api/budget', rateLimiter, budgetRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/observability', observabilityRoutes);
+app.use('/api/metrics', metricsRoutes);
 app.use('/api/techniques', techniquesRoutes);
 app.use('/api/critique', rateLimiter, critiqueRoutes);
 app.use('/api/share', sharingRoutes);
@@ -108,6 +111,14 @@ app.use(errorHandler);
 
 // Setup WebSocket handlers
 setupWebSocket(io);
+
+// Initialize and start the optimization worker with WebSocket support
+const optimizationWorker = getOptimizationWorker(io);
+optimizationWorker.start().then(() => {
+  console.log('🔄 Optimization Worker started');
+}).catch(err => {
+  console.error('❌ Failed to start Optimization Worker:', err);
+});
 
 // Track WebSocket connections
 io.on('connection', (socket) => {
@@ -135,41 +146,49 @@ httpServer.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM received, shutting down gracefully...');
-  
+
+  // Stop optimization worker
+  await optimizationWorker.stop();
+  console.log('✅ Optimization worker stopped');
+
   // Close HTTP server
   httpServer.close(() => {
     console.log('✅ HTTP server closed');
   });
-  
+
   // Close WebSocket server
   io.close(() => {
     console.log('✅ WebSocket server closed');
   });
-  
+
   // Cleanup health check service
   await healthCheckService.cleanup();
   console.log('✅ Health check service cleaned up');
-  
+
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('🛑 SIGINT received, shutting down gracefully...');
-  
+
+  // Stop optimization worker
+  await optimizationWorker.stop();
+  console.log('✅ Optimization worker stopped');
+
   // Close HTTP server
   httpServer.close(() => {
     console.log('✅ HTTP server closed');
   });
-  
+
   // Close WebSocket server
   io.close(() => {
     console.log('✅ WebSocket server closed');
   });
-  
+
   // Cleanup health check service
   await healthCheckService.cleanup();
   console.log('✅ Health check service cleaned up');
-  
+
   process.exit(0);
 });
 

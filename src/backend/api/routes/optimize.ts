@@ -1,18 +1,19 @@
 // ============================================================
 // Optimization API Routes - Epic 1.4
+// Enhanced with Worker Service & Real-time Updates
 // ============================================================
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
 import { Prisma } from '@prisma/client';
-import { DspyServiceClient } from '../../services/DspyServiceClient.js';
-import { parseContentSnapshot } from '../../../shared/utils/promptRenderer';
+import { getOptimizationWorker } from '../../services/OptimizationWorkerService.js';
+import { optimizationLogger } from '../../services/StructuredLogger.js';
+import { budgetService } from '../../services/BudgetEnforcementService.js';
+import { parseContentSnapshot } from '../../../shared/utils/promptRenderer.js';
 import type {
-  OptimizerType,
-  OptimizationMetricType,
   OptimizationBudget,
-} from '../../../shared/types/dspy';
+} from '../../../shared/types/dspy.js';
 
 const router = Router();
 
@@ -31,6 +32,7 @@ const createOptimizationSchema = z.object({
     maxTokens: z.number().positive().optional(),
     maxUSD: z.number().positive().optional(),
   }).optional().default({}),
+  workspaceId: z.string().uuid().optional(),
 });
 
 const applyOptimizationSchema = z.object({
@@ -42,6 +44,8 @@ const applyOptimizationSchema = z.object({
 // ============================================================
 
 router.post('/', async (req: Request, res: Response) => {
+  const logger = optimizationLogger.child({});
+
   try {
     const validation = createOptimizationSchema.safeParse(req.body);
 
@@ -59,7 +63,21 @@ router.post('/', async (req: Request, res: Response) => {
       optimizerType,
       metricType,
       budget,
+      workspaceId,
     } = validation.data;
+
+    // Check budget constraints if workspace provided
+    if (workspaceId) {
+      const budgetCheck = await budgetService.canStartOptimizationRun(workspaceId);
+      if (!budgetCheck.allowed) {
+        logger.warn('Budget check failed', { workspaceId, reason: budgetCheck.reason });
+        return res.status(429).json({
+          error: 'Budget limit reached',
+          reason: budgetCheck.reason,
+          currentUsage: budgetCheck.currentUsage,
+        });
+      }
+    }
 
     // Verify template and version exist
     const version = await prisma.templateVersion.findUnique({
@@ -104,13 +122,30 @@ router.post('/', async (req: Request, res: Response) => {
         status: 'queued',
         progress: 0,
         stage: 'Waiting to start',
+        tenantId: workspaceId,
       },
     });
 
-    // Trigger async optimization (via queue or background process)
-    // In a production setup, this would be pushed to a job queue
-    triggerOptimizationJob(run.id).catch(err => {
-      console.error('Failed to trigger optimization job:', err);
+    logger.info('Optimization run created', {
+      runId: run.id,
+      workspaceId,
+      templateId,
+      optimizerType,
+      metricType,
+    });
+
+    // Enqueue job to worker (worker will pick it up automatically)
+    const worker = getOptimizationWorker();
+    await worker.enqueueJob({
+      runId: run.id,
+      templateId,
+      baseVersionId,
+      datasetId,
+      optimizerType,
+      metricType,
+      budget: finalBudget,
+      tenantId: workspaceId,
+      workspaceId,
     });
 
     res.status(201).json({
@@ -121,7 +156,7 @@ router.post('/', async (req: Request, res: Response) => {
       createdAt: run.createdAt,
     });
   } catch (error) {
-    console.error('Error creating optimization run:', error);
+    logger.errorWithStack('Error creating optimization run', error as Error);
     res.status(500).json({ error: 'Failed to create optimization run' });
   }
 });
@@ -324,6 +359,8 @@ router.post('/:id/apply', async (req: Request, res: Response) => {
 // ============================================================
 
 router.post('/:id/cancel', async (req: Request, res: Response) => {
+  const logger = optimizationLogger.child({ runId: req.params.id });
+
   try {
     const { id } = req.params;
 
@@ -339,18 +376,49 @@ router.post('/:id/cancel', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Cannot cancel completed run' });
     }
 
-    await prisma.optimizationRun.update({
-      where: { id },
-      data: {
-        status: 'canceled',
-        finishedAt: new Date(),
-      },
-    });
+    // Use worker to cancel (handles active jobs)
+    const worker = getOptimizationWorker();
+    await worker.cancelJob(id);
+
+    logger.info('Optimization run cancelled');
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error canceling optimization run:', error);
+    logger.errorWithStack('Error canceling optimization run', error as Error);
     res.status(500).json({ error: 'Failed to cancel optimization run' });
+  }
+});
+
+// ============================================================
+// POST /api/optimize/:id/restart - Restart failed/cancelled run
+// ============================================================
+
+router.post('/:id/restart', async (req: Request, res: Response) => {
+  const logger = optimizationLogger.child({ runId: req.params.id });
+
+  try {
+    const { id } = req.params;
+
+    const worker = getOptimizationWorker();
+    const newRunId = await worker.restartRun(id);
+
+    logger.info('Optimization run restarted', { newRunId });
+
+    // Get new run details
+    const newRun = await prisma.optimizationRun.findUnique({
+      where: { id: newRunId },
+    });
+
+    res.status(201).json({
+      originalRunId: id,
+      newRunId,
+      status: newRun?.status,
+      createdAt: newRun?.createdAt,
+    });
+  } catch (error) {
+    logger.errorWithStack('Error restarting optimization run', error as Error);
+    const message = error instanceof Error ? error.message : 'Failed to restart optimization run';
+    res.status(400).json({ error: message });
   }
 });
 
@@ -408,139 +476,5 @@ router.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to list optimization runs' });
   }
 });
-
-// ============================================================
-// Background Job Trigger (Simplified inline execution)
-// ============================================================
-
-async function triggerOptimizationJob(runId: string): Promise<void> {
-  // In production, this would push to a queue (BullMQ, etc.)
-  // For now, execute inline with async handling
-
-  try {
-    // Update status to running
-    await prisma.optimizationRun.update({
-      where: { id: runId },
-      data: {
-        status: 'running',
-        startedAt: new Date(),
-        stage: 'Loading data',
-        progress: 10,
-      },
-    });
-
-    // Load run data
-    const run = await prisma.optimizationRun.findUnique({
-      where: { id: runId },
-      include: {
-        baseVersion: true,
-        dataset: {
-          include: {
-            examples: true,
-          },
-        },
-      },
-    });
-
-    if (!run) {
-      throw new Error('Run not found');
-    }
-
-    // Update progress
-    await prisma.optimizationRun.update({
-      where: { id: runId },
-      data: {
-        stage: 'Preparing DSPy compilation',
-        progress: 20,
-      },
-    });
-
-    // Parse content snapshot
-    const contentSnapshot = parseContentSnapshot(run.baseVersion.contentSnapshot);
-
-    // Prepare dataset for DSPy
-    const dspyDataset = run.dataset.examples.map(ex => ({
-      input_variables: ex.inputVariables as Record<string, unknown>,
-      expected_output: ex.expectedOutput || undefined,
-    }));
-
-    // Update progress
-    await prisma.optimizationRun.update({
-      where: { id: runId },
-      data: {
-        stage: 'Calling DSPy service',
-        progress: 40,
-      },
-    });
-
-    // Call DSPy service
-    const dspyClient = new DspyServiceClient();
-    const compileResult = await dspyClient.compile({
-      basePromptSnapshot: {
-        system: contentSnapshot.system,
-        developer: contentSnapshot.developer,
-        user: contentSnapshot.user,
-        context: contentSnapshot.context,
-      },
-      dataset: dspyDataset,
-      model: {
-        providerModelString: contentSnapshot.modelConfig?.model || 'gpt-4',
-        temperature: contentSnapshot.modelConfig?.temperature,
-        maxTokens: contentSnapshot.modelConfig?.maxTokens,
-      },
-      optimizer: {
-        type: run.optimizerType as 'bootstrap_fewshot' | 'copro',
-      },
-      metricType: run.metricType as 'exact_match' | 'contains' | 'json_valid',
-      budget: run.budget as { maxCalls?: number; maxTokens?: number; maxUSD?: number },
-    });
-
-    // Update progress
-    await prisma.optimizationRun.update({
-      where: { id: runId },
-      data: {
-        stage: 'Saving results',
-        progress: 90,
-      },
-    });
-
-    // Save result
-    await prisma.optimizationResult.create({
-      data: {
-        runId,
-        optimizedSnapshot: compileResult.optimizedPromptSnapshot as unknown as Prisma.InputJsonValue,
-        dspyArtifactJson: compileResult.dspyArtifactJson ? JSON.parse(compileResult.dspyArtifactJson) : null,
-        baselineScore: compileResult.baselineScore,
-        optimizedScore: compileResult.optimizedScore,
-        scoreDelta: compileResult.delta,
-        cost: compileResult.cost as unknown as Prisma.InputJsonValue,
-        diagnostics: compileResult.diagnostics as unknown as Prisma.InputJsonValue,
-      },
-    });
-
-    // Mark as succeeded
-    await prisma.optimizationRun.update({
-      where: { id: runId },
-      data: {
-        status: 'succeeded',
-        finishedAt: new Date(),
-        stage: 'Completed',
-        progress: 100,
-      },
-    });
-  } catch (error) {
-    console.error('Optimization job failed:', error);
-
-    // Mark as failed
-    await prisma.optimizationRun.update({
-      where: { id: runId },
-      data: {
-        status: 'failed',
-        finishedAt: new Date(),
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      },
-    });
-  }
-}
 
 export default router;
