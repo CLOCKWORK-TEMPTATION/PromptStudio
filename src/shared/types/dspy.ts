@@ -3,6 +3,51 @@
 // ============================================================
 
 // ============================================================
+// Prompt Types
+// ============================================================
+
+export interface Prompt {
+  id: string;
+  name: string;
+  description?: string;
+  tags: string[];
+  tenantId?: string;
+  ownerId?: string;
+  activeVersionId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PromptVersion {
+  id: string;
+  promptId: string;
+  promptEntityId?: string;
+  version: number;
+  content: string;
+  systemPrompt?: string;
+  processPrompt?: string;
+  taskPrompt?: string;
+  outputPrompt?: string;
+  refinementReason?: string;
+  qualityScore?: number;
+  performanceMetrics?: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface PromptAuditEvent {
+  id: string;
+  promptId: string;
+  promptVersionId?: string;
+  optimizationRunId?: string;
+  evaluationRunId?: string;
+  tenantId?: string;
+  actorId?: string;
+  eventType: string;
+  details: Record<string, unknown>;
+  createdAt: Date;
+}
+
+// ============================================================
 // Template & Version Types
 // ============================================================
 
@@ -109,10 +154,14 @@ export interface EvaluationRun {
   templateId?: string;
   templateVersionId?: string;
   datasetId: string;
+  promptId?: string;
+  baselinePromptVersionId?: string;
+  optimizedPromptVersionId?: string;
   metricType: MetricType;
   status: 'pending' | 'running' | 'completed' | 'failed';
   startedAt?: Date;
   completedAt?: Date;
+  durationMs?: number;
   errorMessage?: string;
   aggregateScore?: number;
   totalExamples: number;
@@ -120,6 +169,10 @@ export interface EvaluationRun {
   failedExamples: number;
   perExampleResults?: ExampleResult[];
   failureCases?: FailureCase[];
+  topFailureCases?: FailureCase[];
+  calls: number;
+  tokens: number;
+  usdEstimate: number;
   maxSamples?: number;
   createdById?: string;
   createdAt: Date;
@@ -180,6 +233,9 @@ export interface OptimizationRun {
   templateId: string;
   baseVersionId: string;
   datasetId: string;
+  promptId?: string;
+  baselinePromptVersionId?: string;
+  optimizedPromptVersionId?: string;
   optimizerType: OptimizerType;
   metricType: OptimizationMetricType;
   budget: OptimizationBudget;
@@ -190,6 +246,10 @@ export interface OptimizationRun {
   createdAt: Date;
   startedAt?: Date;
   finishedAt?: Date;
+  durationMs?: number;
+  calls: number;
+  tokens: number;
+  usdEstimate: number;
   tenantId?: string;
   createdById?: string;
 }
@@ -220,11 +280,13 @@ export interface OptimizationResult {
   runId: string;
   optimizedSnapshot: OptimizedPromptSnapshot;
   dspyArtifactJson?: unknown;
+  patchJson?: unknown;
   baselineScore?: number;
   optimizedScore?: number;
   scoreDelta?: number;
   cost?: OptimizationCost;
   diagnostics?: OptimizationDiagnostics;
+  topFailureCases?: FailureCase[];
   appliedVersionId?: string;
   createdAt: Date;
 }

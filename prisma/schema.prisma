@@ -26,9 +26,11 @@ model Tenant {
   requestSignatures     RequestSignature[]
   collaborationSessions CollaborationSession[]
   marketplacePrompts    MarketplacePrompt[]
+  prompts               Prompt[]
   promptTemplates       PromptTemplate[]
   evaluationDatasets    EvaluationDataset[]
   optimizationRuns      OptimizationRun[]
+  promptAuditEvents     PromptAuditEvent[]
 
   @@index([domain])
   @@index([isActive])
@@ -216,6 +218,8 @@ model User {
   auditLogs          AuditLog[]
   tenant             Tenant?                @relation(fields: [tenantId], references: [id])
   requestSignatures  RequestSignature[]
+  ownedPrompts       Prompt[]               @relation("PromptOwner")
+  promptAuditEvents  PromptAuditEvent[]     @relation("PromptAuditActor")
 
   // DSPy Optimization relations
   ownedTemplates     PromptTemplate[]       @relation("TemplateOwner")
@@ -480,6 +484,7 @@ model MarketplacePrompt {
 model PromptVersion {
   id            String  @id @default(uuid())
   promptId      String
+  promptEntityId String?
   version       Int
   content       String
   systemPrompt  String?
@@ -496,9 +501,13 @@ model PromptVersion {
 
   // Relations
   prompt MarketplacePrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  promptEntity Prompt?     @relation("PromptEntityVersions", fields: [promptEntityId], references: [id], onDelete: Cascade)
+  activeForPrompt Prompt?  @relation("ActivePromptVersion")
 
   @@unique([promptId, version])
+  @@unique([promptEntityId, version])
   @@index([promptId])
+  @@index([promptEntityId])
 }
 
 // Prompt Chain for Multi-Step Processing
@@ -793,6 +802,34 @@ model ChainMemoryState {
 // DSPy Optimization System - Epic 0 + Epic 1
 // ============================================================
 
+// Prompt - Core prompt entity for DSPy workflows
+model Prompt {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  tags            String[] @default([])
+  tenantId        String?
+  ownerId         String?
+  activeVersionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant          Tenant?        @relation(fields: [tenantId], references: [id])
+  owner           User?          @relation("PromptOwner", fields: [ownerId], references: [id])
+  activeVersion   PromptVersion? @relation("ActivePromptVersion", fields: [activeVersionId], references: [id])
+  versions        PromptVersion[] @relation("PromptEntityVersions")
+  optimizationRuns OptimizationRun[]
+  evaluationRuns   EvaluationRun[]
+  auditEvents      PromptAuditEvent[]
+
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([activeVersionId])
+  @@index([tenantId, createdAt])
+}
+
 // Prompt Template - Independent prompt templates for optimization
 model PromptTemplate {
   id          String   @id @default(uuid())
@@ -909,6 +946,9 @@ model EvaluationRun {
   templateId      String?
   templateVersionId String?
   datasetId       String
+  promptId        String?
+  baselinePromptVersionId  String?
+  optimizedPromptVersionId String?
 
   // Evaluation configuration
   metricType String // exact_match | contains | json_valid | custom
@@ -917,6 +957,7 @@ model EvaluationRun {
   status       String   @default("pending") // pending | running | completed | failed
   startedAt    DateTime?
   completedAt  DateTime?
+  durationMs   Int?
   errorMessage String?
 
   // Results
@@ -928,6 +969,12 @@ model EvaluationRun {
   // Detailed results as JSON
   perExampleResults Json? @default("[]")
   failureCases      Json? @default("[]")
+  topFailureCases   Json? @default("[]")
+
+  // Cost tracking
+  calls       Int   @default(0)
+  tokens      Int   @default(0)
+  usdEstimate Float @default(0)
 
   // Execution metadata
   maxSamples  Int?
@@ -937,11 +984,17 @@ model EvaluationRun {
   // Relations
   dataset   EvaluationDataset @relation(fields: [datasetId], references: [id])
   createdBy User?             @relation("EvaluationCreator", fields: [createdById], references: [id])
+  prompt    Prompt?           @relation(fields: [promptId], references: [id])
+  baselinePromptVersion  PromptVersion? @relation("BaselineEvaluationPromptVersion", fields: [baselinePromptVersionId], references: [id])
+  optimizedPromptVersion PromptVersion? @relation("OptimizedEvaluationPromptVersion", fields: [optimizedPromptVersionId], references: [id])
 
   @@index([datasetId])
   @@index([status])
   @@index([createdById])
   @@index([createdAt])
+  @@index([promptId])
+  @@index([baselinePromptVersionId])
+  @@index([optimizedPromptVersionId])
 }
 
 // Optimization Run - DSPy optimization execution
@@ -950,6 +1003,9 @@ model OptimizationRun {
   templateId     String
   baseVersionId  String
   datasetId      String
+  promptId       String?
+  baselinePromptVersionId  String?
+  optimizedPromptVersionId String?
 
   // Optimizer configuration
   optimizerType String // bootstrap_fewshot | copro
@@ -969,6 +1025,12 @@ model OptimizationRun {
   createdAt  DateTime  @default(now())
   startedAt  DateTime?
   finishedAt DateTime?
+  durationMs Int?
+
+  // Cost tracking
+  calls       Int   @default(0)
+  tokens      Int   @default(0)
+  usdEstimate Float @default(0)
 
   // Multi-tenant support
   tenantId    String?
@@ -980,6 +1042,9 @@ model OptimizationRun {
   dataset     EvaluationDataset @relation(fields: [datasetId], references: [id])
   tenant      Tenant?           @relation(fields: [tenantId], references: [id])
   createdBy   User?             @relation("OptimizationCreator", fields: [createdById], references: [id])
+  prompt      Prompt?           @relation(fields: [promptId], references: [id])
+  baselinePromptVersion  PromptVersion? @relation("BaselineOptimizationPromptVersion", fields: [baselinePromptVersionId], references: [id])
+  optimizedPromptVersion PromptVersion? @relation("OptimizedOptimizationPromptVersion", fields: [optimizedPromptVersionId], references: [id])
   result      OptimizationResult?
 
   @@index([templateId])
@@ -988,6 +1053,9 @@ model OptimizationRun {
   @@index([createdById])
   @@index([tenantId])
   @@index([createdAt])
+  @@index([promptId])
+  @@index([baselinePromptVersionId])
+  @@index([optimizedPromptVersionId])
 }
 
 // Optimization Result - Results from DSPy optimization
@@ -1001,6 +1069,8 @@ model OptimizationResult {
 
   // DSPy artifact (can be large)
   dspyArtifactJson Json?
+  // Patch artifact for prompt diffs
+  patchJson        Json?
 
   // Score comparison
   baselineScore   Float?
@@ -1013,7 +1083,8 @@ model OptimizationResult {
 
   // Diagnostics as JSON
   // Structure: { topFailureCases: [...] }
-  diagnostics Json? @default("{}")
+  diagnostics     Json? @default("{}")
+  topFailureCases Json? @default("[]")
 
   // Link to new version if applied
   appliedVersionId String?
@@ -1026,6 +1097,38 @@ model OptimizationResult {
 
   @@index([runId])
   @@index([appliedVersionId])
+}
+
+// Prompt Audit Event - change tracking and observability
+model PromptAuditEvent {
+  id                  String   @id @default(uuid())
+  promptId            String
+  promptVersionId     String?
+  optimizationRunId   String?
+  evaluationRunId     String?
+  tenantId            String?
+  actorId             String?
+  eventType           String
+  details             Json     @default("{}")
+  createdAt           DateTime @default(now())
+
+  // Relations
+  prompt          Prompt          @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  promptVersion   PromptVersion?  @relation(fields: [promptVersionId], references: [id], onDelete: Cascade)
+  optimizationRun OptimizationRun? @relation(fields: [optimizationRunId], references: [id], onDelete: SetNull)
+  evaluationRun   EvaluationRun?  @relation(fields: [evaluationRunId], references: [id], onDelete: SetNull)
+  tenant          Tenant?         @relation(fields: [tenantId], references: [id])
+  actor           User?           @relation("PromptAuditActor", fields: [actorId], references: [id])
+
+  @@index([promptId])
+  @@index([promptVersionId])
+  @@index([optimizationRunId])
+  @@index([evaluationRunId])
+  @@index([tenantId])
+  @@index([actorId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([promptId, createdAt])
 }
 
 // ============================================================
