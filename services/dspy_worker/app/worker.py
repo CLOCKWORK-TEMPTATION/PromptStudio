@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import dataclass
+from typing import Callable
 
 import structlog
 
@@ -15,6 +16,7 @@ from .executor import CandidateResult, JobExecutor, StaticJobExecutor
 from .metrics import MetricsRecorder
 from .queue import QueueClient
 from .schemas import JobPayload
+from .status import InMemoryRunStatusStore, RunStatus, RunStatusRecord, RunStatusStore
 from .storage import BestResultStore
 
 logger = structlog.get_logger(__name__)
@@ -35,11 +37,12 @@ class JobRunOutcome:
 class JobRunner:
     """Executes optimization jobs while enforcing budgets."""
 
-    def __init__(self, executor: JobExecutor) -> None:
+    def __init__(self, executor: JobExecutor, time_source: Callable[[], float] | None = None) -> None:
         self._executor = executor
+        self._time_source = time_source or time.monotonic
 
     async def run(self, job: JobPayload) -> JobRunOutcome:
-        start_time = time.monotonic()
+        start_time = self._time_source()
         budget_tracker = BudgetTracker(job.budget)
         best_store = BestResultStore()
         hard_stop_reason: BudgetLimitReason | None = None
@@ -47,11 +50,13 @@ class JobRunner:
         async for candidate in self._executor.iterate_candidates(job):
             best_store.save_if_better(candidate)
             budget_tracker.record_usage(candidate.usage)
+            budget_tracker.update_duration(self._time_source() - start_time)
             hard_stop_reason = budget_tracker.check_limits()
             if hard_stop_reason is not None:
                 break
 
-        duration_seconds = time.monotonic() - start_time
+        duration_seconds = self._time_source() - start_time
+        budget_tracker.update_duration(duration_seconds)
         hard_stop = hard_stop_reason is not None
 
         return JobRunOutcome(
@@ -67,10 +72,16 @@ class JobRunner:
 class WorkerService:
     """Consumes jobs from the queue and records observability signals."""
 
-    def __init__(self, queue_client: QueueClient, metrics: MetricsRecorder) -> None:
+    def __init__(
+        self,
+        queue_client: QueueClient,
+        metrics: MetricsRecorder,
+        status_store: RunStatusStore | None = None,
+    ) -> None:
         self._queue_client = queue_client
         self._metrics = metrics
         self._runner = JobRunner(StaticJobExecutor())
+        self._status_store = status_store or InMemoryRunStatusStore()
         self._shutdown_event = asyncio.Event()
 
     async def run_forever(self) -> None:
@@ -95,8 +106,19 @@ class WorkerService:
             prompt_signature=job.prompt_signature.model_dump(),
             dataset_ref=job.dataset_ref.model_dump(),
         )
+        await self._status_store.update(
+            RunStatusRecord(
+                job_id=job.job_id,
+                status=RunStatus.RUNNING,
+            )
+        )
         outcome = await self._runner.run(job)
-        self._metrics.record_job(outcome.duration_seconds, outcome.usage, outcome.hard_stop)
+        self._metrics.record_job(
+            outcome.duration_seconds,
+            outcome.usage,
+            outcome.hard_stop,
+            outcome.hard_stop_reason,
+        )
 
         log_payload = {
             "job_id": outcome.job_id,
@@ -112,6 +134,21 @@ class WorkerService:
             log_payload["best_score"] = outcome.best_candidate.score
 
         if outcome.hard_stop:
+            await self._status_store.update(
+                RunStatusRecord(
+                    job_id=job.job_id,
+                    status=RunStatus.HARD_STOPPED,
+                    hard_stop_reason=outcome.hard_stop_reason,
+                    best_candidate=outcome.best_candidate,
+                )
+            )
             logger.warning("job_hard_stop", **log_payload)
         else:
+            await self._status_store.update(
+                RunStatusRecord(
+                    job_id=job.job_id,
+                    status=RunStatus.COMPLETED,
+                    best_candidate=outcome.best_candidate,
+                )
+            )
             logger.info("job_completed", **log_payload)

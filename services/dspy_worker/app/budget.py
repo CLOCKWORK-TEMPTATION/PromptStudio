@@ -16,6 +16,7 @@ class BudgetLimitReason(str, Enum):
     MAX_CALLS = "max_calls"
     MAX_TOKENS = "max_tokens"
     MAX_USD = "max_usd"
+    MAX_DURATION = "max_duration_seconds"
 
 
 @dataclass(slots=True)
@@ -25,6 +26,7 @@ class BudgetUsage:
     calls: int = 0
     tokens: int = 0
     usd: float = 0.0
+    duration_seconds: float = 0.0
 
 
 class BudgetTracker:
@@ -43,6 +45,9 @@ class BudgetTracker:
         self._usage.tokens += usage.tokens
         self._usage.usd += usage.usd
 
+    def update_duration(self, duration_seconds: float) -> None:
+        self._usage.duration_seconds = duration_seconds
+
     def check_limits(self) -> BudgetLimitReason | None:
         if self._usage.calls >= self._limits.max_calls:
             return BudgetLimitReason.MAX_CALLS
@@ -50,4 +55,6 @@ class BudgetTracker:
             return BudgetLimitReason.MAX_TOKENS
         if self._usage.usd >= self._limits.max_usd:
             return BudgetLimitReason.MAX_USD
+        if self._usage.duration_seconds >= self._limits.max_duration_seconds:
+            return BudgetLimitReason.MAX_DURATION
         return None

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from prometheus_client import Counter, Histogram
 
-from .budget import BudgetUsage
+from .budget import BudgetLimitReason, BudgetUsage
 
 
 @dataclass(slots=True)
@@ -19,6 +19,7 @@ class MetricsRecorder:
     job_cost_usd: Histogram
     job_calls_total: Counter
     job_hard_stop_total: Counter
+    job_hard_stop_reason_total: Counter
 
     @classmethod
     def create(cls) -> "MetricsRecorder":
@@ -41,11 +42,24 @@ class MetricsRecorder:
                 "dspy_worker_job_hard_stop_total",
                 "Number of hard-stop events enforced by budget limits",
             ),
+            job_hard_stop_reason_total=Counter(
+                "dspy_worker_job_hard_stop_reason_total",
+                "Hard-stop events by budget limit reason",
+                labelnames=("reason",),
+            ),
         )
 
-    def record_job(self, duration_seconds: float, usage: BudgetUsage, hard_stop: bool) -> None:
+    def record_job(
+        self,
+        duration_seconds: float,
+        usage: BudgetUsage,
+        hard_stop: bool,
+        hard_stop_reason: BudgetLimitReason | None,
+    ) -> None:
         self.job_duration_seconds.observe(duration_seconds)
         self.job_cost_usd.observe(usage.usd)
         self.job_calls_total.inc(usage.calls)
         if hard_stop:
             self.job_hard_stop_total.inc()
+            if hard_stop_reason is not None:
+                self.job_hard_stop_reason_total.labels(reason=hard_stop_reason.value).inc()

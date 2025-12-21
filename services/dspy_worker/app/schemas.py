@@ -35,6 +35,7 @@ class BudgetLimits(BaseModel):
     max_calls: int = Field(ge=1, le=10000)
     max_tokens: int = Field(ge=1, le=10_000_000)
     max_usd: float = Field(ge=0, le=10_000)
+    max_duration_seconds: float = Field(ge=0.1, le=86_400)
 
 
 class JobPayload(BaseModel):
